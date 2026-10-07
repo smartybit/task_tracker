@@ -41,21 +41,28 @@ first version and remain open to revision.
 - An owner with neither read nor write permission cannot view or edit the task,
   even though they remain its owner. Evaluate access using current permissions,
   not ownership.
-- Users choose project and owner independently of the parent task. The hierarchy
-  may therefore span projects and owners.
+- All tasks in a hierarchy belong to the same project and therefore the same
+  organization as its top-level task. Owners may differ between tasks.
+- Project-based task permissions are consequently the same throughout a hierarchy.
 - Parent time totals include time recorded directly against the parent and all
   descendants, without double counting.
 - Task statuses are administrator-configured and have a `final` property, meaning
   that no further activity is planned.
 - Initial statuses include In Progress, Postponed, Waiting for Customer Response,
   Canceled, and Completed. Canceled and Completed are final.
+- Once a status has been used, it cannot be changed at all in the first version.
 - A task may enter a final status only if every descendant is already in a final
   status, not merely its immediate children.
+- Reopening a task also reopens any final ancestors up to the top-level task.
+  Reopening does not require reopening its children or siblings.
 - Users may select multiple statuses to include in their task list, in addition
   to filtering by project and switching between flat and hierarchical views.
 - A task cannot be deleted if it has any child tasks or any records in any user's
   timesheet. This restriction applies to everyone, including administrators,
   regardless of whether they can view those children or records.
+- Totals reflect current task properties. Moving a task hierarchy to another
+  project moves its accumulated hours to that project, including historical hours.
+  Changes to parent relationships also update the corresponding ancestor totals.
 
 ### Timesheets
 
@@ -63,16 +70,27 @@ first version and remain open to revision.
   historical entries, even when no timesheet permissions are configured.
 - Configured timesheet permissions mean Read Others' Timesheets and Write Others'
   Timesheets. They govern access to other users' timesheets only.
+- These flags are configured per user and grant access to any other user's
+  timesheet. Individual colleague grants and employee reporting structures are
+  outside the first version.
 - Timesheet permissions cover the person's entire timesheet, including entries
   from every project, breaks, and closing markers. They are not filtered by the
   viewer's project permissions.
 - Timesheet access does not grant access to referenced task descriptions or
   details. Opening a task requires separate task read permission.
+- Task read permission is sufficient to select a task for time recording; task
+  write permission and task ownership are not required. Editing existing timesheet
+  records remains permitted through timesheet access if task access is later lost.
 - Timesheet entries must not overlap or leave unrecorded gaps within a recorded
   working session. Breaks explicitly represent time without a task.
 - Users can insert, edit, and delete historical entries. Detailed adjustment
   behavior is delegated to the implementation and may change in a later version.
 - Starting another entry closes the preceding entry at the new start time.
+- A running task entry contributes zero duration to timesheets and reported totals
+  until explicitly closed by a break, End of Working Day, or the start of another
+  task. Preserve its start time and leave its end time unset while it is running.
+- Do not automatically infer an end time when the user logs out or leaves an
+  entry running overnight. Duration is determined when the entry is closed.
 - Break is a filler entry with no associated task.
 - End of Working Day closes the last entry. It does not record task work.
 - When adding work after an End of Working Day marker, the application should
@@ -88,12 +106,17 @@ first version and remain open to revision.
   modifying historical data.
 - Task and remark grants are additive. An organization-level grant applies to
   every project in that organization and cannot be denied at the project level.
+- Access to task remarks requires task read permission plus the corresponding
+  remark permission: remark read to view them and remark write to modify them.
+  Task write permission is not needed merely to write remarks.
 - Users have implicit read and write access to their own timesheet. Unset
   timesheet flags do not restrict this access.
 - Read Others' Timesheets and Write Others' Timesheets apply to other users'
   whole timesheets, independently of project-level task and remark access.
   Timesheet write access permits changes to entries without granting permission
   to modify their referenced tasks.
+- Each timesheet flag applies globally to all other users; it is not scoped to
+  an organization, a project, or a selected colleague.
 - An unset flag means no local grant; an inherited grant can still apply.
 - The underlying permission model permits write without read. The configuration
   UI should enable read when write is selected to discourage accidental use of
@@ -113,6 +136,15 @@ first version and remain open to revision.
 - Reference behavior, attachment formats, and remark editing details are delegated
   to implementation judgment.
 
+### Search and Reporting
+
+- Search covers tasks, their descriptions, and task remarks. Search results and
+  snippets respect task and remark access permissions.
+- Project totals include work recorded by all users and can be filtered by person
+  and date range. The permission needed to view those reports remains open below.
+- Historical project totals use the task's current project rather than its project
+  at the time the work was recorded.
+
 ## Proposed First-Version Defaults
 
 These defaults make the delegated behavior concrete. They are proposals rather
@@ -129,8 +161,9 @@ than additional user-confirmed requirements.
   entry to 09:00–09:30 and assigns 09:30–10:00 to the inserted task. Later entries
   keep their start times. Historical insertion asks for a start time.
 - Editing a shared boundary adjusts the end of the earlier entry and the start
-  of the next together. Reject changes that create zero or negative durations
-  or reorder unrelated entries. Preview affected rows before applying the edit.
+  of the next together. Reject changes that create zero or negative durations in
+  closed intervals or reorder unrelated entries. Preview affected rows before
+  applying the edit. A running entry's zero reported duration is intentional.
 - Deleting a middle entry extends its predecessor to the next boundary. If it
   has no predecessor, replace the removed interval with a break. Offer replacing
   any removed interval with a break when the preceding work did not continue.
@@ -142,6 +175,8 @@ than additional user-confirmed requirements.
   the next day's 00:00, displayed as an end-of-day boundary, and the following
   day's entry starts at that same instant. Literally ending at 23:59 would lose
   one minute and contradict the no-gap requirement.
+- Apply overnight splitting when the entry is explicitly closed. Crossing midnight
+  alone does not close the running entry or make it contribute recorded hours.
 - Exclude breaks and end-of-day markers from working-time totals.
 - Apply all changes to affected entries atomically. Permit edits when the editor
   is the timesheet's user or has Write Others' Timesheets permission. Neighboring
@@ -151,21 +186,34 @@ than additional user-confirmed requirements.
 ### Hierarchy and Reporting
 
 - Reject cycles in task hierarchies.
+- Enforce a common project throughout a hierarchy. A project change on a root
+  updates the entire hierarchy together; an individual descendant cannot be moved
+  to another project while it remains attached to its current parent.
+- Reject reparenting across different projects unless the user explicitly chooses
+  a consistent project for the moved subtree and satisfies the required task
+  write permissions and owner checks. Never silently move tasks between projects.
 - Preserve the final-state invariant when adding or moving children or reopening
   descendants: affected final ancestors must also be reopened, with permission
   checks and an explicit preview of the changes.
+- Reopen final ancestors into a configured non-final status, leaving already
+  non-final ancestors and other branches unchanged. Apply the requested change and
+  ancestor changes atomically; reject the operation if a required change is denied.
+- Treat status use as permanent: after first use, disallow renaming, changing the
+  final flag, or deleting the status, even if no task currently uses it.
 - Allow historical time corrections on final tasks. Starting new work should
   prompt the user to reopen the task and any affected ancestors.
-- Attribute project totals to the project of each recorded task. A cross-project
-  parent total can differ from its own project's total.
+- Attribute project totals to the current project of each recorded task and
+  recompute rollups after project or parent changes. Include each work entry once.
 - Restrict task and remark searches and hierarchy views to accessible data.
-  Task rollups exclude inaccessible descendants and are labeled as partial.
+- Task project permissions apply uniformly to every descendant in a hierarchy.
 - Whole-timesheet views, daily totals, and timesheet exports include all work
   entries when the viewer is the timesheet's user or has Read Others' Timesheets
   permission, even if some referenced tasks are inaccessible. They must not
   expose protected task descriptions, remarks, or other task details.
 - A user's daily total sums work entries once; it must not sum both ancestor
   rollups and their descendant entries.
+- Person filters refer to the user whose timesheet records the work, not the task
+  owner. Changing task ownership does not reassign recorded work to another user.
 
 ### Content and Lifecycle
 
@@ -179,9 +227,9 @@ than additional user-confirmed requirements.
 - Attachment access follows its containing task or remark. Downloads enforce the
   same permissions as views. Accept verified PNG, JPEG, and WebP images initially;
   use a 2 MiB (2,097,152-byte) upload limit as the interpretation of 2 MB.
-- Users with remark write permission may edit, delete, or star remarks. Preserve
-  the original author and creation timestamp when editing; show an edit timestamp.
-  No version history is required.
+- Users with task read and remark write permission may edit, delete, or star
+  remarks. Preserve the original author and creation timestamp when editing;
+  show an edit timestamp. No version history is required.
 - Check task deletion eligibility atomically: reject deletion if any child task
   or timesheet record references the task. Do not cascade deletion into children
   or timesheet records, including through project or organization deletion.
@@ -193,7 +241,11 @@ than additional user-confirmed requirements.
 
 ## Questions Still Open
 
-1. The phrase "Let the system advise to change the task" in the hierarchy answer
-   is incomplete. What advice or automatic suggestion was intended?
+1. Which permission grants access to project reports and person breakdowns:
+   project task read permission, Read Others' Timesheets, or both? Whole-timesheet
+   access and task details must continue to respect their separate permissions.
 2. Which shared time zone or fixed UTC offset should be configured for deployment?
 3. Who handles VDS backups, and what recovery procedure is expected?
+4. Must both SQLite and PostgreSQL be supported in the first release, or can
+   support for one database follow later? Is cross-database migration required
+   in the first release?
