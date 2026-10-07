@@ -1,8 +1,9 @@
 # Task Tracking Tool: Clarified Requirements
 
-This document supplements `initial_project_description.md`. Confirmed requirements
-below reflect the user's answers. Proposed defaults are implementation choices
-for the first version and remain open to revision.
+This document supplements `initial_project_description.md` and takes precedence
+where later answers change the original requirements. Confirmed requirements below
+reflect the user's answers. Proposed defaults are implementation choices for the
+first version and remain open to revision.
 
 ## Confirmed Requirements
 
@@ -34,6 +35,12 @@ for the first version and remain open to revision.
 - Ownership may be transferred. A proposed owner must have task write permission
   for the task's project. This check also applies when selecting a project.
 - Ownership does not itself grant access permissions.
+- An existing owner may subsequently lose access without preventing permission
+  changes or causing technical problems. Keep the owner unchanged; no automatic
+  reassignment, access restoration, or other resolution is required.
+- An owner with neither read nor write permission cannot view or edit the task,
+  even though they remain its owner. Evaluate access using current permissions,
+  not ownership.
 - Users choose project and owner independently of the parent task. The hierarchy
   may therefore span projects and owners.
 - Parent time totals include time recorded directly against the parent and all
@@ -46,11 +53,21 @@ for the first version and remain open to revision.
   status, not merely its immediate children.
 - Users may select multiple statuses to include in their task list, in addition
   to filtering by project and switching between flat and hierarchical views.
+- A task cannot be deleted if it has any child tasks or any records in any user's
+  timesheet. This restriction applies to everyone, including administrators,
+  regardless of whether they can view those children or records.
 
 ### Timesheets
 
-- Each user has a personal timesheet. Other users may read or modify it when
-  granted the corresponding permissions.
+- Each user has a personal timesheet and can always read and modify it, including
+  historical entries, even when no timesheet permissions are configured.
+- Configured timesheet permissions mean Read Others' Timesheets and Write Others'
+  Timesheets. They govern access to other users' timesheets only.
+- Timesheet permissions cover the person's entire timesheet, including entries
+  from every project, breaks, and closing markers. They are not filtered by the
+  viewer's project permissions.
+- Timesheet access does not grant access to referenced task descriptions or
+  details. Opening a task requires separate task read permission.
 - Timesheet entries must not overlap or leave unrecorded gaps within a recorded
   working session. Breaks explicitly represent time without a task.
 - Users can insert, edit, and delete historical entries. Detailed adjustment
@@ -69,8 +86,14 @@ for the first version and remain open to revision.
 - Each area has independent read and write flags. Read permits viewing; write
   permits supported modifications, including adding, editing, deleting, and
   modifying historical data.
-- Grants are additive. An organization-level grant applies to every project in
-  that organization and cannot be denied at the project level.
+- Task and remark grants are additive. An organization-level grant applies to
+  every project in that organization and cannot be denied at the project level.
+- Users have implicit read and write access to their own timesheet. Unset
+  timesheet flags do not restrict this access.
+- Read Others' Timesheets and Write Others' Timesheets apply to other users'
+  whole timesheets, independently of project-level task and remark access.
+  Timesheet write access permits changes to entries without granting permission
+  to modify their referenced tasks.
 - An unset flag means no local grant; an inherited grant can still apply.
 - The underlying permission model permits write without read. The configuration
   UI should enable read when write is selected to discourage accidental use of
@@ -120,8 +143,10 @@ than additional user-confirmed requirements.
   day's entry starts at that same instant. Literally ending at 23:59 would lose
   one minute and contradict the no-gap requirement.
 - Exclude breaks and end-of-day markers from working-time totals.
-- Apply all changes to affected entries atomically. Never silently modify a
-  neighboring entry for which the editor lacks write permission.
+- Apply all changes to affected entries atomically. Permit edits when the editor
+  is the timesheet's user or has Write Others' Timesheets permission. Neighboring
+  entries in other projects do not need separate timesheet permissions or
+  permission to modify the tasks themselves.
 
 ### Hierarchy and Reporting
 
@@ -133,10 +158,14 @@ than additional user-confirmed requirements.
   prompt the user to reopen the task and any affected ancestors.
 - Attribute project totals to the project of each recorded task. A cross-project
   parent total can differ from its own project's total.
-- Restrict searches, totals, exports, and hierarchy views to accessible data.
-  Clearly label partial totals when inaccessible descendants are excluded.
-- A user's daily total sums permitted work entries once; it must not sum both
-  ancestor rollups and their descendant entries.
+- Restrict task and remark searches and hierarchy views to accessible data.
+  Task rollups exclude inaccessible descendants and are labeled as partial.
+- Whole-timesheet views, daily totals, and timesheet exports include all work
+  entries when the viewer is the timesheet's user or has Read Others' Timesheets
+  permission, even if some referenced tasks are inaccessible. They must not
+  expose protected task descriptions, remarks, or other task details.
+- A user's daily total sums work entries once; it must not sum both ancestor
+  rollups and their descendant entries.
 
 ### Content and Lifecycle
 
@@ -144,31 +173,27 @@ than additional user-confirmed requirements.
   break links. Show a generic unavailable label for restricted targets, without
   exposing titles, authors, snippets, or attachment previews.
 - Deleted references show a generic unavailable/deleted-target placeholder.
+- In an accessible timesheet, show the task label and recorded times for each
+  entry. If the task is restricted, disable access to its details and show the
+  access restriction when the user attempts to open it.
 - Attachment access follows its containing task or remark. Downloads enforce the
   same permissions as views. Accept verified PNG, JPEG, and WebP images initially;
   use a 2 MiB (2,097,152-byte) upload limit as the interpretation of 2 MB.
 - Users with remark write permission may edit, delete, or star remarks. Preserve
   the original author and creation timestamp when editing; show an edit timestamp.
   No version history is required.
-- Before deleting a task, preview affected descendants, remarks, attachments, and
-  time entries. Remove its task-linked entries using the same timesheet adjustment
-  rules. Require write permission for every affected object; deletion policy for
-  a parent with descendants remains an open question below.
+- Check task deletion eligibility atomically: reject deletion if any child task
+  or timesheet record references the task. Do not cascade deletion into children
+  or timesheet records, including through project or organization deletion.
+- For an eligible task, preview deletion of its remarks and attachments and
+  require the relevant write permissions. References to the deleted task become
+  unavailable. No task deletion recovery is required.
 - Provide an administrator-driven password reset without email, and a local
   setup procedure to create the first administrator.
 
 ## Questions Still Open
 
-1. Do timesheet permissions apply to entries by task project, or to an entire
-   user's timesheet? How should taskless breaks and closing markers be scoped?
-   Project-scoped edits can require permission for neighboring entries in other
-   projects. An owner must not implicitly bypass the configured permissions.
-2. If a permission change leaves an existing task owner without write access,
-   should the system require reassignment first, or keep the owner and flag the
-   task for reassignment?
-3. When deleting a parent, should the system delete descendants too, detach them,
-   or require the user to move/delete them first?
-4. The phrase "Let the system advise to change the task" in the hierarchy answer
+1. The phrase "Let the system advise to change the task" in the hierarchy answer
    is incomplete. What advice or automatic suggestion was intended?
-5. Which shared time zone or fixed UTC offset should be configured for deployment?
-6. Who handles VDS backups, and what recovery procedure is expected?
+2. Which shared time zone or fixed UTC offset should be configured for deployment?
+3. Who handles VDS backups, and what recovery procedure is expected?
