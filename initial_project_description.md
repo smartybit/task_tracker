@@ -19,7 +19,7 @@ The application should support multiple users.
 
 The application should have a modular architecture. The first version should use a web application as the frontend. Mobile and desktop applications may be added as alternative frontends later.
 
-SQLite and PostgreSQL should be supported as database engines.
+PostgreSQL is the application's database engine.
 
 ## Task List and Timesheet
 

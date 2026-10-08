@@ -15,12 +15,18 @@ first version and remain open to revision.
 - Daily totals, project totals, search, and CSV export are required in the first
   version.
 - Deploy on the current VDS. Backup ownership and restore procedures remain open.
-- SQLite and PostgreSQL are intended database options. Equivalent workflows and a
-  documented migration procedure are desirable; their implementation cost should
-  be assessed before committing to the first-version scope.
+- PostgreSQL is the only supported database engine.
 - No immutable audit trail, archiving, deletion recovery, or preservation of
   deleted tasks and their history is required in the first version. Task status
   change history remains required while the task exists.
+
+### Selected Technologies
+
+- Backend: Python 3.13, Django 5.2 LTS, and Django REST Framework.
+- Web frontend: React, TypeScript, and Vite.
+- The backend API owns permission checks, business rules, and report calculations
+  so future Android or other clients can use the same behavior.
+- PostgreSQL is used for development, testing, and deployment.
 
 ### Users and Authentication
 
@@ -273,6 +279,3 @@ than additional user-confirmed requirements.
 
 1. Which shared time zone or fixed UTC offset should be configured for deployment?
 2. Who handles VDS backups, and what recovery procedure is expected?
-3. Must both SQLite and PostgreSQL be supported in the first release, or can
-   support for one database follow later? Is cross-database migration required
-   in the first release?
