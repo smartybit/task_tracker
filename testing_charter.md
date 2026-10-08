@@ -101,6 +101,12 @@ selected during implementation.
 
 ## Verification Approach
 
+The [reusable test setup](architecture.md#reusable-test-setup-planned) describes
+shared services, isolation, fixture/reset handling, and result capture. The
+[implementation plan](implementation_plan.md#shared-test-environment) maps that
+environment to each stage. Setup is planned for Stage 2; these descriptions do not
+mean that executable tests or a runtime environment already exist.
+
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real
   transactions and independent connections for concurrency scenarios.

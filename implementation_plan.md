@@ -13,6 +13,8 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Application implementation has not started: 0 of 9 implementation stages complete.
 - The repository currently contains documentation only. No application, database
   migrations, or executable test suite has been created or run.
+- The reusable test environment and its per-stage use are described below;
+  implementation of that environment begins in Stage 2.
 - Next action: Stage 1, define the data model and API operations.
 
 ## Progress Overview
@@ -33,6 +35,15 @@ Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
 when its work and completion checks are satisfied. Record any blocker and the
 specific action needed to resolve it; do not infer completion from elapsed effort.
 
+## Shared Test Environment
+
+Reuse the [planned test setup](architecture.md#reusable-test-setup-planned) rather
+than creating unrelated environments for each stage. Its core is an isolated
+application and PostgreSQL setup, disposable scenario data, temporary image
+storage, and a real browser when needed. Stage 2 introduces the tooling and
+verified commands; later stages extend the fixtures and checks. The descriptions
+below are planned environments, not evidence of tests already executed.
+
 ## Stage 1: Data Model and API Operations
 
 - [ ] Define entities and relationships for users, organizations, projects, access
@@ -45,6 +56,10 @@ specific action needed to resolve it; do not infer completion from elapsed effor
 - [ ] Work through historical insertion/deletion examples, reopening ancestors,
   project moves, and used-status immutability. Record selected implementation
   approaches in the architecture and retain the distinction from product rules.
+
+Test environment: documentation and worked examples only; no running application
+is required yet. Define example inputs, expected timelines, access outcomes, and
+report totals that can later become automated fixtures.
 
 Completion check: the design covers the agreed requirements and gives each
 critical operation a clear input, result, access rule, and failure behavior.
@@ -60,6 +75,14 @@ Technical details can evolve as implementation provides evidence.
   shell that can communicate with the backend.
 - [ ] Set up the test harness and isolated PostgreSQL test data. Document verified
   setup, migration, build, and test commands.
+- [ ] Implement shared test configuration, database/upload isolation, seed/reset
+  and readiness handling, selected test tooling, and result capture. Add an initial
+  real-browser smoke check and document its browser target.
+
+Test environment: containerized application services with dedicated PostgreSQL
+test databases and temporary uploads. Exercise clean startup, migrations, API
+connectivity, the frontend build, and the initial browser smoke check. Verify the
+documented test/reset workflow without touching development data.
 
 Completion check: a fresh development setup starts successfully, migrations run,
 the frontend reaches the API, the frontend builds, and the initial automated
@@ -80,6 +103,11 @@ checks run against PostgreSQL. No unimplemented feature is presented as complete
 - [ ] Add API checks for grant combinations, inheritance, direct unauthorized
   requests, and permission changes during an active session.
 
+Test environment: reuse Stage 2 with seeded users, administrators, organizations,
+projects, and grant combinations. API checks exercise the authorization matrix;
+separate browser sessions exercise login and permission management without sharing
+authentication state.
+
 Completion check: users can sign in and administrators can configure accounts and
 grants. Access tests demonstrate both allowed operations and denied operations,
 including write-without-read cases and the own-timesheet exception.
@@ -97,6 +125,10 @@ including write-without-read cases and the own-timesheet exception.
 - [ ] Verify hierarchy/project changes and ownership after access loss. Exercise
   concurrent task operations where they can invalidate the business rules.
 
+Test environment: extend the shared fixtures with deep task trees, used/unused
+statuses, differing owners, and referenced time records. Use API and browser checks
+for task workflows and independent PostgreSQL connections for hierarchy races.
+
 Completion check: permitted users manage tasks through the interface, forbidden
 operations are rejected by the API, and task/history invariants remain valid.
 
@@ -113,6 +145,11 @@ operations are rejected by the API, and task/history invariants remain valid.
 - [ ] Verify continuity, overlap rejection, end-of-day resumption, invalid changes,
   rollback, and concurrent requests using independent PostgreSQL connections.
 
+Test environment: real PostgreSQL transactions with controlled clocks and an
+explicit test zone, known multi-day timelines, and independently calculated
+durations. Coordinate competing requests through independent connections and
+verify committed state and rollback, not just individual response codes.
+
 Completion check: reproducible timeline examples produce correct stored intervals
 and durations; successful, failed, and competing operations preserve integrity.
 The deployment working time zone must be selected for final time-behavior acceptance.
@@ -127,6 +164,11 @@ The deployment working time zone must be selected for final time-behavior accept
   while keeping restricted task details protected.
 - [ ] Add browser workflow checks for recording work and correcting past work.
   Explore competing tabs and recovery after a failed request.
+
+Test environment: real automated browsers against the shared frontend/API and
+reset test database. Use independent sessions or tabs, controlled timestamps, and
+seeded cross-project timesheets to exercise edits, permission boundaries, and
+failed-request recovery.
 
 Completion check: users can complete the task-to-timesheet workflow through the
 browser, including historical corrections. This is the first useful work-tracking
@@ -146,6 +188,11 @@ milestone; the remaining first-version features are still outstanding.
 - [ ] Reconcile results against independently calculated examples, including
   historical edits, project moves, rounding, midnight work, and access changes.
 
+Test environment: seed small datasets with independently known project/person/day
+and direct/descendant totals. Compare API and browser results with those values;
+parse actual CSV downloads and check individual records, permissions, quoting, and
+rounding before and after edits or moves.
+
 Completion check: browser reports and CSV satisfy their respective access rules
 and agree with source records. The task-to-timesheet-to-report workflow is usable.
 
@@ -163,6 +210,11 @@ and agree with source records. The task-to-timesheet-to-report workflow is usabl
 - [ ] Verify content workflows, reference lifecycle, image validation, and direct
   access attempts using the API and browser.
 
+Test environment: use temporary image storage, valid/invalid/size-boundary files,
+and seeded remarks, references, and searchable text with different access grants.
+API and browser checks cover direct downloads, snippets, shared stars, and target
+lifecycle changes; exercise screenshot pasting if delivered.
+
 Completion check: collaboration, attachments, and search work through the interface
 without revealing protected content. Remaining optional work is documented.
 
@@ -178,6 +230,12 @@ without revealing protected content. Remaining optional work is documented.
   and complete exploratory sessions for permissions and competing edits.
 - [ ] Verify startup, migrations, and persistence in the deployment configuration.
   Record actual deployment state and remaining limitations.
+
+Test environment: an isolated deployment-like Compose setup with production
+frontend assets, the selected server/proxy, and persistent test volumes. Exercise
+migrations, restart/replacement, and agreed backup/restore checks using synthetic
+data only. Run critical API/browser checks and exploratory sessions without using
+live VDS databases or attachments.
 
 Completion check: the first-version completion criteria in the testing charter
 are met, operations are documented, and no unresolved issue exposes unauthorized
@@ -214,3 +272,4 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 | --- | --- | --- |
 | 2026-10-08 | Planning baseline prepared | Requirements, architecture, testing charter, and agent/Git guidance are recorded through `cba1d65`. |
 | 2026-10-08 | Implementation tracker created | Reviewed against project documents; local links and whitespace checked. No application tests exist or were run. Included in the commit titled `docs: add implementation plan and progress tracker`. Next: Stage 1; all implementation stages remain unstarted. |
+| 2026-10-08 | Reusable test setup documented | Architecture defines shared services, isolation, fixtures, execution lifecycle, and evidence; all nine stages identify their test environment. Documentation consistency, local links, and whitespace checked in the commit titled `docs: describe reusable test setup across implementation stages`. No runtime or application tests implemented or run; next action remains Stage 1. |

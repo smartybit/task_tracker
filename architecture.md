@@ -100,6 +100,83 @@ Proposals below preserve the approaches discussed so far and remain revisable.
 - Define schema migration, startup, backup, and recovery procedures as deployment
   work progresses. Backup scope must account for both database data and image files.
 
+## Reusable Test Setup (Planned)
+
+Introduce this shared environment in Stage 2 of the
+[implementation plan](implementation_plan.md#stage-2-application-foundation), then
+extend its fixtures and checks as features arrive. This describes intended setup,
+not an environment already implemented or tests already run. The
+[testing charter](testing_charter.md) defines the scenarios and acceptance priorities.
+
+### Services and Isolation
+
+- Use a separate Docker Compose test project or equivalent explicit test
+  configuration for the backend, PostgreSQL, and frontend build/runtime when
+  browser checks need it. Reuse application code and locked dependencies; match
+  the PostgreSQL major version intended for deployment.
+- Give tests dedicated configuration, credentials, database/storage names, and
+  host ports when exposed. Test startup, reset, and cleanup must target only this
+  environment, never development or production data on the shared VDS.
+- Run backend checks against disposable PostgreSQL databases created through
+  application migrations. Give browser scenarios a separately reset application
+  database; independent suites must not share mutable state accidentally.
+- Use temporary upload directories or dedicated test volumes with synthetic
+  images. Remove only test-owned files during cleanup, not real attachments.
+- Reuse built images where practical, but reset mutable data between runs. Keep
+  release-verification databases, volumes, and credentials isolated too.
+
+### Test Layers
+
+- Combine focused business-rule tests with API/database integration tests using
+  real PostgreSQL rather than substituting another database engine.
+- Exercise concurrency with real commits and independent database connections,
+  explicit synchronization, and bounded timeouts. Tests wrapped in one shared
+  rollback transaction do not demonstrate locking or competing-request behavior.
+- Run browser workflows against the real frontend, backend, and test database.
+  Use separate authenticated browser contexts for different users or clients.
+- Check TypeScript and the production frontend build; add focused component tests
+  where useful. Mock-based UI checks do not replace end-to-end integration checks.
+- Extend the environment in Stage 9 with production assets, the selected server
+  and reverse proxy, and persistent test volumes for restart, migration, and
+  agreed backup/restore checks. Never restore test backups into live storage.
+
+### Shared Data and Deterministic Results
+
+- Provide reusable builders and a documented seed/reset workflow for synthetic
+  users and administrators, two organizations, several projects, grant combinations,
+  and task trees at least three levels deep. Extend fixtures only as their models
+  and features become available.
+- Add multi-day timelines with closed/open entries, breaks, closing markers, and
+  midnight work. Keep small independently calculated totals and expected CSV
+  records, including rounding cases, rather than deriving expectations from the
+  report implementation itself.
+- Control the backend clock and use an explicit shared test zone. Until the
+  deployment zone is selected, use a documented fixed test zone; then include the
+  selected deployment configuration in acceptance checks. Use controlled browser
+  time or explicit historical timestamps where a workflow depends on the clock.
+- Reset scenario data independently so tests do not rely on execution order.
+  Include valid, invalid, and size-boundary image samples when images are added.
+
+### Setup, Execution, and Evidence
+
+- Select and lock backend, component, and browser test tooling during Stage 2,
+  including an initial browser smoke-check target. No test runner or supported
+  browser matrix has been selected yet.
+- Add verified repository entry points for building/starting services, migrations,
+  seeding/resetting test data, running each test layer, and cleaning up test-owned
+  resources. Document exact commands once implemented and successfully exercised;
+  do not present proposed commands as working instructions.
+- Wait for database and application readiness before checks. Start with documented
+  sequential execution; require separate databases and storage before enabling
+  parallel suites.
+- Record the tested revision, exact commands, relevant configuration, results, and
+  known limitations. Retain useful failure logs and browser traces/screenshots as
+  generated artifacts outside tracked source, and summarize actual checks in the
+  implementation tracker. Do not include credentials in logs or reports.
+- Make the same entry points reusable locally and by future CI. CI integration is
+  not required by this documentation update. Verify Stage 2 setup from clean test
+  state before treating the foundation as complete.
+
 ## Future Android Frontend Options
 
 No Android implementation has been selected or included in the first version.
