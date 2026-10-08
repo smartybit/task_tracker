@@ -6,11 +6,11 @@ Establish confidence that the task tracker protects access boundaries, preserves
 recorded work, and produces correct totals while supporting everyday team use.
 Prioritize permission errors, lost data, and incorrect time accounting.
 
-The requirements are defined in [initial_project_description.md](initial_project_description.md)
-and [requirements_clarifications.md](requirements_clarifications.md). The latter
-takes precedence. This charter guides testing; it does not add product features.
-Treat proposed defaults as revisable choices and keep their tests aligned with
-the behavior selected during implementation.
+Product behavior is defined in [requirements.md](requirements.md). Selected
+technologies and implementation proposals are in [architecture.md](architecture.md).
+This charter guides testing; it does not add product features. Treat proposed
+defaults as revisable choices and keep their tests aligned with the behavior
+selected during implementation.
 
 ## Test Missions
 

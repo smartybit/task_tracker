@@ -1,32 +1,40 @@
-# Task Tracking Tool: Clarified Requirements
+# Task Tracking Tool: Requirements
 
-This document supplements `initial_project_description.md` and takes precedence
-where later answers change the original requirements. Confirmed requirements below
-reflect the user's answers. Proposed defaults are implementation choices for the
-first version and remain open to revision.
+This is the authoritative product description and business specification. It
+consolidates the original description and subsequent decisions, with later agreed
+rules taking precedence over earlier versions. Agreed requirements and proposed
+defaults are identified separately.
 
-## Confirmed Requirements
+Technology choices and implementation proposals are in
+[architecture.md](architecture.md). Verification priorities are in
+[testing_charter.md](testing_charter.md).
 
-### Purpose and Scope
+## Purpose and Scope
 
 - A personal or small-team tool for recording work, progress, difficulties, and
   decisions. Billing and approval workflows are outside the first version.
 - A modular application with a web frontend initially; other frontends may follow.
 - Daily totals, project totals, search, and CSV export are required in the first
   version.
-- Deploy on the current VDS. Backup ownership and restore procedures remain open.
-- PostgreSQL is the only supported database engine.
+- Deployment decisions and open backup questions are documented in the architecture.
 - No immutable audit trail, archiving, deletion recovery, or preservation of
   deleted tasks and their history is required in the first version. Task status
   change history remains required while the task exists.
 
-### Selected Technologies
+## Main Features
 
-- Backend: Python 3.13, Django 5.2 LTS, and Django REST Framework.
-- Web frontend: React, TypeScript, and Vite.
-- The backend API owns permission checks, business rules, and report calculations
-  so future Android or other clients can use the same behavior.
-- PostgreSQL is used for development, testing, and deployment.
+- Organize work into tasks, projects, organizations, and task hierarchies.
+- View tasks as a flat list or a tree, filtered by project and selected statuses.
+- Record work in a personal timesheet and correct past entries.
+- Discuss progress, difficulties, open questions, and decisions in task remarks;
+  highlight important remarks with shared stars.
+- Reference other tasks and remarks, and attach images in descriptions and remarks.
+- Search task content and remarks, view time reports, and export individual records.
+- Support multiple accounts with administrator-managed access permissions.
+
+## Detailed Business Rules
+
+The following requirements reflect agreed product behavior.
 
 ### Users and Authentication
 
@@ -37,6 +45,7 @@ first version and remain open to revision.
 
 ### Tasks, Ownership, and Hierarchy
 
+- A task has a description, a status, and a history of status changes.
 - Every task belongs to a project; every project belongs to an organization.
 - The creator becomes the initial task owner.
 - Ownership may be transferred. A proposed owner must have task write permission
@@ -70,6 +79,18 @@ first version and remain open to revision.
 - Totals reflect current task properties. Moving a task hierarchy to another
   project moves its accumulated hours to that project, including historical hours.
   Changes to parent relationships also update the corresponding ancestor totals.
+
+### Task List and Work Area
+
+- Users can switch between hierarchical and flat task lists and filter by project.
+  Multiple selected statuses determine which tasks are shown.
+- A task window provides its description and a chronological remarks/chat section.
+- The timesheet appears on the right-hand side of the work interface, with Task,
+  Start Time, and End Time columns.
+- A Day field selects the date whose timesheet entries are displayed.
+- Dragging a task into the timesheet creates an entry starting at the current time
+  when recording current work. Historical insertion uses the proposed rules below.
+- Users can manually adjust entry start and end times.
 
 ### Timesheets
 
@@ -135,10 +156,13 @@ first version and remain open to revision.
 
 - Remarks contain arbitrary text and record their author and timestamp.
 - Remarks appear chronologically. Starred remarks are shared, not personal,
-  and appear in a separate chronological list linking to their original position.
+  and appear in a separate chronological list at the top of the task window,
+  linking to their original position in the main remarks stream.
 - Task descriptions and remarks can reference tasks and remarks.
-- Tasks, descriptions, and remarks support images and screenshots, with a 2 MB
-  limit per screenshot. Pasting screenshots directly is desirable.
+- Task descriptions and task remarks support inserted or attached images and
+  screenshots, with a 2 MB limit per screenshot. Images are associated with those
+  descriptions or remarks, without a separate standalone task attachment area.
+  Pasting screenshots directly is desirable.
 - General file attachments may be required later.
 - Reference behavior, attachment formats, and remark editing details are delegated
   to implementation judgment.
@@ -184,8 +208,6 @@ than additional user-confirmed requirements.
 - Represent intervals as start-inclusive and end-exclusive. A boundary at 10:00
   can end one entry and start the next without overlap or a gap.
 - Permit one running entry per user. Starting task work or a break closes it.
-- Store chronological segments bounded by their neighboring start times and an
-  optional end-of-day boundary.
 - Inserting a task at 09:30 within an entry from 09:00 to 10:00 shortens that
   entry to 09:00–09:30 and assigns 09:30–10:00 to the inserted task. Later entries
   keep their start times. Historical insertion asks for a start time.
@@ -207,10 +229,10 @@ than additional user-confirmed requirements.
 - Apply overnight splitting when the entry is explicitly closed. Crossing midnight
   alone does not close the running entry or make it contribute recorded hours.
 - Exclude breaks and end-of-day markers from working-time totals.
-- Apply all changes to affected entries atomically. Permit edits when the editor
-  is the timesheet's user or has Write Others' Timesheets permission. Neighboring
-  entries in other projects do not need separate timesheet permissions or
-  permission to modify the tasks themselves.
+- Apply a multi-entry edit completely or leave all affected entries unchanged.
+  Permit edits when the editor is the timesheet's user or has Write Others'
+  Timesheets permission. Neighboring entries in other projects do not need separate
+  timesheet permissions or permission to modify the tasks themselves.
 
 ### Hierarchy and Reporting
 
@@ -226,7 +248,7 @@ than additional user-confirmed requirements.
   checks and an explicit preview of the changes.
 - Reopen final ancestors into a configured non-final status, leaving already
   non-final ancestors and other branches unchanged. Apply the requested change and
-  ancestor changes atomically; reject the operation if a required change is denied.
+  ancestor changes together; leave them unchanged if a required change is denied.
 - Treat status use as permanent: after first use, disallow renaming, changing the
   final flag, or deleting the status, even if no task currently uses it.
 - Allow historical time corrections on final tasks. Starting new work should
@@ -261,21 +283,24 @@ than additional user-confirmed requirements.
   entry. If the task is restricted, disable access to its details and show the
   access restriction when the user attempts to open it.
 - Attachment access follows its containing task or remark. Downloads enforce the
-  same permissions as views. Accept verified PNG, JPEG, and WebP images initially;
-  use a 2 MiB (2,097,152-byte) upload limit as the interpretation of 2 MB.
+  same permissions as views. For descriptions, the containing object is the task.
+  Accept verified PNG, JPEG, and WebP images initially; use a 2 MiB
+  (2,097,152-byte) upload limit as the interpretation of 2 MB.
 - Users with task read and remark write permission may edit, delete, or star
   remarks. Preserve the original author and creation timestamp when editing;
   show an edit timestamp. No version history is required.
-- Check task deletion eligibility atomically: reject deletion if any child task
-  or timesheet record references the task. Do not cascade deletion into children
-  or timesheet records, including through project or organization deletion.
+- Reject task deletion if any child task or timesheet record references the task.
+  Prevent bypassing this rule through concurrent changes or indirect deletion;
+  do not cascade into children or time records through project/organization deletion.
 - For an eligible task, preview deletion of its remarks and attachments and
   require the relevant write permissions. References to the deleted task become
   unavailable. No task deletion recovery is required.
-- Provide an administrator-driven password reset without email, and a local
-  setup procedure to create the first administrator.
+- Provide an administrator-driven password reset without email. First-administrator
+  setup is described as a proposal in the architecture.
 
-## Questions Still Open
+## Open Product Questions
 
 1. Which shared time zone or fixed UTC offset should be configured for deployment?
-2. Who handles VDS backups, and what recovery procedure is expected?
+
+Backup ownership and recovery expectations remain open in
+[architecture.md](architecture.md#open-technical-and-operational-decisions).
