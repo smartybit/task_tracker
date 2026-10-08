@@ -36,7 +36,7 @@ selected during implementation.
 
 ### Stage 3 Authentication and Administration Checks
 
-Extend the verified Stage 2 Compose harness with API and Chromium checks for
+Use the shared Compose harness for API and Chromium checks for
 CSRF bootstrap, login/logout, account creation, administrator password reset,
 catalog/grant management, and current identity. Exercise valid mutations through
 the actual Vite proxy as well as missing/invalid CSRF and untrusted origins;
@@ -125,7 +125,8 @@ shared services, isolation, fixture/reset handling, and result capture. The
 [implementation plan](implementation_plan.md#shared-test-environment) maps that
 environment to each stage. Initial executable foundation checks exist; see
 [README.md](README.md) for verified setup commands and the tracker for actual
-results. Stage 2 lifecycle checks passed; later-stage feature checks remain planned.
+results. Stage 2 and Stage 3 checks passed; task, time-entry, report, and content
+workflow checks remain planned.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

@@ -11,7 +11,8 @@ password administration, organization/project catalogs, and organization/project
 grant management. Shared backend policies cover independent task/remark grants,
 organization inheritance, own-timesheet access, and global others-timesheet flags.
 Administrators have no automatic application-data grants. See the tracker for
-current verification results.
+current verification results. Stage 3 acceptance passed two complete test runs,
+each with 35 PostgreSQL backend tests and 9 Chromium checks.
 
 Task management, task statuses, time recording, reports, remarks, images, and
 search remain unimplemented. Timesheets currently contain only the per-user

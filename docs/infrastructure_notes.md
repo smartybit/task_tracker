@@ -85,7 +85,17 @@ One approved full-script attempt exited with status 143 during the initial test
 reset, before application checks. Its cleanup completed, and Docker inspection
 confirmed no test containers/network remained. The cause was not established;
 the next invocation started successfully from clean test state. Keep this
-interrupted attempt distinct from successful verification runs.
+interrupted attempt distinct from successful verification runs. The later
+running-stack reset succeeded and did not reproduce the interruption.
+
+Two sequential complete `sh scripts/test.sh` invocations subsequently exited 0
+against Stage 3 source `5653aa5`: each passed all 35 PostgreSQL backend tests,
+TypeScript/Vite build, and all 9 Chromium checks, followed by cleanup. The second
+invocation reset a healthy running test stack before recreating services and
+fresh databases. No test containers, networks, or volumes remained after either
+run. Final Docker inspection retained both development/downloader volumes and
+all five unrelated container IDs; no development migrations or fixture resets
+were run. Stage 3 is complete; Stage 4 remains unstarted.
 
 ## Docker Access Is Session-Specific
 

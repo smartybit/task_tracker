@@ -296,7 +296,7 @@ than additional user-confirmed requirements.
   require the relevant write permissions. References to the deleted task become
   unavailable. No task deletion recovery is required.
 - Provide an administrator-driven password reset without email. First-administrator
-  setup is described as a proposal in the architecture.
+  setup is described in the architecture.
 
 ## Open Product Questions
 
