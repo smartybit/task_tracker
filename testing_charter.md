@@ -34,6 +34,25 @@ selected during implementation.
 - Change permissions during an active session; subsequent requests must use the
   current grants. Include deliberately configured write-without-read combinations.
 
+### Stage 3 Authentication and Administration Checks
+
+Extend the verified Stage 2 Compose harness with API and Chromium checks for
+CSRF bootstrap, login/logout, account creation, administrator password reset,
+catalog/grant management, and current identity. Exercise valid mutations through
+the actual Vite proxy as well as missing/invalid CSRF and untrusted origins;
+API tests must explicitly enforce CSRF. Verify that old passwords no longer
+work after reset, existing sessions lose authentication after reset/deactivation, and grant
+or administrator-role changes affect subsequent requests without another login.
+Use separate browser contexts and reset mutable synthetic fixtures between cases.
+
+Check first-administrator bootstrap races, account/timesheet atomic creation,
+unique grants, rejected updates, and rollback against PostgreSQL. Exercise new
+migrations on both fresh databases and an isolated Stage 2 schema with synthetic
+existing users. At Stage 3, task/remark and self/others timesheet access are shared
+service contracts; repeat those checks through actual feature endpoints when
+Stages 4–8 introduce them. The Stage 3 completion boundary does not imply that
+task, time-entry, remark, or reporting workflows already work.
+
 ### 2. Preserve Timesheet Integrity
 
 - Start tasks, switch tasks, insert breaks, and close the day. An open task has an
@@ -105,8 +124,8 @@ The [reusable test setup](architecture.md#reusable-test-setup-planned) describes
 shared services, isolation, fixture/reset handling, and result capture. The
 [implementation plan](implementation_plan.md#shared-test-environment) maps that
 environment to each stage. Initial executable foundation checks exist; see
-[README.md](README.md) for setup commands and the tracker for actual results and
-unverified workflows. Tests for later-stage product features remain planned.
+[README.md](README.md) for verified setup commands and the tracker for actual
+results. Stage 2 lifecycle checks passed; later-stage feature checks remain planned.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

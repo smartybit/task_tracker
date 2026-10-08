@@ -3,9 +3,10 @@
 Stage 1 design for the [implementation plan](../implementation_plan.md).
 [Requirements](../requirements.md) remain authoritative. This document selects
 initial implementation approaches for delegated behavior, not additional
-user-confirmed product requirements. Endpoints and fields below are design
-contracts; none are implemented yet. Refine them with verified migrations and
-tests as each stage starts.
+user-confirmed product requirements. Stage 2 implemented the initial User and
+MutationLock models and a versioned health API. The feature operation catalogue
+below remains a design contract, with implementation tracked by stage. Refine it
+with verified migrations and tests as each feature stage starts.
 
 ## Modules and Records
 
@@ -246,6 +247,7 @@ Times use a controlled fixed zone; all durations are independently calculated.
 
 The deployment working zone and backup responsibility/recovery expectations remain
 open as recorded in the requirements and architecture. They do not block schema/API
-design. Search language configuration, supplementary UI libraries, server/proxy,
-and test runners are chosen when their stages need them. None of the examples
+design. Search language configuration, supplementary UI libraries, and server/proxy
+are chosen when their stages need them. The initial test runners are Django and
+Playwright/Chromium, verified in Stage 2. None of the worked business examples
 above constitutes PostgreSQL, browser, or concurrency verification yet.

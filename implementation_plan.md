@@ -23,12 +23,13 @@ actual progress; it does not turn proposals into confirmed requirements.
 - The test rerun left the running development database unchanged. Development
   containers/networks are stopped and removed; its database volume is retained.
   Unrelated containers and volumes are preserved.
-- Pending handoff documentation was committed as `df58d99`; verification results
-  are in the milestone titled `docs: complete Stage 2 lifecycle verification`.
-- Stage 3 remains Not started. Stop here as requested; the next implementation
-  session can begin Stage 3. See [README.md](README.md) for verified commands and
-  [infrastructure notes](docs/infrastructure_notes.md#stage-2-verification-resumed-2026-10-08)
-  for current results and historical access restrictions.
+- Stage 2 verification is recorded in `e9a6ccf`. Stage 3 planning has been
+  reviewed against that foundation; its implementation remains Not started.
+- Next implementation milestone: Stage 3 accounts, session authentication, catalog
+  management, and shared permissions, using the verified test entry point. See
+  [README.md](README.md) for commands and
+  [infrastructure notes](docs/infrastructure_notes.md#stage-2-verification-2026-10-08)
+  for verified lifecycle results and session-specific access considerations.
 
 ## Progress Overview
 
@@ -50,12 +51,12 @@ specific action needed to resolve it; do not infer completion from elapsed effor
 
 ## Shared Test Environment
 
-Reuse the [planned test setup](architecture.md#reusable-test-setup-planned) rather
+Reuse the [shared test setup](architecture.md#reusable-test-setup-planned) rather
 than creating unrelated environments for each stage. Its core is an isolated
 application and PostgreSQL setup, disposable scenario data, temporary image
 storage, and a real browser when needed. Stage 2 introduces the tooling and
-verified commands; later stages extend the fixtures and checks. The descriptions
-below are planned environments, not evidence of tests already executed.
+verified commands; later stages extend the fixtures and checks. Stage 2 evidence
+below records executed checks; environments for unstarted stages remain planned.
 
 ## Stage 1: Data Model and API Operations
 
@@ -139,27 +140,78 @@ Stage 3 has not started.
 
 ## Stage 3: Accounts and Permissions
 
-- [ ] Implement email/password sign-in and sign-out, first-administrator setup,
-  administrator-created accounts, and the selected password reset workflow.
-- [ ] Implement organization/project setup and grant configuration, with the
-  management interface required to exercise them.
-- [ ] Implement shared access checks and authorized queries for task/remark grants
-  and organization inheritance, keeping read and write independently meaningful.
-- [ ] Implement unconditional access to one's own timesheet and global Read Others'
-  Timesheets / Write Others' Timesheets flags.
-- [ ] Add login and management screens. Ensure administrator privileges do not
-  implicitly bypass application-data permissions.
-- [ ] Add API checks for grant combinations, inheritance, direct unauthorized
-  requests, and permission changes during an active session.
+Plan reviewed against Stage 2 verification in `e9a6ccf`. Reuse the existing UUID
+email user model, migrations, session middleware, versioned API, MutationLock,
+and sequential Compose test lifecycle. Stage 2 verified public health requests;
+authenticated requests, CSRF, account administration, and grants remain untested
+and unimplemented. The implementation sequence below forms coherent milestones.
 
-Test environment: reuse Stage 2 with seeded users, administrators, organizations,
-projects, and grant combinations. API checks exercise the authorization matrix;
-separate browser sessions exercise login and permission management without sharing
-authentication state.
+- [ ] Add `projects` and `access` modules with organizations, projects, and unique
+  user/organization and user/project grants. Use new migrations without rewriting
+  applied account/core migrations. Introduce the minimal per-user `Timesheet`
+  record/revision from Stage 1, backfill existing users, and create it atomically
+  with new accounts. Work sessions and time entries remain Stage 5 work.
+- [ ] Implement shared account/catalog/grant mutation services using the existing
+  domain coordination lock and transaction. Check current administrator access
+  inside the transaction; reject unknown fields and protected deletion/reparenting.
+  Account creation and its timesheet must commit or roll back together. Management
+  commands and fixture setup must preserve the same invariants.
+- [ ] Implement the proposed guarded first-administrator command, email/password
+  sign-in and sign-out, CSRF bootstrap, and current-identity API. Use the Stage 1
+  `auth/csrf`, `auth/login`, `auth/logout`, and `auth/me` contracts. Enforce CSRF on
+  login and every unsafe authenticated request, return consistent safe errors,
+  and keep public registration and unrestricted Django admin routes absent.
+- [ ] Implement administrator-created accounts, account updates/deactivation,
+  global timesheet flags, and administrator-driven password reset without email.
+  Apply password validation and hashing; passwords must not appear in responses
+  or logs. Verify rejection of inactive accounts and invalidation of existing
+  sessions after password reset/deactivation. The exact bootstrap/reset approach
+  is an implementation proposal in the architecture, not a new product rule.
+- [ ] Implement independent effective task/remark read and write checks with
+  organization OR project inheritance, and self/others timesheet checks. Evaluate
+  current database grants on each request. Keep whole-timesheet authorization
+  distinct from project reporting; administrative status grants no data bypass.
+- [ ] Implement administrator-only organization/project and grant APIs plus scoped
+  catalog selectors for regular users. Include choices needed for authorized
+  write-only operations without exposing task/remark content. Reject attempts
+  to set inherited grants or unrelated account fields through these endpoints.
+- [ ] Add login, account/reset, catalog, and grant-management screens. Extend the
+  shared frontend API client for session requests, CSRF headers/token refresh,
+  and authentication/permission failures. Verify cookies and trusted origins
+  through Vite's real Compose proxy; explicitly configure the internal browser
+  origin in test settings while retaining bounded host/origin allowlists.
+  Selecting write in the UI enables read; the API still accepts write-only grants.
+- [ ] Extend guarded synthetic seed/reset fixtures with two organizations,
+  several projects, administrators without data grants, and representative grant
+  combinations. Isolate browser scenarios that change passwords or permissions;
+  do not rely on suite order or credentials left by a previous scenario.
+- [ ] Add PostgreSQL API/service checks for allowed/denied administration, duplicate
+  grants/accounts, rollback, direct and inherited grants, write without read,
+  remark task-read prerequisites, self-access, and all others-timesheet flag
+  combinations. Exercise active-session grant/admin revocation and deactivation;
+  verify competing grant/account operations with independent transactions.
+- [ ] Add separate-session Chromium workflows for login/logout, account creation
+  and password reset, catalog/grant management, and access changes without a new
+  login. Exercise missing/invalid CSRF and unsafe untrusted-origin requests as
+  well as successful mutations through the real frontend/API/PostgreSQL stack.
 
-Completion check: users can sign in and administrators can configure accounts and
-grants. Access tests demonstrate both allowed operations and denied operations,
-including write-without-read cases and the own-timesheet exception.
+Test environment: extend Stage 2's verified `sh scripts/test.sh`; retain its
+PostgreSQL isolation, readiness, builds, browser artifacts, and scoped cleanup.
+Keep the health/proxy regression checks. Use explicit CSRF enforcement in API
+checks and real browser contexts so test-client shortcuts cannot mask failures.
+Verify new migrations both on a fresh test database and against an isolated
+Stage 2 schema containing synthetic existing users, including timesheet backfill.
+Development data must not be used for migration or fixture-reset checks.
+
+Completion check: the complete test script passes sequentially on two clean runs
+with cleanup verified. A first administrator can be bootstrapped by the documented
+command, users can sign in/out, and administrators can manage accounts, reset
+passwords, configure organization/project catalogs and grants through the browser. PostgreSQL and
+browser checks demonstrate CSRF/session behavior, allowed and denied management,
+current permissions after changes, and independent read/write grants. Shared
+service checks cover the own-timesheet exception and task/remark permission matrix;
+actual task, time-entry, remark, and reporting endpoints are verified when added
+in Stages 4–8. Do not present those later workflows as completed in Stage 3.
 
 ## Stage 4: Tasks and Their Interface
 
@@ -318,14 +370,18 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 
 ## Progress Log
 
-| Date | Milestone | Evidence and next action |
+These entries record results at each milestone. Current status and next work are
+defined in Current Position and the stage sections above.
+
+| Date | Milestone | Evidence |
 | --- | --- | --- |
 | 2026-10-08 | Planning baseline prepared | Requirements, architecture, testing charter, and agent/Git guidance are recorded through `cba1d65`. |
-| 2026-10-08 | Implementation tracker created | Reviewed against project documents; local links and whitespace checked. No application tests exist or were run. Included in the commit titled `docs: add implementation plan and progress tracker`. Next: Stage 1; all implementation stages remain unstarted. |
-| 2026-10-08 | Reusable test setup documented | Architecture defines shared services, isolation, fixtures, execution lifecycle, and evidence; all nine stages identify their test environment. Documentation consistency, local links, and whitespace checked in the commit titled `docs: describe reusable test setup across implementation stages`. No runtime or application tests implemented or run; next action remains Stage 1. |
-| 2026-10-08 | Search infrastructure direction recorded | Architecture and Stage 8 specify PostgreSQL-backed search through Django, without a separate search service for v1. Diff, local link/heading, and whitespace checked; no application tests run. Commit: `docs: record PostgreSQL search approach`. Next: Stage 1. |
-| 2026-10-08 | Stage 1 design completed | Domain records, API/access/error contracts, timeline commands, locking, and worked acceptance examples reviewed against requirements and charter; 26 Markdown links/anchors and whitespace checked. No application/database/browser tests run. Environment probe: Python 3.13.5 and Compose v5.5.1 available; initial Docker version denied, approved Docker info succeeded (29.8.0); host Node/npm absent. Commit: `docs: complete initial domain and API design`. Next: Stage 2 and container execution checks. |
-| 2026-10-08 | Stage 2 foundation implemented and component-verified | Built Django/React images; PostgreSQL 17.11 migrations and migration-drift/system checks passed; 13 backend tests passed; TypeScript and Vite production build passed; 3 Playwright 1.64.0 checks passed against real API/database services, including the internal Compose hostname. Backend checks/seed entry point exercised, Compose files validated, shell syntax/local links/whitespace checked. Commands/environment documented in README. Compose startup was denied by session Docker socket permissions, so full orchestration/reset/cleanup script is not claimed verified and Stage 2 remains In progress. Commit: `feat: scaffold Dockerized Django and React foundation`. Next: verify Compose workflows and finish Stage 2 before accounts/permissions implementation. |
-| 2026-10-08 | Infrastructure discoveries preserved | Added troubleshooting notes linked from AGENTS and README; recorded user-confirmed cleanup without claiming independent inspection or restored permissions. Documentation checked against existing code and prior results; local links/anchors and whitespace checked. No runtime tests rerun. Commit: `docs: preserve infrastructure discoveries for future agents`. Next: complete Stage 2 Compose verification. |
-| 2026-10-08 | Stage 2 completion attempt blocked | Docker info succeeded (29.8.0); standalone development `docker compose ps` showed no containers. Test Compose startup was denied. `sh scripts/test.sh` failed at its initial test-project reset and its cleanup trap with Docker socket permission denied; no application checks ran or new containers started. Recorded the evidence and blocker; documentation consistency/links/whitespace checked. Commit: `docs: record Stage 2 verification access blocker`. Next: authorized Compose lifecycle access or user-run verification; Stage 2 is not complete. |
-| 2026-10-08 | Stage 2 lifecycle verification completed | Pending handoff reviewed/committed as `df58d99`. Two full test-script runs passed (13 PostgreSQL tests, build, 3 Chromium checks each), with no test resources left. Fresh development startup/migrations, 3 development Chromium checks, proxy connectivity, isolation, and restart persistence passed; final cleanup retains development data and unrelated resources. Docker/Git/host-loopback access used explicit sandbox approvals. Documentation links/anchors, configuration, shell syntax, diff, and whitespace checked. Commit: `docs: complete Stage 2 lifecycle verification`. Stage 2 Done; stop before Stage 3 as requested. |
+| 2026-10-08 | Implementation tracker created | Reviewed against project documents; local links and whitespace checked. No application tests existed or were run at this milestone. Included in the commit titled `docs: add implementation plan and progress tracker`. |
+| 2026-10-08 | Reusable test setup documented | Architecture defines shared services, isolation, fixtures, execution lifecycle, and evidence; all nine stages identify their test environment. Documentation consistency, local links, and whitespace checked in the commit titled `docs: describe reusable test setup across implementation stages`. No runtime or application tests were implemented or run at this milestone. |
+| 2026-10-08 | Search infrastructure direction recorded | Architecture and Stage 8 specify PostgreSQL-backed search through Django, without a separate search service for v1. Diff, local link/heading, and whitespace checked; no application tests run. Commit: `docs: record PostgreSQL search approach`. |
+| 2026-10-08 | Stage 1 design completed | Domain records, API/access/error contracts, timeline commands, locking, and worked acceptance examples reviewed against requirements and charter; 26 Markdown links/anchors and whitespace checked. No application/database/browser tests run. Environment probe: Python 3.13.5 and Compose v5.5.1 available; initial Docker version denied, approved Docker info succeeded (29.8.0); host Node/npm absent. Commit: `docs: complete initial domain and API design`. |
+| 2026-10-08 | Stage 2 foundation implemented and component-verified | Built Django/React images; PostgreSQL 17.11 migrations and migration-drift/system checks passed; 13 backend tests passed; TypeScript and Vite production build passed; 3 Playwright 1.64.0 checks passed against real API/database services, including the internal Compose hostname. Backend checks/seed entry point exercised, Compose files validated, shell syntax/local links/whitespace checked. Commands/environment documented in README. Compose startup was denied by session Docker socket permissions, so full orchestration/reset/cleanup script is not claimed verified and Stage 2 was In progress at this milestone. Commit: `feat: scaffold Dockerized Django and React foundation`. |
+| 2026-10-08 | Infrastructure discoveries preserved | Added troubleshooting notes linked from AGENTS and README; recorded user-confirmed cleanup without claiming independent inspection or restored permissions. Documentation checked against existing code and prior results; local links/anchors and whitespace checked. No runtime tests rerun. Commit: `docs: preserve infrastructure discoveries for future agents`. |
+| 2026-10-08 | Stage 2 completion attempt blocked | Docker info succeeded (29.8.0); standalone development `docker compose ps` showed no containers. Test Compose startup was denied. `sh scripts/test.sh` failed at its initial test-project reset and its cleanup trap with Docker socket permission denied; no application checks ran or new containers started. Recorded the evidence and blocker; documentation consistency/links/whitespace checked. Commit: `docs: record Stage 2 verification access blocker`. Stage 2 was incomplete at this milestone; the later lifecycle verification resolved the blocker. |
+| 2026-10-08 | Stage 2 lifecycle verification completed | Diagnostic documentation reviewed/committed as `df58d99`. Two full test-script runs passed (13 PostgreSQL tests, build, 3 Chromium checks each), with no test resources left. Fresh development startup/migrations, 3 development Chromium checks, proxy connectivity, isolation, and restart persistence passed; final cleanup retains development data and unrelated resources. Docker/Git/host-loopback access used explicit sandbox approvals. Documentation links/anchors, configuration, shell syntax, diff, and whitespace checked. Commit: `docs: complete Stage 2 lifecycle verification`. Stage 2 completed; Stage 3 implementation remained unstarted. |
+| 2026-10-08 | Stage 3 plan reviewed against verified foundation | Clarified existing scaffolding, session/CSRF proxy checks, transactional account/grant services, minimal timesheet backfill, administrator bootstrap/reset proposals, fixture isolation, and completion boundaries for later endpoints. Removed obsolete session instructions while retaining infrastructure findings and milestone evidence. Documentation consistency, local links/anchors, and whitespace checked; no runtime tests run for this documentation review. Stage 3 implementation remains Not started. Commit: `docs: refine Stage 3 plan and remove stale handovers`. |

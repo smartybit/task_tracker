@@ -7,18 +7,18 @@ Use [README.md](../README.md) for setup commands and the
 this note when a discovery changes; do not treat old session restrictions as
 permanent properties of the VDS.
 
-## Stage 2 Verification Resumed: 2026-10-08
+## Stage 2 Verification: 2026-10-08
 
-The previous access blocker is resolved through explicit sandbox escalation in
-this session. Git commit, Docker inspection, scoped Compose lifecycle commands,
-and the test script ran with approval; no socket/group/daemon permissions were
-changed. The initial sandboxed Git commit and test script still failed, and host
-loopback access also needed escalation. Continue requesting access when required;
+The Stage 2 access blocker was resolved through explicit sandbox escalation
+during verification in `e9a6ccf`. Git commit, Docker inspection, scoped Compose
+lifecycle commands, and the test script ran with approval; no socket/group/daemon
+permissions were changed. The sandboxed Git commit and test script failed before
+escalation, and host loopback access also needed escalation. Continue requesting access when required;
 past approvals do not establish access in a future session.
 
-The pending handoff was reviewed, checked for local links/anchors and whitespace,
-and committed as `df58d99` (`docs: preserve Stage 2 session handoff`). The handoff
-below records the earlier session state and is retained as historical evidence.
+Earlier diagnostic documentation was reviewed and committed as `df58d99`.
+Its expired session instructions have been removed; the verified findings and
+access failures are retained below. Git history preserves the original text.
 
 Two sequential approved `sh scripts/test.sh` runs exited successfully: each built
 images, started ready services, migrated fresh PostgreSQL 17.11 databases, passed
@@ -35,7 +35,8 @@ volume and applying all 18 migrations:
 docker compose -f compose.yaml -p task-tracker-dev up -d --build --wait --wait-timeout 120
 ```
 
-Django checks passed with no migration drift. All 3 Chromium checks passed against its actual `frontend:5173` Compose service;
+Django checks passed with no migration drift. All 3 Chromium checks passed
+against its actual `frontend:5173` Compose service;
 frontend-internal and host-loopback `/api/v1/health/` checks returned PostgreSQL
 health through Vite's proxy. Only frontend port 5173 was published, on loopback.
 
@@ -51,54 +52,14 @@ while retaining the volume. The two downloader containers remained running with
 their original IDs; their volume and three pre-existing stopped containers were
 preserved. No pruning, broad cleanup, or development-volume removal was used.
 
-Stage 2 completion checks passed. Stage 3 remains unstarted; this verification
-session stops here. Results apply to foundation source `c54e5ad` and documentation
-baseline `df58d99`, with no application changes during the checks.
-
-## Session Handoff: 2026-10-08
-
-Resume by finishing Stage 2, not by rebuilding the foundation or starting Stage 3.
-The last implementation commit is `c54e5ad`; subsequent commits document findings.
-Component verification passed (13 backend tests and 3 Chromium checks), but full
-development Compose startup and the combined test lifecycle are still unverified.
-
-The user supplied read-only diagnostics from a normal SSH terminal, without sudo:
-
-- `vasiliy` (UID 1000) belongs to `docker` (GID 989); the Docker socket is
-  `root:docker`, mode `660`.
-- Context is `default`, endpoint `unix:///var/run/docker.sock`, with no
-  `DOCKER_HOST` or `DOCKER_CONTEXT` override.
-- `docker version` and formatted `docker info` both succeeded (Docker 29.8.0).
-  System Docker service/socket are active; inactive user-level Docker is expected.
-- In contrast, the agent session saw restricted groups and mapped socket ownership
-  (`nobody:nogroup`). This locates the observed access problem in the agent
-  execution environment, not in the SSH user's Docker access or daemon health.
-
-The user plans to restart Codex. The suggested CLI mode was
-`codex --sandbox workspace-write --ask-for-approval on-request`, as `vasiliy`
-without sudo. No configuration or permission changes were made; access in a new
-session is not yet verified and managed restrictions may still apply.
-
-Next: check current Git state and session Docker access/cleanup authorization;
-run `sh scripts/test.sh` sequentially (it resets only `task-tracker-tests`) and
-verify repeatability/cleanup. Also exercise the development Compose workflow and
-frontend-to-API connectivity in README. Preserve development volumes and unrelated
-containers. Fix actual failures, record results, and mark Stage 2 Done only once
-all completion checks pass; commit the coherent result.
-
-The diagnostic script is `/tmp/task-tracker-docker-diagnostics.sh`; its optional
-output file is `/tmp/task-tracker-docker-diagnostics.log`. These temporary files
-are not tracked or guaranteed to survive. No application checks were rerun during
-this diagnosis or handoff, and no new containers were started.
-
-At this earlier handoff, the handoff and tracker update were staged but not
-committed: standalone `git add` succeeded, while `git commit` was denied creating
-`.git/index.lock` on a read-only filesystem. They were subsequently committed as
-`df58d99` with approved Git write access; see the verification update above.
+Stage 2 completion checks passed. Results apply to foundation source `c54e5ad`
+and documentation baseline `df58d99`, with no application changes during the
+checks. Current implementation status is maintained in the tracker.
 
 ## Docker Access Is Session-Specific
 
-The same agent session produced these different outcomes:
+Before approved lifecycle verification, an earlier agent session produced these
+different outcomes:
 
 | Action | Observed outcome |
 | --- | --- |
@@ -107,6 +68,19 @@ The same agent session produced these different outcomes:
 | `docker compose config --quiet` and test-config validation | Succeeded; validates configuration, not service startup. |
 | `docker version`, Compose startup, and `docker stop` | Docker socket permission denied. |
 | Forwarding Ctrl-C to running verification sessions | Rejected by the tool's approval policy. |
+
+Read-only diagnostics supplied from the user's normal SSH terminal confirmed
+that `vasiliy` (UID 1000) belonged to `docker` (GID 989), and the socket was
+`root:docker`, mode `660`. Docker used the default context and
+`unix:///var/run/docker.sock`, without environment overrides; Docker 29.8.0 and
+the system service/socket were healthy. An inactive user-level Docker service
+was expected for this system daemon. The agent saw restricted groups and
+mapped socket ownership (`nobody:nogroup`). This identified an agent execution
+restriction, not a daemon failure. No host permission/configuration changes were
+needed; approved sandbox escalation subsequently enabled lifecycle verification.
+
+Earlier Git staging also succeeded while commit failed creating `.git/index.lock`
+on a read-only filesystem. Approved Git write access resolved that failure.
 
 This is evidence of command/session access differences, not proof of a broken
 Docker installation or an incorrect host group. Check the current session's
@@ -134,18 +108,18 @@ ask for an authorized session or user-run verification.
   `task-tracker-foundation-frontend` (loopback 5179). The bounded browser check used
   loopback 5180. These names/ports are not evidence that services are running now.
 
-The user confirmed on 2026-10-08 that the three requested containers were stopped.
-That confirmation was not independently inspected and does not demonstrate a
-change to agent execution permissions. Recheck ownership/availability before
-reusing names or ports; never stop an unrelated service to free a port.
+The user initially reported those three containers stopped. Stage 2 verification
+subsequently inspected all containers and independently confirmed no foundation
+containers remained. Neither observation establishes future-session access.
+Recheck ownership/availability before reusing names or ports; never stop an unrelated service to free a port.
 
 After that cleanup, a Stage 2 completion attempt on the same date confirmed the
 restriction remained: standalone `docker compose ps` succeeded and showed no
 development-project containers; Docker info also succeeded. Test Compose startup
 was denied. `sh scripts/test.sh` failed at the initial test-project reset and again
 in its cleanup trap before any application checks or startup. No new verification
-containers were started. Stage 2 needs an authorized Compose lifecycle session or
-user-run verification, not another copy of the component-level fallback.
+containers were started by that failed attempt. Later approved lifecycle
+verification resolved this blocker and confirmed test and development cleanup.
 
 ## Non-Root Frontend Files Must Be Writable
 

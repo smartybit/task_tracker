@@ -135,13 +135,10 @@ on port 5180, waits for readiness, and tests the internal Compose hostname plus
 successful API/database connectivity and failed-request recovery. Its disposable
 container is time-bounded; it does not need the separate port-5179 frontend.
 
-If this agent session cannot forward Ctrl-C or stop containers, cleanup must be
-performed from a terminal with Docker access. Only these named verification
-containers are in scope (their synthetic database data is disposable):
-
-```sh
-docker stop task-tracker-foundation-frontend task-tracker-foundation-api task-tracker-foundation-db
-```
+The historical arrangement requires authorized cleanup of the exact containers
+started. Verify names and ownership before stopping them; the infrastructure
+notes record the original names and observed cleanup. The current Compose test
+entry point performs its own scoped cleanup.
 
 The temporary ports and host networking above are Linux verification conveniences,
 not production configuration. The configured working zone is UTC only as a

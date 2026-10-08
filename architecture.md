@@ -46,6 +46,53 @@ measurements and equivalent PostgreSQL integrity tests.
   every interface, including management screens. Catalog/account administration
   must not accidentally grant unrestricted access to tasks or time records.
 
+## Stage 3 Implementation Proposals
+
+Stage 2 already supplies the UUID email user model, session middleware, PostgreSQL
+migrations, domain coordination row, versioned health API, and verified Compose
+lifecycle. Extend these components with new migrations and feature modules.
+Do not rebuild the user model or treat public health connectivity as evidence
+that authenticated mutations work. These are technical proposals for Stage 3;
+the requirements and Stage 1 authorization contracts remain authoritative.
+
+- Add `projects` and `access` modules and a minimal `timesheets.Timesheet` model
+  containing the unique user relationship and revision. Backfill existing users
+  and create the row in the same transaction as subsequent accounts. Time-entry
+  models and commands remain Stage 5 work. Keep account/catalog/grant mutations
+  behind shared services using the existing MutationLock before checking mutable
+  administrator permissions or references; login/session storage is excluded.
+- Provide a local interactive first-administrator command that validates/hashes
+  the password and atomically creates the account and timesheet only if no
+  application administrator exists. Serialize competing bootstrap attempts through
+  MutationLock. Do not create default accounts or passwords on service startup.
+  Ordinary account creation goes through administrator-only services/API screens.
+- Use administrator-entered new passwords for the Stage 1 password-reset action,
+  with Django password validation/hashing and no email delivery. Verify that old
+  passwords and existing sessions stop authenticating after reset, and inactive
+  accounts cannot continue through existing sessions. No temporary-password or
+  forced-change workflow is assumed by this proposal.
+- Implement CSRF bootstrap/login/logout/current-identity endpoints and a shared
+  browser API client for cookies, CSRF headers, and refreshed tokens after login.
+  Explicitly protect login itself. Keep JSON errors consistent with Stage 1 and
+  distinguish authentication, permission, validation, and CSRF failures without
+  exposing account existence or protected data.
+- Configure exact trusted frontend origins for each environment and test unsafe
+  requests through Vite's actual proxy. The current Chromium suite uses
+  `http://frontend:5173`; test CSRF configuration must cover that origin, while
+  development covers its documented loopback browser origins. Keep host checking
+  and CSRF validation enabled. Stage 2's GET-only health checks did not verify this.
+- Keep effective grants in shared checks/selectors rather than session state.
+  Combine organization/project flags with OR independently for each operation;
+  remarks also require task read. Catalog choices must support authorized
+  write-only operations without returning protected content. Verify timesheet
+  self/others checks at service level now, then enforce and repeat those checks
+  against real endpoints as Stages 4–8 implement them.
+- Extend the existing guarded seed command and sequential test entry point.
+  Browser cases that reset passwords or change grants need independently reset
+  fixtures and separate session contexts. Preserve foundation health/proxy checks,
+  database/upload isolation, failure artifacts, and test-owned cleanup. Verify
+  upgrades from the Stage 2 schema with synthetic users in an isolated database.
+
 ## Proposed Data and Transaction Approach
 
 - Model organizations, projects, tasks, statuses, users, access grants, remarks,
