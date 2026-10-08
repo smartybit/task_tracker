@@ -5,6 +5,19 @@ This document records selected technologies and implementation proposals.
 [testing_charter.md](testing_charter.md) defines verification priorities.
 Proposals below preserve the approaches discussed so far and remain revisable.
 
+## Stage 1 Implementation Design
+
+[Domain model and API design](docs/domain_design.md) specifies records, access
+gates, operation contracts, transaction boundaries, and worked acceptance examples.
+It selects initial approaches for delegated behavior without changing the agreed
+product rules. Later sections retain the broader architecture context.
+
+Initially, business mutations use a persistent database coordination lock, with
+per-user timesheet locking inside that transaction. This conservative small-team
+approach serializes writes to protect hierarchy, catalog, permission, and timesheet
+changes together. Finer-grained concurrency is a later optimization requiring
+measurements and equivalent PostgreSQL integrity tests.
+
 ## Accepted Decisions
 
 - Backend: Python 3.13, Django 5.2 LTS, and Django REST Framework.

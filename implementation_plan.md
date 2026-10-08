@@ -10,18 +10,20 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 - Last updated: 2026-10-08.
 - Planning documents and the implementation roadmap are prepared.
-- Application implementation has not started: 0 of 9 implementation stages complete.
+- Stage 1 design is complete: 1 of 9 implementation stages complete.
 - The repository currently contains documentation only. No application, database
   migrations, or executable test suite has been created or run.
 - The reusable test environment and its per-stage use are described below;
   implementation of that environment begins in Stage 2.
-- Next action: Stage 1, define the data model and API operations.
+- Next action: Stage 2, scaffold the containerized application and test harness.
+  The initial Docker version probe was denied, but the approved Docker info
+  diagnostic succeeded; verify container execution before relying on the setup.
 
 ## Progress Overview
 
 | Stage | Result | Status | Completion evidence |
 | --- | --- | --- | --- |
-| 1 | Data model and API operation design | Not started | — |
+| 1 | Data model and API operation design | Done | [Design and worked examples](docs/domain_design.md); documentation checks recorded below |
 | 2 | Runnable application foundation | Not started | — |
 | 3 | Accounts, organization/project setup, and permissions | Not started | — |
 | 4 | Task management and task interface | Not started | — |
@@ -46,14 +48,14 @@ below are planned environments, not evidence of tests already executed.
 
 ## Stage 1: Data Model and API Operations
 
-- [ ] Define entities and relationships for users, organizations, projects, access
+- [x] Define entities and relationships for users, organizations, projects, access
   grants, tasks, statuses/history, remarks, images, and timesheet entries.
-- [ ] Design email-based accounts before creating the initial user migrations.
-- [ ] Define API operations for account/catalog management, task/tree changes,
+- [x] Design email-based accounts before creating the initial user migrations.
+- [x] Define API operations for account/catalog management, task/tree changes,
   time recording/corrections, remarks, references, images, reports, and CSV.
-- [ ] Define authorization checks, validation failures, and transaction boundaries
+- [x] Define authorization checks, validation failures, and transaction boundaries
   for operations that affect multiple records.
-- [ ] Work through historical insertion/deletion examples, reopening ancestors,
+- [x] Work through historical insertion/deletion examples, reopening ancestors,
   project moves, and used-status immutability. Record selected implementation
   approaches in the architecture and retain the distinction from product rules.
 
@@ -64,6 +66,11 @@ report totals that can later become automated fixtures.
 Completion check: the design covers the agreed requirements and gives each
 critical operation a clear input, result, access rule, and failure behavior.
 Technical details can evolve as implementation provides evidence.
+
+Design result: [domain model and API operations](docs/domain_design.md), linked
+from the architecture, covers the schema, command semantics, authorization matrix,
+failure responses, locking approach, and worked examples. Stage 1 completion is a
+design milestone only, not evidence of functioning features or executed tests.
 
 ## Stage 2: Application Foundation
 
@@ -275,3 +282,4 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 | 2026-10-08 | Implementation tracker created | Reviewed against project documents; local links and whitespace checked. No application tests exist or were run. Included in the commit titled `docs: add implementation plan and progress tracker`. Next: Stage 1; all implementation stages remain unstarted. |
 | 2026-10-08 | Reusable test setup documented | Architecture defines shared services, isolation, fixtures, execution lifecycle, and evidence; all nine stages identify their test environment. Documentation consistency, local links, and whitespace checked in the commit titled `docs: describe reusable test setup across implementation stages`. No runtime or application tests implemented or run; next action remains Stage 1. |
 | 2026-10-08 | Search infrastructure direction recorded | Architecture and Stage 8 specify PostgreSQL-backed search through Django, without a separate search service for v1. Diff, local link/heading, and whitespace checked; no application tests run. Commit: `docs: record PostgreSQL search approach`. Next: Stage 1. |
+| 2026-10-08 | Stage 1 design completed | Domain records, API/access/error contracts, timeline commands, locking, and worked acceptance examples reviewed against requirements and charter; 26 Markdown links/anchors and whitespace checked. No application/database/browser tests run. Environment probe: Python 3.13.5 and Compose v5.5.1 available; initial Docker version denied, approved Docker info succeeded (29.8.0); host Node/npm absent. Commit: `docs: complete initial domain and API design`. Next: Stage 2 and container execution checks. |
