@@ -1,0 +1,130 @@
+# Testing Charter
+
+## Purpose and Authority
+
+Establish confidence that the task tracker protects access boundaries, preserves
+recorded work, and produces correct totals while supporting everyday team use.
+Prioritize permission errors, lost data, and incorrect time accounting.
+
+The requirements are defined in [initial_project_description.md](initial_project_description.md)
+and [requirements_clarifications.md](requirements_clarifications.md). The latter
+takes precedence. This charter guides testing; it does not add product features.
+Treat proposed defaults as revisable choices and keep their tests aligned with
+the behavior selected during implementation.
+
+## Test Missions
+
+### 1. Exercise Access Boundaries
+
+- Cover regular users and administrators with direct project grants, inherited
+  organization grants, and all read/write flag combinations. Organization grants
+  remain effective when project flags are unset. Administrators have no implicit
+  access to application data.
+- Verify unconditional read/write access to one's own timesheet. Separately test
+  Read Others' Timesheets and Write Others' Timesheets across all other users.
+- Verify that whole-timesheet access includes every project while task details,
+  remarks, and images still require their corresponding access. Preserve the
+  permitted task labels and timestamps in the timesheet.
+- Require task read plus the relevant remark permission for remark operations.
+  Check that task read alone permits recording time without task write or ownership.
+- Check permissions through direct API requests as well as the interface, including
+  search snippets, reference previews, downloads, reports, and CSV exports.
+- Transfer ownership to an eligible user, then revoke that user's access. Ownership
+  remains intact and confers no visibility or editing rights.
+- Change permissions during an active session; subsequent requests must use the
+  current grants. Include deliberately configured write-without-read combinations.
+
+### 2. Preserve Timesheet Integrity
+
+- Start tasks, switch tasks, insert breaks, and close the day. An open task has an
+  unset end time and contributes zero hours until explicitly closed.
+- Insert, edit, and delete historical entries at the beginning, middle, and end
+  of a session. Check continuity, positive closed durations, and absence of overlap.
+  Breaks fill non-working intervals; time outside a recorded session needs no filler.
+- Verify the selected neighboring-entry adjustment rules and the advice to convert
+  an end-of-day marker to a break before resuming work.
+- Close work that crosses midnight and verify each day's allocation without losing
+  a minute. Merely crossing midnight, logging out, or restarting the application
+  must not invent an end time or recorded hours.
+- Exercise simultaneous edits from two clients, including task starts and boundary
+  changes. Accepted results preserve the timeline; rejected operations leave no
+  partial changes. Check the selected one-running-entry rule.
+
+### 3. Enforce Task and Status Rules
+
+- Require a project, enforce one project throughout a hierarchy, and reject cycles.
+  Different owners are allowed; ownership and project changes enforce the agreed
+  owner eligibility checks without automatically resolving later access loss.
+- Block finalizing a task while any descendant is non-final. Reopening propagates
+  through final ancestors while leaving unrelated branches unchanged.
+- Verify status history and immutability of used statuses. Under the proposed
+  default, first use permanently prevents editing or deleting that status.
+- Block deletion whenever a child or any user's timesheet record exists, including
+  records the caller cannot view. Check administrators and indirect deletion paths.
+- Race deletion against creation of a child or time record, and finalization
+  against a descendant reopening. The committed result must satisfy the rules.
+
+### 4. Reconcile Reports and CSV with Recorded Work
+
+- Require project task read access for every reported project. Without Read Others'
+  Timesheets, include only the requesting user's work; with it, include permitted
+  project work from all users. Apply these restrictions before calculating totals.
+- Verify project summaries, person-by-day summaries, and task hierarchies with
+  person/date filters and descendant selection. Person means the timesheet user.
+- Check direct and descendant hours separately, with every entry counted once.
+  For example, direct work of 1 hour on a parent, 2 on its child, and 0.5 on its
+  grandchild gives the parent 1 direct hour, 2.5 descendant hours, and 3.5 total hours.
+- Exclude breaks from work totals and count open entries as zero. Display decimal
+  hours: six hours and thirty minutes is `6.5`. Sum original durations before rounding.
+- Edit historical entries, move tasks between parents, and change a hierarchy's
+  project. Reports must reflect current relationships and project attribution.
+- Distinguish unrestricted whole-timesheet daily totals from project-restricted
+  reports; differences must follow permissions rather than inconsistent arithmetic.
+- Export all authorized task records in the requested period, independently of
+  interactive report filters. Check Person, Project, Task, Date, Start Time,
+  End Time, and decimal Duration. Exclude breaks and closing markers; retain open
+  task records with a blank end and zero duration. Check CSV quoting and Unicode.
+
+### 5. Complete Everyday Workflows and Preserve Data
+
+- Exercise email/password sign-in, administrator-created accounts, catalog and
+  permission management, and denial of unauthorized operations.
+- Create tasks, filter multiple statuses, switch flat/hierarchical lists, drag a
+  task into the timesheet, correct past work, and inspect resulting reports.
+- Post remarks, verify author/timestamp and chronology, share stars between users,
+  and jump from a starred remark to its original position.
+- Follow references after renames, moves, access loss, and deletion. Verify image
+  upload/download permissions, invalid files, and the selected size limit. Test
+  screenshot pasting if implemented.
+- Restart the application and verify persisted records and attachments. Exercise
+  failed multi-record operations and confirm rollback without data loss.
+
+## Verification Approach
+
+- Use focused automated tests for business rules and meaningful boundary cases.
+- Run API and database integration tests against PostgreSQL, including real
+  transactions and independent connections for concurrency scenarios.
+- Maintain a small set of browser tests for complete critical workflows. Use
+  exploratory sessions for two-tab interactions, repeated actions, stale screens,
+  keyboard navigation, and recovery after failed requests.
+- Use isolated synthetic data: multiple users, two organizations with several
+  projects, different permission combinations, and a hierarchy at least three
+  levels deep. Include several days, midnight work, open entries, and special entries.
+- Control the clock and working time zone for reproducible checks. Derive expected
+  results independently from small examples rather than duplicating implementation.
+- For each defect, retain reproduction steps and add an appropriate regression
+  check. Record the tested revision, environment, results, and known limitations.
+
+## Completion Criteria and Boundaries
+
+Before a version is considered ready, its critical automated checks pass against
+PostgreSQL, required end-to-end workflows have been exercised, and there are no
+unresolved defects that expose unauthorized data, lose records, corrupt timelines,
+or produce incorrect totals. Document remaining limitations and reproduce failures
+clearly. Verify startup and persistence in the deployment configuration.
+
+Native Android/desktop clients, offline synchronization, general file attachments,
+email delivery, approvals, immutable auditing, and daylight-saving behavior are
+outside the first-version charter. Backup/restore acceptance checks depend on the
+still-open backup responsibility and recovery requirements; the deployment working
+time zone also remains to be selected.
