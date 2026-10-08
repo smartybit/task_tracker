@@ -20,6 +20,7 @@ services:
     image: task-tracker-web:dev
     environment:
       APP_ENV: test
+      DJANGO_CSRF_TRUSTED_ORIGINS: http://frontend:5173
       DJANGO_SECRET_KEY: isolated-test-only-secret
       POSTGRES_DB: task_tracker_test
       POSTGRES_USER: task_tracker_test

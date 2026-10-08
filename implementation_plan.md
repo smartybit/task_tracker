@@ -13,7 +13,8 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Stages 1 and 2 are complete: 2 of 9 implementation stages complete.
 - Stage 2 now has Django/REST Framework, account/core migrations, a health API,
   a React/TypeScript/Vite shell, locked dependencies, and isolated test configuration.
-  Task, permission, timesheet, reporting, and content workflows are not implemented.
+  Stage 3 adds session/account administration, catalogs, grants, and shared access
+  policies. Task, time-entry, reporting, and content workflows remain unimplemented.
 - Full Stage 2 verification passed with explicit sandbox approvals: two sequential
   complete test runs, fresh development startup, real frontend/API/database checks,
   and development shutdown/restart with database identity and contents retained.
@@ -24,7 +25,8 @@ actual progress; it does not turn proposals into confirmed requirements.
   containers/networks are stopped and removed; its database volume is retained.
   Unrelated containers and volumes are preserved.
 - Stage 2 verification is recorded in `e9a6ccf`. Stage 3 planning has been
-  reviewed against that foundation; its implementation remains Not started.
+  reviewed against that foundation; Stage 3 backend checks pass (35 PostgreSQL
+  tests). Management screens are drafted and browser verification is in progress.
 - Next implementation milestone: Stage 3 accounts, session authentication, catalog
   management, and shared permissions, using the verified test entry point. See
   [README.md](README.md) for commands and
@@ -37,7 +39,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | --- | --- | --- | --- |
 | 1 | Data model and API operation design | Done | [Design and worked examples](docs/domain_design.md); documentation checks recorded below |
 | 2 | Runnable application foundation | Done | Two full Compose test runs; fresh development startup, API/browser checks, restart persistence, and scoped cleanup verified |
-| 3 | Accounts, organization/project setup, and permissions | Not started | — |
+| 3 | Accounts, organization/project setup, and permissions | In progress | Backend migrations/checks and 35 PostgreSQL tests pass; browser/full lifecycle verification pending |
 | 4 | Task management and task interface | Not started | — |
 | 5 | Timesheet engine | Not started | — |
 | 6 | Timesheet interface | Not started | — |
@@ -132,46 +134,47 @@ baseline `df58d99`; documentation-only changes during verification):
   whitespace were checked. No application failures or code changes were needed.
   The npm esbuild install-script warning remained non-failing.
 
-Only account/core backend modules are introduced so far; remaining feature modules
-will grow in their respective stages. Temporary uploads, guarded test seed/reset,
+At the Stage 2 milestone, only account/core modules were introduced; Stage 3
+extends that foundation with projects, access, and the minimal timesheet model. Temporary uploads, guarded test seed/reset,
 readiness checks, browser failure artifacts, and the versioned health API provide
 the shared foundation. Later-stage fixtures and workflows remain unimplemented.
-Stage 3 has not started.
+Stage 3 implementation progress is recorded below.
 
 ## Stage 3: Accounts and Permissions
 
 Plan reviewed against Stage 2 verification in `e9a6ccf`. Reuse the existing UUID
 email user model, migrations, session middleware, versioned API, MutationLock,
 and sequential Compose test lifecycle. Stage 2 verified public health requests;
-authenticated requests, CSRF, account administration, and grants remain untested
-and unimplemented. The implementation sequence below forms coherent milestones.
+Stage 3 backend checks now verify authenticated requests, CSRF, account
+administration, and grants. The sequence below records implementation progress;
+browser and complete lifecycle acceptance remain pending.
 
-- [ ] Add `projects` and `access` modules with organizations, projects, and unique
+- [x] Add `projects` and `access` modules with organizations, projects, and unique
   user/organization and user/project grants. Use new migrations without rewriting
   applied account/core migrations. Introduce the minimal per-user `Timesheet`
   record/revision from Stage 1, backfill existing users, and create it atomically
   with new accounts. Work sessions and time entries remain Stage 5 work.
-- [ ] Implement shared account/catalog/grant mutation services using the existing
+- [x] Implement shared account/catalog/grant mutation services using the existing
   domain coordination lock and transaction. Check current administrator access
   inside the transaction; reject unknown fields and protected deletion/reparenting.
   Account creation and its timesheet must commit or roll back together. Management
   commands and fixture setup must preserve the same invariants.
-- [ ] Implement the proposed guarded first-administrator command, email/password
+- [x] Implement the proposed guarded first-administrator command, email/password
   sign-in and sign-out, CSRF bootstrap, and current-identity API. Use the Stage 1
   `auth/csrf`, `auth/login`, `auth/logout`, and `auth/me` contracts. Enforce CSRF on
   login and every unsafe authenticated request, return consistent safe errors,
   and keep public registration and unrestricted Django admin routes absent.
-- [ ] Implement administrator-created accounts, account updates/deactivation,
+- [x] Implement administrator-created accounts, account updates/deactivation,
   global timesheet flags, and administrator-driven password reset without email.
   Apply password validation and hashing; passwords must not appear in responses
   or logs. Verify rejection of inactive accounts and invalidation of existing
   sessions after password reset/deactivation. The exact bootstrap/reset approach
   is an implementation proposal in the architecture, not a new product rule.
-- [ ] Implement independent effective task/remark read and write checks with
+- [x] Implement independent effective task/remark read and write checks with
   organization OR project inheritance, and self/others timesheet checks. Evaluate
   current database grants on each request. Keep whole-timesheet authorization
   distinct from project reporting; administrative status grants no data bypass.
-- [ ] Implement administrator-only organization/project and grant APIs plus scoped
+- [x] Implement administrator-only organization/project and grant APIs plus scoped
   catalog selectors for regular users. Include choices needed for authorized
   write-only operations without exposing task/remark content. Reject attempts
   to set inherited grants or unrelated account fields through these endpoints.
@@ -181,11 +184,11 @@ and unimplemented. The implementation sequence below forms coherent milestones.
   through Vite's real Compose proxy; explicitly configure the internal browser
   origin in test settings while retaining bounded host/origin allowlists.
   Selecting write in the UI enables read; the API still accepts write-only grants.
-- [ ] Extend guarded synthetic seed/reset fixtures with two organizations,
+- [x] Extend guarded synthetic seed/reset fixtures with two organizations,
   several projects, administrators without data grants, and representative grant
   combinations. Isolate browser scenarios that change passwords or permissions;
   do not rely on suite order or credentials left by a previous scenario.
-- [ ] Add PostgreSQL API/service checks for allowed/denied administration, duplicate
+- [x] Add PostgreSQL API/service checks for allowed/denied administration, duplicate
   grants/accounts, rollback, direct and inherited grants, write without read,
   remark task-read prerequisites, self-access, and all others-timesheet flag
   combinations. Exercise active-session grant/admin revocation and deactivation;
@@ -212,6 +215,17 @@ current permissions after changes, and independent read/write grants. Shared
 service checks cover the own-timesheet exception and task/remark permission matrix;
 actual task, time-entry, remark, and reporting endpoints are verified when added
 in Stages 4–8. Do not present those later workflows as completed in Stage 3.
+
+Backend milestone evidence (2026-10-08): new migrations applied, Django system
+and migration-drift checks passed, and 35 PostgreSQL tests passed through the
+source-mounted test Compose backend. This includes all 256 local/inherited flag
+combinations, CSRF/session checks, password reset/deactivation with reactivation,
+account/timesheet rollback, bootstrap command/races, concurrent grant replacement,
+a blocked writer after administrator revocation, and an isolated Stage 2 schema
+upgrade. Generic Django command precedence and PostgreSQL activity-snapshot
+sampling were corrected after the initial checks. Frontend TypeScript/production
+build passed; browser checks and two complete lifecycle runs remain pending.
+Commit: `feat: implement Stage 3 account and permission backend`.
 
 ## Stage 4: Tasks and Their Interface
 
@@ -385,3 +399,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-08 | Stage 2 completion attempt blocked | Docker info succeeded (29.8.0); standalone development `docker compose ps` showed no containers. Test Compose startup was denied. `sh scripts/test.sh` failed at its initial test-project reset and its cleanup trap with Docker socket permission denied; no application checks ran or new containers started. Recorded the evidence and blocker; documentation consistency/links/whitespace checked. Commit: `docs: record Stage 2 verification access blocker`. Stage 2 was incomplete at this milestone; the later lifecycle verification resolved the blocker. |
 | 2026-10-08 | Stage 2 lifecycle verification completed | Diagnostic documentation reviewed/committed as `df58d99`. Two full test-script runs passed (13 PostgreSQL tests, build, 3 Chromium checks each), with no test resources left. Fresh development startup/migrations, 3 development Chromium checks, proxy connectivity, isolation, and restart persistence passed; final cleanup retains development data and unrelated resources. Docker/Git/host-loopback access used explicit sandbox approvals. Documentation links/anchors, configuration, shell syntax, diff, and whitespace checked. Commit: `docs: complete Stage 2 lifecycle verification`. Stage 2 completed; Stage 3 implementation remained unstarted. |
 | 2026-10-08 | Stage 3 plan reviewed against verified foundation | Clarified existing scaffolding, session/CSRF proxy checks, transactional account/grant services, minimal timesheet backfill, administrator bootstrap/reset proposals, fixture isolation, and completion boundaries for later endpoints. Removed obsolete session instructions while retaining infrastructure findings and milestone evidence. Documentation consistency, local links/anchors, and whitespace checked; no runtime tests run for this documentation review. Stage 3 implementation remains Not started. Commit: `docs: refine Stage 3 plan and remove stale handovers`. |
+| 2026-10-08 | Stage 3 backend implemented and verified | Session/CSRF, account/bootstrap/reset, project/organization/grant APIs and shared policies implemented; additive migrations/backfill and transactional domain services verified. System/drift checks and 35 PostgreSQL tests pass, including permission matrix, upgrade, rollback, and independent-connection races. Browser/full lifecycle verification pending; Stage 3 remains In progress. Commit: `feat: implement Stage 3 account and permission backend`. |

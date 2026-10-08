@@ -4,8 +4,10 @@ Stage 1 design for the [implementation plan](../implementation_plan.md).
 [Requirements](../requirements.md) remain authoritative. This document selects
 initial implementation approaches for delegated behavior, not additional
 user-confirmed product requirements. Stage 2 implemented the initial User and
-MutationLock models and a versioned health API. The feature operation catalogue
-below remains a design contract, with implementation tracked by stage. Refine it
+MutationLock models and a versioned health API. Stage 3 adds session/account,
+organization/project, and grant APIs, shared access policies, and the minimal
+Timesheet record; verification status is tracked in the implementation plan.
+The remaining feature operation catalogue below remains a design contract. Refine it
 with verified migrations and tests as each feature stage starts.
 
 ## Modules and Records

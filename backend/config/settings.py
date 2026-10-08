@@ -13,13 +13,16 @@ CSRF_TRUSTED_ORIGINS = os.environ.get(
 ).split(",")
 
 INSTALLED_APPS = [
+    "accounts",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.postgres",
     "rest_framework",
-    "accounts",
     "core",
+    "projects",
+    "access",
+    "timesheets",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -57,9 +60,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+CSRF_FAILURE_VIEW = "core.api.csrf_failure"
+
 REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "core.api.api_exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication"
+        "accounts.authentication.BrowserSessionAuthentication"
     ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],

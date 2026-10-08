@@ -46,14 +46,15 @@ measurements and equivalent PostgreSQL integrity tests.
   every interface, including management screens. Catalog/account administration
   must not accidentally grant unrestricted access to tasks or time records.
 
-## Stage 3 Implementation Proposals
+## Stage 3 Implementation Decisions
 
 Stage 2 already supplies the UUID email user model, session middleware, PostgreSQL
 migrations, domain coordination row, versioned health API, and verified Compose
 lifecycle. Extend these components with new migrations and feature modules.
-Do not rebuild the user model or treat public health connectivity as evidence
-that authenticated mutations work. These are technical proposals for Stage 3;
-the requirements and Stage 1 authorization contracts remain authoritative.
+The implementation retains the existing user model and adds new migrations.
+The decisions below implement the reviewed Stage 3 proposals; the requirements
+and Stage 1 authorization contracts remain authoritative. Runtime verification
+results are recorded in the implementation tracker.
 
 - Add `projects` and `access` modules and a minimal `timesheets.Timesheet` model
   containing the unique user relationship and revision. Backfill existing users
@@ -66,11 +67,15 @@ the requirements and Stage 1 authorization contracts remain authoritative.
   application administrator exists. Serialize competing bootstrap attempts through
   MutationLock. Do not create default accounts or passwords on service startup.
   Ordinary account creation goes through administrator-only services/API screens.
+  The generic `createsuperuser` and `changepassword` commands direct operators to
+  these paths; the accounts app precedes Django auth for command registration.
 - Use administrator-entered new passwords for the Stage 1 password-reset action,
   with Django password validation/hashing and no email delivery. Verify that old
   passwords and existing sessions stop authenticating after reset, and inactive
   accounts cannot continue through existing sessions. No temporary-password or
-  forced-change workflow is assumed by this proposal.
+  forced-change workflow is introduced. A private `session_version` is included
+  in Django session hashes and incremented on deactivation, so reactivation does
+  not revive old sessions. Password hashes continue to invalidate reset sessions.
 - Implement CSRF bootstrap/login/logout/current-identity endpoints and a shared
   browser API client for cookies, CSRF headers, and refreshed tokens after login.
   Explicitly protect login itself. Keep JSON errors consistent with Stage 1 and
@@ -92,6 +97,10 @@ the requirements and Stage 1 authorization contracts remain authoritative.
   fixtures and separate session contexts. Preserve foundation health/proxy checks,
   database/upload isolation, failure artifacts, and test-owned cleanup. Verify
   upgrades from the Stage 2 schema with synthetic users in an isolated database.
+  Lists use stable ordering and 50-item pages; grant configuration returns local
+  and effective flags for the selected account. Zero flags replace a local grant
+  without denying inherited access. Browser mutation scenarios create independent
+  accounts and never change the shared fixture administrator credentials.
 
 ## Proposed Data and Transaction Approach
 
