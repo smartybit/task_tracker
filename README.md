@@ -23,12 +23,12 @@ automatically.
 - Django's test runner handles backend checks; Playwright 1.64.0 runs Chromium
   workflows. Component-specific tooling will be selected when needed.
 
-## Intended Development Compose Workflow
+## Development Compose Workflow
 
-Build and configuration validation have been exercised. Full Compose startup and
-the combined test script remain unverified in the current agent session because
-its Compose startup command cannot access the Docker socket. Component-level
-verification uses the separate container workflow below.
+The development startup, migrations, frontend-to-API connectivity, and Chromium
+smoke checks were verified on 2026-10-08. Docker commands require authorized daemon
+access; in a restricted agent session, request sandbox escalation for both startup
+and cleanup before starting services. See the [infrastructure notes](docs/infrastructure_notes.md).
 
 Optionally copy `.env.example` to `.env` and select local development values.
 The built-in defaults are development-only, not production credentials.
@@ -40,7 +40,7 @@ docker compose up -d --wait
 docker compose ps
 ```
 
-The planned browser address is `http://127.0.0.1:5173`. On the VDS, use an SSH
+The browser address is `http://127.0.0.1:5173`. On the VDS, use an SSH
 tunnel to reach its loopback address from your computer. PostgreSQL and Django
 are not published on host ports in this configuration. Vite proxies `/api` to
 Django. Backend sources and frontend sources/config are mounted for development;
@@ -59,8 +59,7 @@ development database settings from `.env`. The browser suite uses a real fronten
 API, and PostgreSQL; the failure-recovery check deliberately mocks one failed
 request, then retries against the real backend.
 
-Planned single entry point (shell syntax and configuration checked, full execution
-still pending Compose startup access):
+Single entry point (run from the repository root with Docker lifecycle access):
 
 ```sh
 sh scripts/test.sh
@@ -78,12 +77,14 @@ requires the dedicated test database/user and never seeds development accounts.
 The test runner creates and destroys its own `test_task_tracker_test` database;
 browser fixtures use the separately migrated `task_tracker_test` database.
 
-### Component Verification Without Compose Startup
+### Historical Component Verification
 
-The following loopback-only temporary container arrangement is used for foundation
-verification. Commands run from the repository root; use separate terminals for
-long-running database/API/frontend services. Stop them with Ctrl-C when finished;
-`--rm` removes their containers and the temporary database data is not retained.
+The following loopback-only temporary container arrangement was used for initial
+foundation verification before the complete Compose workflow was verified. It is
+retained for reproducing those component checks. Confirm authorized startup and
+cleanup before using it. Commands run from the repository root; use separate
+terminals for long-running database/API/frontend services. Stop them with Ctrl-C
+when finished; `--rm` removes their containers and the temporary database data is not retained.
 The explicit names and ports belong only to this verification arrangement. If
 they are already in use, stop and choose another documented arrangement rather
 than stopping an unrelated service.

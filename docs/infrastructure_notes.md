@@ -7,6 +7,54 @@ Use [README.md](../README.md) for setup commands and the
 this note when a discovery changes; do not treat old session restrictions as
 permanent properties of the VDS.
 
+## Stage 2 Verification Resumed: 2026-10-08
+
+The previous access blocker is resolved through explicit sandbox escalation in
+this session. Git commit, Docker inspection, scoped Compose lifecycle commands,
+and the test script ran with approval; no socket/group/daemon permissions were
+changed. The initial sandboxed Git commit and test script still failed, and host
+loopback access also needed escalation. Continue requesting access when required;
+past approvals do not establish access in a future session.
+
+The pending handoff was reviewed, checked for local links/anchors and whitespace,
+and committed as `df58d99` (`docs: preserve Stage 2 session handoff`). The handoff
+below records the earlier session state and is retained as historical evidence.
+
+Two sequential approved `sh scripts/test.sh` runs exited successfully: each built
+images, started ready services, migrated fresh PostgreSQL 17.11 databases, passed
+system/migration-drift checks and all 13 backend tests, seeded synthetic accounts,
+built TypeScript/Vite production assets, and passed all 3 Chromium checks using
+Playwright 1.64.0. After each run, Docker label-filtered container/network/volume
+listings showed no `task-tracker-tests` resources. The npm esbuild install-script
+warning remained non-failing. No application changes were needed.
+
+Development started with the following command, creating a fresh development
+volume and applying all 18 migrations:
+
+```sh
+docker compose -f compose.yaml -p task-tracker-dev up -d --build --wait --wait-timeout 120
+```
+
+Django checks passed with no migration drift. All 3 Chromium checks passed against its actual `frontend:5173` Compose service;
+frontend-internal and host-loopback `/api/v1/health/` checks returned PostgreSQL
+health through Vite's proxy. Only frontend port 5173 was published, on loopback.
+
+The second test run took place while development remained running. Development
+retained the same database system identifier, 18 migrations, zero users, and its
+`domain` coordination row at revision zero; the tests did not seed development.
+
+Development `down` retained `task-tracker-dev_development-db`. A second
+`up -d --wait --wait-timeout 120` reused the same database system identifier and
+counts; startup reported no migrations to apply, and the host-loopback proxied
+health route passed again. Final `down` removed development containers/network
+while retaining the volume. The two downloader containers remained running with
+their original IDs; their volume and three pre-existing stopped containers were
+preserved. No pruning, broad cleanup, or development-volume removal was used.
+
+Stage 2 completion checks passed. Stage 3 remains unstarted; this verification
+session stops here. Results apply to foundation source `c54e5ad` and documentation
+baseline `df58d99`, with no application changes during the checks.
+
 ## Session Handoff: 2026-10-08
 
 Resume by finishing Stage 2, not by rebuilding the foundation or starting Stage 3.
@@ -43,10 +91,10 @@ output file is `/tmp/task-tracker-docker-diagnostics.log`. These temporary files
 are not tracked or guaranteed to survive. No application checks were rerun during
 this diagnosis or handoff, and no new containers were started.
 
-This handoff and the tracker update are staged but not committed: standalone
-`git add` succeeded, while `git commit` was denied creating `.git/index.lock`
-on a read-only filesystem. Review and commit these documentation changes when
-the new session has authorized Git write access.
+At this earlier handoff, the handoff and tracker update were staged but not
+committed: standalone `git add` succeeded, while `git commit` was denied creating
+`.git/index.lock` on a read-only filesystem. They were subsequently committed as
+`df58d99` with approved Git write access; see the verification update above.
 
 ## Docker Access Is Session-Specific
 
@@ -167,7 +215,7 @@ checks passed, 13 backend tests passed, TypeScript/production builds passed, and
 3 Playwright Chromium checks passed using the documented component arrangement.
 Source-mounted backend checks and the rebuilt backend image were both exercised.
 
-Full development Compose startup and the combined Compose reset/test/cleanup
-script have not been exercised successfully. Next verification is that complete
-workflow, including repeatability and cleanup, before Stage 2 is marked Done.
-No application tests were rerun just to write this note.
+At that foundation milestone, full development Compose startup and the combined
+Compose reset/test/cleanup script had not been exercised successfully. Those
+checks were subsequently run with authorized access; see the verification update
+above for repeatability, cleanup, and development results.

@@ -10,33 +10,32 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 - Last updated: 2026-10-08.
 - Planning documents and the implementation roadmap are prepared.
-- Stage 1 design is complete: 1 of 9 implementation stages complete.
+- Stages 1 and 2 are complete: 2 of 9 implementation stages complete.
 - Stage 2 now has Django/REST Framework, account/core migrations, a health API,
   a React/TypeScript/Vite shell, locked dependencies, and isolated test configuration.
   Task, permission, timesheet, reporting, and content workflows are not implemented.
-- Container-level PostgreSQL/backend, frontend-build, and Chromium checks are
-  verified. Full Compose startup and the combined reset/test/cleanup script remain
-  unverified because this session denies Compose startup access to the Docker socket.
-- Stage 2 completion is blocked by session Docker lifecycle permissions: the
-  startup recheck and `sh scripts/test.sh` both failed before application checks.
-- User-provided SSH diagnostics confirm working Docker access as `vasiliy`; the
-  observed denial is specific to the agent execution environment. The user plans
-  a new session; its permissions and full Compose workflow remain unverified.
-- Next action: obtain authorized Compose startup/reset/shutdown access or user-run
-  verification, then finish the foundation before moving to Stage 3. See
-  [README.md](README.md) for commands and limitations and the
-  [session handoff](docs/infrastructure_notes.md#session-handoff-2026-10-08) for context.
-- Cleanup resolved by user report on 2026-10-08: the three temporary foundation
-  containers were stopped. This was not independently inspected and does not
-  demonstrate a change to agent Docker permissions. See the
-  [infrastructure notes](docs/infrastructure_notes.md) before starting new services.
+- Full Stage 2 verification passed with explicit sandbox approvals: two sequential
+  complete test runs, fresh development startup, real frontend/API/database checks,
+  and development shutdown/restart with database identity and contents retained.
+- Each test run passed 13 PostgreSQL backend tests, TypeScript/production build,
+  and 3 Chromium checks. A further 3 Chromium checks passed against development.
+  Scoped test cleanup was independently verified after each run.
+- The test rerun left the running development database unchanged. Development
+  containers/networks are stopped and removed; its database volume is retained.
+  Unrelated containers and volumes are preserved.
+- Pending handoff documentation was committed as `df58d99`; verification results
+  are in the milestone titled `docs: complete Stage 2 lifecycle verification`.
+- Stage 3 remains Not started. Stop here as requested; the next implementation
+  session can begin Stage 3. See [README.md](README.md) for verified commands and
+  [infrastructure notes](docs/infrastructure_notes.md#stage-2-verification-resumed-2026-10-08)
+  for current results and historical access restrictions.
 
 ## Progress Overview
 
 | Stage | Result | Status | Completion evidence |
 | --- | --- | --- | --- |
 | 1 | Data model and API operation design | Done | [Design and worked examples](docs/domain_design.md); documentation checks recorded below |
-| 2 | Runnable application foundation | Blocked | Component checks pass; session denies Compose startup/reset; full workflow pending |
+| 2 | Runnable application foundation | Done | Two full Compose test runs; fresh development startup, API/browser checks, restart persistence, and scoped cleanup verified |
 | 3 | Accounts, organization/project setup, and permissions | Not started | — |
 | 4 | Task management and task interface | Not started | — |
 | 5 | Timesheet engine | Not started | — |
@@ -87,14 +86,15 @@ design milestone only, not evidence of functioning features or executed tests.
 ## Stage 2: Application Foundation
 
 - [x] Scaffold Django/REST Framework and React/TypeScript/Vite with PostgreSQL.
-- [ ] Add reproducible development startup using Docker Compose, dependency
+- [x] Add reproducible development startup using Docker Compose, dependency
   lockfiles, configuration templates, and appropriate ignored/generated paths.
-- [ ] Establish the backend modules and versioned API structure from Stage 1.
+- [x] Establish initial backend modules (`accounts`, `core`, `config`) and the
+  versioned API structure from Stage 1; feature modules grow in their stages.
 - [x] Introduce the initial account/database migrations and a minimal frontend
   shell that can communicate with the backend.
 - [x] Set up the test harness and isolated PostgreSQL test data. Document verified
   setup, migration, build, and test commands.
-- [ ] Implement shared test configuration, database/upload isolation, seed/reset
+- [x] Implement shared test configuration, database/upload isolation, seed/reset
   and readiness handling, selected test tooling, and result capture. Add an initial
   real-browser smoke check and document its browser target.
 
@@ -107,12 +107,35 @@ Completion check: a fresh development setup starts successfully, migrations run,
 the frontend reaches the API, the frontend builds, and the initial automated
 checks run against PostgreSQL. No unimplemented feature is presented as complete.
 
-Current evidence: backend and frontend images build; account/core migrations,
-system/migration checks, PostgreSQL foundation tests, TypeScript/production build,
-and Chromium smoke workflows run through the component commands in README.
+Completion evidence (2026-10-08, application source `c54e5ad`, verification
+baseline `df58d99`; documentation-only changes during verification):
+
+- Two sequential approved `sh scripts/test.sh` runs exited 0. Each built images,
+  migrated fresh PostgreSQL 17.11 databases, passed Django system/migration-drift
+  checks and all 13 backend tests, seeded synthetic accounts, built TypeScript/Vite
+  production assets, and passed all 3 Playwright 1.64.0 Chromium checks.
+- After each run, label-filtered Docker listings showed no test-owned containers,
+  networks, or volumes. No concurrent invocations or development-data resets ran.
+- Fresh development Compose startup with `up -d --build --wait --wait-timeout 120`
+  succeeded, applying all 18 migrations. Development system/drift checks passed;
+  3 Chromium checks passed against the actual development frontend. Requests from
+  inside Vite and from host loopback reached PostgreSQL through `/api/v1/health/`.
+- The second test run ran alongside development. Database system identifier,
+  migration count (18), user count (0), and coordination row (`domain`, revision 0)
+  stayed unchanged. Development shutdown without `--volumes` retained its volume;
+  restart reused the same database identity/counts and served the proxied API.
+- Final cleanup removed development containers/network and retained
+  `task-tracker-dev_development-db`. The unrelated downloader services and volume,
+  plus three pre-existing stopped containers, remained untouched.
+- Both Compose configurations, shell syntax, Markdown links/anchors, diff, and
+  whitespace were checked. No application failures or code changes were needed.
+  The npm esbuild install-script warning remained non-failing.
+
 Only account/core backend modules are introduced so far; remaining feature modules
-will grow in their respective stages. Full Compose startup/reset/cleanup and its
-single test entry point require verification before Stage 2 is marked Done.
+will grow in their respective stages. Temporary uploads, guarded test seed/reset,
+readiness checks, browser failure artifacts, and the versioned health API provide
+the shared foundation. Later-stage fixtures and workflows remain unimplemented.
+Stage 3 has not started.
 
 ## Stage 3: Accounts and Permissions
 
@@ -305,3 +328,4 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 | 2026-10-08 | Stage 2 foundation implemented and component-verified | Built Django/React images; PostgreSQL 17.11 migrations and migration-drift/system checks passed; 13 backend tests passed; TypeScript and Vite production build passed; 3 Playwright 1.64.0 checks passed against real API/database services, including the internal Compose hostname. Backend checks/seed entry point exercised, Compose files validated, shell syntax/local links/whitespace checked. Commands/environment documented in README. Compose startup was denied by session Docker socket permissions, so full orchestration/reset/cleanup script is not claimed verified and Stage 2 remains In progress. Commit: `feat: scaffold Dockerized Django and React foundation`. Next: verify Compose workflows and finish Stage 2 before accounts/permissions implementation. |
 | 2026-10-08 | Infrastructure discoveries preserved | Added troubleshooting notes linked from AGENTS and README; recorded user-confirmed cleanup without claiming independent inspection or restored permissions. Documentation checked against existing code and prior results; local links/anchors and whitespace checked. No runtime tests rerun. Commit: `docs: preserve infrastructure discoveries for future agents`. Next: complete Stage 2 Compose verification. |
 | 2026-10-08 | Stage 2 completion attempt blocked | Docker info succeeded (29.8.0); standalone development `docker compose ps` showed no containers. Test Compose startup was denied. `sh scripts/test.sh` failed at its initial test-project reset and its cleanup trap with Docker socket permission denied; no application checks ran or new containers started. Recorded the evidence and blocker; documentation consistency/links/whitespace checked. Commit: `docs: record Stage 2 verification access blocker`. Next: authorized Compose lifecycle access or user-run verification; Stage 2 is not complete. |
+| 2026-10-08 | Stage 2 lifecycle verification completed | Pending handoff reviewed/committed as `df58d99`. Two full test-script runs passed (13 PostgreSQL tests, build, 3 Chromium checks each), with no test resources left. Fresh development startup/migrations, 3 development Chromium checks, proxy connectivity, isolation, and restart persistence passed; final cleanup retains development data and unrelated resources. Docker/Git/host-loopback access used explicit sandbox approvals. Documentation links/anchors, configuration, shell syntax, diff, and whitespace checked. Commit: `docs: complete Stage 2 lifecycle verification`. Stage 2 Done; stop before Stage 3 as requested. |
