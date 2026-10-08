@@ -19,9 +19,10 @@ actual progress; it does not turn proposals into confirmed requirements.
   unverified because this session denies Compose startup access to the Docker socket.
 - Next action: verify the documented Compose workflows, then finish the foundation
   before moving to Stage 3. See [README.md](README.md) for commands and limitations.
-- Cleanup limitation: stop the three named temporary foundation containers from
-  a Docker-enabled terminal; this session denied both interrupt forwarding and
-  `docker stop`. README lists their exact names and loopback-only ports.
+- Cleanup resolved by user report on 2026-10-08: the three temporary foundation
+  containers were stopped. This was not independently inspected and does not
+  demonstrate a change to agent Docker permissions. See the
+  [infrastructure notes](docs/infrastructure_notes.md) before starting new services.
 
 ## Progress Overview
 
@@ -295,3 +296,4 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 | 2026-10-08 | Search infrastructure direction recorded | Architecture and Stage 8 specify PostgreSQL-backed search through Django, without a separate search service for v1. Diff, local link/heading, and whitespace checked; no application tests run. Commit: `docs: record PostgreSQL search approach`. Next: Stage 1. |
 | 2026-10-08 | Stage 1 design completed | Domain records, API/access/error contracts, timeline commands, locking, and worked acceptance examples reviewed against requirements and charter; 26 Markdown links/anchors and whitespace checked. No application/database/browser tests run. Environment probe: Python 3.13.5 and Compose v5.5.1 available; initial Docker version denied, approved Docker info succeeded (29.8.0); host Node/npm absent. Commit: `docs: complete initial domain and API design`. Next: Stage 2 and container execution checks. |
 | 2026-10-08 | Stage 2 foundation implemented and component-verified | Built Django/React images; PostgreSQL 17.11 migrations and migration-drift/system checks passed; 13 backend tests passed; TypeScript and Vite production build passed; 3 Playwright 1.64.0 checks passed against real API/database services, including the internal Compose hostname. Backend checks/seed entry point exercised, Compose files validated, shell syntax/local links/whitespace checked. Commands/environment documented in README. Compose startup was denied by session Docker socket permissions, so full orchestration/reset/cleanup script is not claimed verified and Stage 2 remains In progress. Commit: `feat: scaffold Dockerized Django and React foundation`. Next: verify Compose workflows and finish Stage 2 before accounts/permissions implementation. |
+| 2026-10-08 | Infrastructure discoveries preserved | Added troubleshooting notes linked from AGENTS and README; recorded user-confirmed cleanup without claiming independent inspection or restored permissions. Documentation checked against existing code and prior results; local links/anchors and whitespace checked. No runtime tests rerun. Commit: `docs: preserve infrastructure discoveries for future agents`. Next: complete Stage 2 Compose verification. |

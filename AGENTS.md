@@ -12,6 +12,9 @@ This project is a task and time tracker for personal use and small teams.
   scenarios, and completion criteria.
 - [implementation_plan.md](implementation_plan.md) tracks implementation stages,
   completion checks, current progress, and remaining decisions.
+- [docs/infrastructure_notes.md](docs/infrastructure_notes.md) preserves observed
+  setup failures, verified fixes, and session-specific execution limitations.
+  Read it before infrastructure troubleshooting or starting verification services.
 
 Read the relevant documents before changing behavior or design. Keep agreed
 requirements distinct from proposed defaults and open questions. Incorporate new

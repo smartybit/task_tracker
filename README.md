@@ -153,3 +153,5 @@ temporary development/test default; the deployment zone still needs selection.
 - [Testing charter](testing_charter.md) for risk-based scenarios and release criteria.
 - [Implementation tracker](implementation_plan.md) for checks actually run,
   limitations, milestone commits, and next actions.
+- [Infrastructure notes](docs/infrastructure_notes.md) for previously encountered
+  setup problems, fixes, and session-specific Docker access/cleanup limitations.
