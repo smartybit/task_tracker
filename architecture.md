@@ -58,10 +58,12 @@ results are recorded in the implementation tracker.
 
 - Add `projects` and `access` modules and a minimal `timesheets.Timesheet` model
   containing the unique user relationship and revision. Backfill existing users
-  and create the row in the same transaction as subsequent accounts. Time-entry
-  models and commands remain Stage 5 work. Keep account/catalog/grant mutations
-  behind shared services using the existing MutationLock before checking mutable
-  administrator permissions or references; login/session storage is excluded.
+  and create the row in the same transaction as subsequent accounts. The time
+  engine and commands remain Stage 5 work; Stage 4 may introduce the minimal
+  time-record relationships needed to enforce task deletion protection. Keep
+  account/catalog/grant mutations behind shared services using the existing
+  MutationLock before checking mutable administrator permissions or references;
+  login/session storage is excluded.
 - Provide a local interactive first-administrator command that validates/hashes
   the password and atomically creates the account and timesheet only if no
   application administrator exists. Serialize competing bootstrap attempts through
@@ -101,6 +103,12 @@ results are recorded in the implementation tracker.
   and effective flags for the selected account. Zero flags replace a local grant
   without denying inherited access. Browser mutation scenarios create independent
   accounts and never change the shared fixture administrator credentials.
+
+Later domain mutations must reuse these services and coordination rules. Low-level
+model managers are persistence helpers, not authorized administration entry points.
+Recheck the current actor, grants, object state, and expected revisions after
+acquiring the domain lock. Stage 3 policy-helper coverage does not demonstrate
+authorization or safe serialization through task, time, or reporting endpoints.
 
 ## Proposed Data and Transaction Approach
 
@@ -176,17 +184,17 @@ for search results and snippets.
 - Define schema migration, startup, backup, and recovery procedures as deployment
   work progresses. Backup scope must account for both database data and image files.
 
-## Reusable Test Setup (Planned)
+## Reusable Test Setup
 
-Introduce this shared environment in Stage 2 of the
-[implementation plan](implementation_plan.md#stage-2-application-foundation), then
-extend its fixtures and checks as features arrive. Initial container images,
-PostgreSQL/backend checks, and browser smoke tests are implemented. Development
-Compose startup, frontend-to-API connectivity, repeatable tests, and scoped cleanup
-were verified on 2026-10-08. See [README.md](README.md) for commands and the tracker
-for full lifecycle results. The remaining setup below is a target, not a claim
-that later feature tests exist. The [testing charter](testing_charter.md) defines
-the scenarios and acceptance priorities.
+The shared environment was introduced in Stage 2 of the
+[implementation plan](implementation_plan.md#stage-2-application-foundation) and
+extended in Stage 3 with authenticated API/browser workflows, migration upgrades,
+and independent-connection concurrency checks. Development Compose startup,
+frontend-to-API connectivity, repeatable tests, and scoped cleanup were verified
+on 2026-10-08. See [README.md](README.md) for commands and the tracker for exact
+results. Extend the same harness and fixtures as features arrive; the later
+feature scenarios below remain planned. The [testing charter](testing_charter.md)
+defines the scenarios and acceptance priorities.
 
 ### Services and Isolation
 
@@ -236,6 +244,9 @@ the scenarios and acceptance priorities.
   time or explicit historical timestamps where a workflow depends on the clock.
 - Reset scenario data independently so tests do not rely on execution order.
   Include valid, invalid, and size-boundary image samples when images are added.
+- Retain the isolated Stage 2-to-Stage 3 upgrade regression and add upgrades from
+  the latest completed schema as new models arrive. Use synthetic existing users,
+  grants, and timesheet rows; never exercise upgrades against development volumes.
 
 ### Setup, Execution, and Evidence
 
@@ -255,8 +266,9 @@ the scenarios and acceptance priorities.
   generated artifacts outside tracked source, and summarize actual checks in the
   implementation tracker. Do not include credentials in logs or reports.
 - Make the same entry points reusable locally and by future CI. CI integration is
-  not required by this documentation update. Verify Stage 2 setup from clean test
-  state before treating the foundation as complete.
+  not required by this documentation update. For later stage completion, run the
+  expanded suite sequentially twice, including reset of running test services,
+  and inspect cleanup while preserving development and unrelated resources.
 
 ## Future Android Frontend Options
 
@@ -279,3 +291,8 @@ No Android implementation has been selected or included in the first version.
    libraries during implementation; these were not fixed by the stack decision.
 3. Choose the deployment working time zone or fixed UTC offset, as identified
    in the requirements. Daylight-saving behavior remains outside product scope.
+4. Define administrator recovery alongside the last-active-administrator product
+   decision. Current account updates can remove the last active administrator;
+   bootstrap rejects any existing administrator, including an inactive one.
+   This code-review finding was not covered by Stage 3 verification. Neither a
+   last-administrator guard nor a supported recovery command is implemented.

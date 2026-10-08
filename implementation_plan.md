@@ -35,6 +35,9 @@ actual progress; it does not turn proposals into confirmed requirements.
   [README.md](README.md) documents startup/bootstrap/management commands;
   [infrastructure notes](docs/infrastructure_notes.md#stage-3-verification-findings-2026-10-08)
   preserve actual verification findings and session access considerations.
+- Post-Stage 3 documentation review identified an unresolved last-active-admin
+  lockout policy. The proposed guard/recovery follow-up below is unimplemented
+  and was not covered by the completed Stage 3 checks.
 
 ## Progress Overview
 
@@ -56,7 +59,7 @@ specific action needed to resolve it; do not infer completion from elapsed effor
 
 ## Shared Test Environment
 
-Reuse the [shared test setup](architecture.md#reusable-test-setup-planned) rather
+Reuse the [shared test setup](architecture.md#reusable-test-setup) rather
 than creating unrelated environments for each stage. Its core is an isolated
 application and PostgreSQL setup, disposable scenario data, temporary image
 storage, and a real browser when needed. Stage 2 introduces the tooling and
@@ -269,23 +272,40 @@ Commit: `docs: record Stage 3 completion and verification`.
 
 ## Stage 4: Tasks and Their Interface
 
+- [ ] Reuse the Stage 3 session/client, current-grant selectors, and domain mutation
+  services. Check mutable permissions and expected task/domain revisions under
+  the existing lock; return safe acknowledgements for write-only operations.
 - [ ] Implement task creation/editing, owners, project membership, hierarchy,
   configured statuses, and status-change history.
+- [ ] Seed the five agreed initial statuses through additive migrations. Preserve
+  permanent first-use protection, including after all referencing tasks change
+  status or are deleted, following the Stage 1 database-trigger design.
 - [ ] Enforce one project per hierarchy, cycle prevention, owner eligibility,
   final-state rules, ancestor reopening, and immutability of used statuses.
 - [ ] Implement deletion eligibility checks. Introduce supporting time-record
-  models as needed to verify the restriction even before time recording is usable.
+  models as needed to verify the restriction even before time recording is usable;
+  reuse the existing Timesheet row and defer recording commands to Stage 5.
+  Protect projects referenced by tasks against catalog deletion.
 - [ ] Build flat/tree task lists, project and multiple-status filters, and the
   task description window.
 - [ ] Verify hierarchy/project changes and ownership after access loss. Exercise
   concurrent task operations where they can invalidate the business rules.
+- [ ] Extend permission checks through actual task list/tree/detail/history and
+  mutation endpoints, including no admin bypass, write-only responses, stale
+  previews/revisions, and revocation while a writer waits for the lock.
 
 Test environment: extend the shared fixtures with deep task trees, used/unused
 statuses, differing owners, and referenced time records. Use API and browser checks
 for task workflows and independent PostgreSQL connections for hierarchy races.
+Retain Stage 3 regressions and add an isolated upgrade from its schema with existing
+users, grants, and timesheet rows. Reuse `sh scripts/test.sh`; require two sequential
+successful full runs, including reset of running services and inspected scoped
+cleanup. Preserve development volumes and unrelated containers throughout.
 
 Completion check: permitted users manage tasks through the interface, forbidden
 operations are rejected by the API, and task/history invariants remain valid.
+Fresh and upgrade migrations and the expanded repeatable suite pass; task deletion
+protection uses real database references rather than mocked time-record checks.
 
 ## Stage 5: Timesheet Engine
 
@@ -399,6 +419,10 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 
 ## Decisions and Dependencies to Track
 
+- Resolve the [last-active-administrator proposal](requirements.md#open-product-questions)
+  and recovery policy before production use. A focused account-lifecycle follow-up
+  should implement the agreed policy with serialized concurrent-removal tests;
+  it is planned work, not part of Stage 3's existing completion evidence.
 - Select the shared working time zone or fixed offset before finalizing Stage 5
   behavior; use an explicitly controlled test zone while that decision is pending.
 - Resolve backup responsibility and recovery expectations before production use
@@ -442,3 +466,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-08 | Stage 3 backend implemented and verified | Session/CSRF, account/bootstrap/reset, project/organization/grant APIs and shared policies implemented; additive migrations/backfill and transactional domain services verified. System/drift checks and 35 PostgreSQL tests pass, including permission matrix, upgrade, rollback, and independent-connection races. Browser/full lifecycle verification was pending at this milestone; Stage 3 was In progress. Commit: `feat: implement Stage 3 account and permission backend`. |
 | 2026-10-08 | Stage 3 management interface verified | Added session-aware frontend client and login/account/catalog/grant screens. First full clean test script exited 0 with 35 PostgreSQL tests, build, 9 Chromium checks, and inspected cleanup. Corrected browser test header typing and catalog select locator; repeatability was pending at this milestone. Stage 3 was In progress. Commit: `feat: add Stage 3 account and grant management screens`. |
 | 2026-10-08 | Stage 3 completed | Source `5653aa5` passed two sequential full test-script runs, each with 35 PostgreSQL tests, TypeScript/Vite build, 9 Chromium checks, and inspected cleanup. The second run reset running services successfully; initial reset interruption (143) did not reproduce. Upgrade/backfill, CSRF/session behavior, permission matrix, rollback, and concurrency verified. Both development/downloader volumes and all unrelated container IDs preserved. Configuration, shell syntax, 45 local Markdown links/anchors, diff, and whitespace checked. Stage 3 Done; Stage 4 remains Not started. Commit: `docs: record Stage 3 completion and verification`. |
+| 2026-10-08 | Post-Stage 3 lessons incorporated | Updated shared test setup to reflect implemented coverage and strengthened Stage 4 plans for service reuse, real endpoint permissions, status protection, Stage 3 schema upgrades, and repeatable scoped cleanup. Account-service review identified last-active-admin lockout; recorded a proposed safeguard and recovery decision without changing agreed behavior. Checked documentation consistency, 47 local Markdown links/anchors, and whitespace; no runtime tests run for this documentation-only change. Stage 4 remains Not started. Commit: `docs: incorporate Stage 3 lessons into remaining plan`. |

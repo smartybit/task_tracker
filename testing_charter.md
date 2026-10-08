@@ -53,6 +53,10 @@ service contracts; repeat those checks through actual feature endpoints when
 Stages 4–8 introduce them. The Stage 3 completion boundary does not imply that
 task, time-entry, remark, or reporting workflows already work.
 
+Follow-up, pending the administrator lifecycle decision: cover last-active-admin
+deactivation/demotion, two competing removals, and the agreed recovery procedure.
+These cases were not part of the successful Stage 3 suite.
+
 ### 2. Preserve Timesheet Integrity
 
 - Start tasks, switch tasks, insert breaks, and close the day. An open task has an
@@ -82,6 +86,14 @@ task, time-entry, remark, or reporting workflows already work.
   records the caller cannot view. Check administrators and indirect deletion paths.
 - Race deletion against creation of a child or time record, and finalization
   against a descendant reopening. The committed result must satisfy the rules.
+- Repeat the Stage 3 grant matrix through actual task endpoints, including
+  administrators without grants, write-only acknowledgements, protected list/tree
+  counts and history, and grants revoked while a mutation waits for the domain
+  lock. Stale revisions and previews must reject without partial history changes
+  or disclosure of unreadable tasks.
+- Test the five initial statuses on fresh migrations and an isolated Stage 3
+  upgrade preserving existing users, grants, and timesheet rows. Check permanent
+  first-use protection after the last referencing task changes status or is deleted.
 
 ### 4. Reconcile Reports and CSV with Recorded Work
 
@@ -120,7 +132,7 @@ task, time-entry, remark, or reporting workflows already work.
 
 ## Verification Approach
 
-The [reusable test setup](architecture.md#reusable-test-setup-planned) describes
+The [reusable test setup](architecture.md#reusable-test-setup) describes
 shared services, isolation, fixture/reset handling, and result capture. The
 [implementation plan](implementation_plan.md#shared-test-environment) maps that
 environment to each stage. Initial executable foundation checks exist; see

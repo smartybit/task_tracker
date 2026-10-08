@@ -301,6 +301,11 @@ than additional user-confirmed requirements.
 ## Open Product Questions
 
 1. Which shared time zone or fixed UTC offset should be configured for deployment?
+2. Should account updates reject deactivation or demotion of the last active
+   administrator? Proposed safeguard: preserve at least one active administrator,
+   including when two administrators update accounts concurrently. Define an
+   operator recovery policy for already locked-out installations as well. This
+   is an unresolved proposal, not an implemented or agreed restriction.
 
 Backup ownership and recovery expectations remain open in
 [architecture.md](architecture.md#open-technical-and-operational-decisions).

@@ -79,6 +79,11 @@ Catalogs manages organizations/projects; an organization with projects cannot be
 deleted, and existing projects cannot change organizations through a field edit.
 Task-status catalogs belong to Stage 4.
 
+Current limitation: account updates do not protect the last active administrator
+from deactivation or demotion, and no supported recovery command exists. Keep an
+active administrator available. The proposed safeguard and recovery policy remain
+an [open product decision](requirements.md#open-product-questions).
+
 Grants manages local task/remark read/write flags per organization or project and
 shows effective project flags. Organization and project flags combine with OR;
 clearing a project flag cannot deny an inherited grant. UI write selection also
