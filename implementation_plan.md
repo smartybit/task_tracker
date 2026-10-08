@@ -17,8 +17,11 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Container-level PostgreSQL/backend, frontend-build, and Chromium checks are
   verified. Full Compose startup and the combined reset/test/cleanup script remain
   unverified because this session denies Compose startup access to the Docker socket.
-- Next action: verify the documented Compose workflows, then finish the foundation
-  before moving to Stage 3. See [README.md](README.md) for commands and limitations.
+- Stage 2 completion is blocked by session Docker lifecycle permissions: the
+  startup recheck and `sh scripts/test.sh` both failed before application checks.
+- Next action: obtain authorized Compose startup/reset/shutdown access or user-run
+  verification, then finish the foundation before moving to Stage 3. See
+  [README.md](README.md) for commands and limitations.
 - Cleanup resolved by user report on 2026-10-08: the three temporary foundation
   containers were stopped. This was not independently inspected and does not
   demonstrate a change to agent Docker permissions. See the
@@ -29,7 +32,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | Stage | Result | Status | Completion evidence |
 | --- | --- | --- | --- |
 | 1 | Data model and API operation design | Done | [Design and worked examples](docs/domain_design.md); documentation checks recorded below |
-| 2 | Runnable application foundation | In progress | Component checks pass; full Compose workflow pending |
+| 2 | Runnable application foundation | Blocked | Component checks pass; session denies Compose startup/reset; full workflow pending |
 | 3 | Accounts, organization/project setup, and permissions | Not started | — |
 | 4 | Task management and task interface | Not started | — |
 | 5 | Timesheet engine | Not started | — |
@@ -297,3 +300,4 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 | 2026-10-08 | Stage 1 design completed | Domain records, API/access/error contracts, timeline commands, locking, and worked acceptance examples reviewed against requirements and charter; 26 Markdown links/anchors and whitespace checked. No application/database/browser tests run. Environment probe: Python 3.13.5 and Compose v5.5.1 available; initial Docker version denied, approved Docker info succeeded (29.8.0); host Node/npm absent. Commit: `docs: complete initial domain and API design`. Next: Stage 2 and container execution checks. |
 | 2026-10-08 | Stage 2 foundation implemented and component-verified | Built Django/React images; PostgreSQL 17.11 migrations and migration-drift/system checks passed; 13 backend tests passed; TypeScript and Vite production build passed; 3 Playwright 1.64.0 checks passed against real API/database services, including the internal Compose hostname. Backend checks/seed entry point exercised, Compose files validated, shell syntax/local links/whitespace checked. Commands/environment documented in README. Compose startup was denied by session Docker socket permissions, so full orchestration/reset/cleanup script is not claimed verified and Stage 2 remains In progress. Commit: `feat: scaffold Dockerized Django and React foundation`. Next: verify Compose workflows and finish Stage 2 before accounts/permissions implementation. |
 | 2026-10-08 | Infrastructure discoveries preserved | Added troubleshooting notes linked from AGENTS and README; recorded user-confirmed cleanup without claiming independent inspection or restored permissions. Documentation checked against existing code and prior results; local links/anchors and whitespace checked. No runtime tests rerun. Commit: `docs: preserve infrastructure discoveries for future agents`. Next: complete Stage 2 Compose verification. |
+| 2026-10-08 | Stage 2 completion attempt blocked | Docker info succeeded (29.8.0); standalone development `docker compose ps` showed no containers. Test Compose startup was denied. `sh scripts/test.sh` failed at its initial test-project reset and its cleanup trap with Docker socket permission denied; no application checks ran or new containers started. Recorded the evidence and blocker; documentation consistency/links/whitespace checked. Commit: `docs: record Stage 2 verification access blocker`. Next: authorized Compose lifecycle access or user-run verification; Stage 2 is not complete. |

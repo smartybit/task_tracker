@@ -50,6 +50,14 @@ That confirmation was not independently inspected and does not demonstrate a
 change to agent execution permissions. Recheck ownership/availability before
 reusing names or ports; never stop an unrelated service to free a port.
 
+After that cleanup, a Stage 2 completion attempt on the same date confirmed the
+restriction remained: standalone `docker compose ps` succeeded and showed no
+development-project containers; Docker info also succeeded. Test Compose startup
+was denied. `sh scripts/test.sh` failed at the initial test-project reset and again
+in its cleanup trap before any application checks or startup. No new verification
+containers were started. Stage 2 needs an authorized Compose lifecycle session or
+user-run verification, not another copy of the component-level fallback.
+
 ## Non-Root Frontend Files Must Be Writable
 
 The initial frontend build failed with `EACCES` while Vite wrote a temporary
