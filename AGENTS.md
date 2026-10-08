@@ -32,6 +32,18 @@ the documents when those instructions change recorded decisions.
 - Update product behavior in the requirements and technical decisions in the
   architecture; keep the testing charter aligned with both.
 
+## Git Workflow
+
+- Use Git to track project changes and preserve the history of decisions.
+- Commit when a coherent intermediate result has been reached and can be clearly
+  described, such as a completed feature, fix, or documentation update. Make these
+  milestone commits without waiting for a separate commit request.
+- Keep each commit focused and use a descriptive message explaining the result.
+- Review the diff, check whitespace, and run verification appropriate to the
+  change before committing. Stage only changes belonging to that result and
+  preserve unrelated local edits.
+- Keep commits local unless the user requests publishing or pushing them.
+
 ## Verification and Handoff
 
 - Use the testing charter to select checks proportional to the change, with
