@@ -206,7 +206,8 @@ and agree with source records. The task-to-timesheet-to-report workflow is usabl
   persistent storage, and permission-checked downloads. Include screenshot pasting
   if practical, recording its delivered or deferred status explicitly.
 - [ ] Implement search over tasks, descriptions, and remarks with authorized
-  results and snippets.
+  results and snippets, using PostgreSQL full-text search and indexes through
+  Django as described in the [search approach](architecture.md#planned-search-approach).
 - [ ] Verify content workflows, reference lifecycle, image validation, and direct
   access attempts using the API and browser.
 
@@ -273,3 +274,4 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 | 2026-10-08 | Planning baseline prepared | Requirements, architecture, testing charter, and agent/Git guidance are recorded through `cba1d65`. |
 | 2026-10-08 | Implementation tracker created | Reviewed against project documents; local links and whitespace checked. No application tests exist or were run. Included in the commit titled `docs: add implementation plan and progress tracker`. Next: Stage 1; all implementation stages remain unstarted. |
 | 2026-10-08 | Reusable test setup documented | Architecture defines shared services, isolation, fixtures, execution lifecycle, and evidence; all nine stages identify their test environment. Documentation consistency, local links, and whitespace checked in the commit titled `docs: describe reusable test setup across implementation stages`. No runtime or application tests implemented or run; next action remains Stage 1. |
+| 2026-10-08 | Search infrastructure direction recorded | Architecture and Stage 8 specify PostgreSQL-backed search through Django, without a separate search service for v1. Diff, local link/heading, and whitespace checked; no application tests run. Commit: `docs: record PostgreSQL search approach`. Next: Stage 1. |

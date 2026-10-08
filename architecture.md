@@ -75,6 +75,13 @@ Proposals below preserve the approaches discussed so far and remain revisable.
 - Verify report results against independently calculated examples and exercise
   permission boundaries and concurrent mutations using PostgreSQL.
 
+## Planned Search Approach
+
+PostgreSQL is expected to do the heavy lifting for search, using its built-in
+full-text search and database indexes through Django. No separate search service
+is planned for the first version. The backend enforces task and remark permissions
+for search results and snippets.
+
 ## Proposed Images and Content Handling
 
 - Store image files in a persistent local volume, with metadata and ownership
