@@ -12,7 +12,8 @@ first version and remain open to revision.
 - A personal or small-team tool for recording work, progress, difficulties, and
   decisions. Billing and approval workflows are outside the first version.
 - A modular application with a web frontend initially; other frontends may follow.
-- Daily totals, project totals, and search are required. CSV export is desirable.
+- Daily totals, project totals, search, and CSV export are required in the first
+  version.
 - Deploy on the current VDS. Backup ownership and restore procedures remain open.
 - SQLite and PostgreSQL are intended database options. Equivalent workflows and a
   documented migration procedure are desirable; their implementation cost should
@@ -140,10 +141,32 @@ first version and remain open to revision.
 
 - Search covers tasks, their descriptions, and task remarks. Search results and
   snippets respect task and remark access permissions.
-- Project totals include work recorded by all users and can be filtered by person
-  and date range. The permission needed to view those reports remains open below.
+- Report data requires task read access for its project, either granted directly
+  or inherited from the organization. Read Others' Timesheets alone does not
+  permit reporting on inaccessible projects.
+- Without Read Others' Timesheets, reports include only the viewer's own recorded
+  work. With that permission, reports may include all users' work, still limited
+  to projects the viewer can read. Apply this rule to totals and person breakdowns.
+- Initial report views are a project summary, a person-by-day summary, and a task
+  hierarchy showing accumulated time. Views support person and date-range filters
+  within the viewer's permitted data.
+- Selecting a task includes its descendants. Show time recorded directly against
+  the task and time recorded against descendants in separate columns. A combined
+  task total includes both, without double counting.
+- Display durations in decimal hours, for example `6.5` for six hours and thirty
+  minutes.
 - Historical project totals use the task's current project rather than its project
   at the time the work was recorded.
+- First-version CSV export dumps individual authorized timesheet records for a
+  selected time period, rather than exporting a filtered summary report. Do not
+  apply interactive person, project, or task filters to this dump; users can
+  filter the resulting file externally. Access restrictions always apply.
+- CSV columns are Person, Project, Task, Date, Start Time, End Time, and Duration
+  in decimal hours. Running entries have a blank end time and zero duration.
+- Task-linked CSV records require project read access and belong to the viewer
+  unless the viewer has Read Others' Timesheets.
+- CSV exports include task-linked records only. Breaks and End of Working Day
+  markers are excluded.
 
 ## Proposed First-Version Defaults
 
@@ -206,12 +229,19 @@ than additional user-confirmed requirements.
   recompute rollups after project or parent changes. Include each work entry once.
 - Restrict task and remark searches and hierarchy views to accessible data.
 - Task project permissions apply uniformly to every descendant in a hierarchy.
-- Whole-timesheet views, daily totals, and timesheet exports include all work
-  entries when the viewer is the timesheet's user or has Read Others' Timesheets
-  permission, even if some referenced tasks are inaccessible. They must not
-  expose protected task descriptions, remarks, or other task details.
+- Whole-timesheet views and their daily totals include all work entries when the
+  viewer is the timesheet's user or has Read Others' Timesheets permission, even
+  if some referenced tasks are inaccessible. They must not expose protected task
+  descriptions, remarks, or other task details.
+- Project reports and the CSV report dump additionally require project read
+  access. They may therefore exclude entries visible in a whole-timesheet view.
+  Clearly distinguish whole-timesheet daily totals from project-filtered report
+  totals so differences are understandable.
 - A user's daily total sums work entries once; it must not sum both ancestor
   rollups and their descendant entries.
+- Calculate totals from original recorded durations and convert to decimal hours
+  for display and export. Round only the final displayed value, rather than
+  summing rounded entry values.
 - Person filters refer to the user whose timesheet records the work, not the task
   owner. Changing task ownership does not reassign recorded work to another user.
 
@@ -241,11 +271,8 @@ than additional user-confirmed requirements.
 
 ## Questions Still Open
 
-1. Which permission grants access to project reports and person breakdowns:
-   project task read permission, Read Others' Timesheets, or both? Whole-timesheet
-   access and task details must continue to respect their separate permissions.
-2. Which shared time zone or fixed UTC offset should be configured for deployment?
-3. Who handles VDS backups, and what recovery procedure is expected?
-4. Must both SQLite and PostgreSQL be supported in the first release, or can
+1. Which shared time zone or fixed UTC offset should be configured for deployment?
+2. Who handles VDS backups, and what recovery procedure is expected?
+3. Must both SQLite and PostgreSQL be supported in the first release, or can
    support for one database follow later? Is cross-database migration required
    in the first release?
