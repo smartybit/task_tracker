@@ -7,6 +7,47 @@ Use [README.md](../README.md) for setup commands and the
 this note when a discovery changes; do not treat old session restrictions as
 permanent properties of the VDS.
 
+## Session Handoff: 2026-10-08
+
+Resume by finishing Stage 2, not by rebuilding the foundation or starting Stage 3.
+The last implementation commit is `c54e5ad`; subsequent commits document findings.
+Component verification passed (13 backend tests and 3 Chromium checks), but full
+development Compose startup and the combined test lifecycle are still unverified.
+
+The user supplied read-only diagnostics from a normal SSH terminal, without sudo:
+
+- `vasiliy` (UID 1000) belongs to `docker` (GID 989); the Docker socket is
+  `root:docker`, mode `660`.
+- Context is `default`, endpoint `unix:///var/run/docker.sock`, with no
+  `DOCKER_HOST` or `DOCKER_CONTEXT` override.
+- `docker version` and formatted `docker info` both succeeded (Docker 29.8.0).
+  System Docker service/socket are active; inactive user-level Docker is expected.
+- In contrast, the agent session saw restricted groups and mapped socket ownership
+  (`nobody:nogroup`). This locates the observed access problem in the agent
+  execution environment, not in the SSH user's Docker access or daemon health.
+
+The user plans to restart Codex. The suggested CLI mode was
+`codex --sandbox workspace-write --ask-for-approval on-request`, as `vasiliy`
+without sudo. No configuration or permission changes were made; access in a new
+session is not yet verified and managed restrictions may still apply.
+
+Next: check current Git state and session Docker access/cleanup authorization;
+run `sh scripts/test.sh` sequentially (it resets only `task-tracker-tests`) and
+verify repeatability/cleanup. Also exercise the development Compose workflow and
+frontend-to-API connectivity in README. Preserve development volumes and unrelated
+containers. Fix actual failures, record results, and mark Stage 2 Done only once
+all completion checks pass; commit the coherent result.
+
+The diagnostic script is `/tmp/task-tracker-docker-diagnostics.sh`; its optional
+output file is `/tmp/task-tracker-docker-diagnostics.log`. These temporary files
+are not tracked or guaranteed to survive. No application checks were rerun during
+this diagnosis or handoff, and no new containers were started.
+
+This handoff and the tracker update are staged but not committed: standalone
+`git add` succeeded, while `git commit` was denied creating `.git/index.lock`
+on a read-only filesystem. Review and commit these documentation changes when
+the new session has authorized Git write access.
+
 ## Docker Access Is Session-Specific
 
 The same agent session produced these different outcomes:

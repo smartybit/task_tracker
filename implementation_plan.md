@@ -19,9 +19,13 @@ actual progress; it does not turn proposals into confirmed requirements.
   unverified because this session denies Compose startup access to the Docker socket.
 - Stage 2 completion is blocked by session Docker lifecycle permissions: the
   startup recheck and `sh scripts/test.sh` both failed before application checks.
+- User-provided SSH diagnostics confirm working Docker access as `vasiliy`; the
+  observed denial is specific to the agent execution environment. The user plans
+  a new session; its permissions and full Compose workflow remain unverified.
 - Next action: obtain authorized Compose startup/reset/shutdown access or user-run
   verification, then finish the foundation before moving to Stage 3. See
-  [README.md](README.md) for commands and limitations.
+  [README.md](README.md) for commands and limitations and the
+  [session handoff](docs/infrastructure_notes.md#session-handoff-2026-10-08) for context.
 - Cleanup resolved by user report on 2026-10-08: the three temporary foundation
   containers were stopped. This was not independently inspected and does not
   demonstrate a change to agent Docker permissions. See the
