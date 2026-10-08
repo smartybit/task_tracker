@@ -56,6 +56,37 @@ Stage 2 completion checks passed. Results apply to foundation source `c54e5ad`
 and documentation baseline `df58d99`, with no application changes during the
 checks. Current implementation status is maintained in the tracker.
 
+## Stage 3 Verification Findings: 2026-10-08
+
+Stage 3 extends the same Compose entry point without new runtime dependencies.
+The test API explicitly trusts `http://frontend:5173` for CSRF; the development
+loopback origins remain separate. Login is explicitly CSRF-protected, and
+session-authenticated unsafe requests return a stable `csrf_failed` JSON error.
+Public health connectivity alone did not establish these mutation behaviors.
+
+The accounts app must precede Django auth in `INSTALLED_APPS` so its guarded
+`createsuperuser`/`changepassword` command replacements take precedence. The first
+backend check caught the incorrect order; corrected checks passed. Use the
+interactive `bootstrap_admin` command documented in README and application
+account management for subsequent account/password changes.
+
+PostgreSQL activity sampling in a transaction can retain a statistics snapshot.
+The deterministic blocked-writer regression calls `pg_stat_clear_snapshot()`
+before checking `pg_stat_activity`; it then observes an actual lock wait before
+committing administrator revocation. Independent connections, bounded lock waits,
+and committed-state assertions are required for these concurrency checks.
+
+The initial Chromium catalog scenario used an exact label query that did not
+match the select element. Its accessible combobox name was correct; the test
+now selects by that role/name. The other eight browser checks passed on that
+attempt; full lifecycle results are recorded in the tracker.
+
+One approved full-script attempt exited with status 143 during the initial test
+reset, before application checks. Its cleanup completed, and Docker inspection
+confirmed no test containers/network remained. The cause was not established;
+the next invocation started successfully from clean test state. Keep this
+interrupted attempt distinct from successful verification runs.
+
 ## Docker Access Is Session-Specific
 
 Before approved lifecycle verification, an earlier agent session produced these

@@ -4,14 +4,19 @@ Personal work and small-team task/time tracking. Product rules are in
 [requirements.md](requirements.md); see [implementation progress](implementation_plan.md)
 before assuming a feature is available.
 
-## Current Foundation
+## Available Features
 
-The repository now contains Django/REST Framework, an email-based user model and
-migrations, a PostgreSQL-backed health endpoint, and a React/TypeScript/Vite shell.
-Task workflows, login screens, grants, time recording, reports, and content/search
-are **not implemented yet**. The user model is preparation for Stage 3, not a
-completed authentication or permissions feature. No personal account is created
-automatically.
+Django/REST Framework and React now provide email/password sessions, account and
+password administration, organization/project catalogs, and organization/project
+grant management. Shared backend policies cover independent task/remark grants,
+organization inheritance, own-timesheet access, and global others-timesheet flags.
+Administrators have no automatic application-data grants. See the tracker for
+current verification results.
+
+Task management, task statuses, time recording, reports, remarks, images, and
+search remain unimplemented. Timesheets currently contain only the per-user
+coordination record; no time-entry workflow is available. No personal account is
+created automatically, and public registration is unavailable.
 
 ## Runtime and Dependencies
 
@@ -51,6 +56,44 @@ Stop development containers with `docker compose down`, which retains that
 database volume. Do not use `down --volumes` on the development project if you
 want to retain its data. This Compose setup is not a production deployment.
 
+## First Administrator and Account Management
+
+After development startup has applied migrations, create the first administrator
+from an interactive terminal:
+
+```sh
+docker compose exec web python manage.py bootstrap_admin --email you@example.com
+```
+
+The command prompts twice for a password, validates it, and atomically creates the
+account and its timesheet record. It refuses once any application administrator
+exists. It never creates default credentials. The generic Django `createsuperuser`
+and `changepassword` commands direct operators to the supported application paths.
+
+Sign in at the frontend address. Administrators can use Accounts to create/edit
+accounts, deactivate/reactivate them, set global timesheet flags, and reset a
+password. Share a reset password directly; no email is sent. Password resets and
+deactivation revoke existing sessions; reactivation requires a new sign-in.
+Catalogs manages organizations/projects; an organization with projects cannot be
+deleted, and existing projects cannot change organizations through a field edit.
+Task-status catalogs belong to Stage 4.
+
+Grants manages local task/remark read/write flags per organization or project and
+shows effective project flags. Organization and project flags combine with OR;
+clearing a project flag cannot deny an inherited grant. UI write selection also
+enables read, while the API supports write without read. Administrator status
+permits configuration, without bypassing these data policies. Regular accounts
+see catalog choices for projects where they have task read or write access.
+Refresh access reloads current grants; the backend checks permissions on every
+request even when a management screen was opened before access was revoked.
+
+Browser requests use session cookies and CSRF headers through Vite's `/api` proxy.
+The CSRF endpoint is `/api/v1/auth/csrf/`; login returns a refreshed token. Unsafe
+requests, including login/logout, require a valid token and allowed origin. Test
+configuration explicitly trusts `http://frontend:5173`; development trusts the
+documented loopback origins. Lists use 50-item pages (`page`, `count`, `next`, and
+`results`). Grant writes replace local flags and default omitted flags to false.
+
 ## Isolated Test Setup
 
 `compose.test.yaml` uses a separate fixed project, credentials, ephemeral database
@@ -66,11 +109,17 @@ sh scripts/test.sh
 ```
 
 This recreates **only** the `task-tracker-tests` project, waits for service health,
-checks migrations, runs backend tests, seeds three synthetic accounts, builds the
+checks migrations, runs backend tests, seeds three synthetic accounts, two
+organizations, three projects, and representative grants, builds the
 frontend, and runs browser checks. Cleanup removes that test project and temporary
 data even on failure. Run sequentially, not concurrently with another invocation.
 Failure screenshots/traces remain in ignored `frontend/test-results/`.
-Later stages add permission, hierarchy, timesheet, image, and report fixtures.
+Stage 3 adds account/CSRF, permission-matrix, migration-upgrade, rollback, and
+concurrency checks, plus separate-session browser administration workflows.
+Later stages add hierarchy, time-entry, image, and report fixtures. Browser
+mutation scenarios create separate synthetic accounts so password/grant changes
+do not alter another scenario’s credentials. The guarded `seed_test_data` command
+restores the three baseline fixture accounts and grants when repeated.
 
 The Django test command refuses development settings. The seed command also
 requires the dedicated test database/user and never seeds development accounts.

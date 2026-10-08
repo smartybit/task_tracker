@@ -26,7 +26,8 @@ actual progress; it does not turn proposals into confirmed requirements.
   Unrelated containers and volumes are preserved.
 - Stage 2 verification is recorded in `e9a6ccf`. Stage 3 planning has been
   reviewed against that foundation; Stage 3 backend checks pass (35 PostgreSQL
-  tests). Management screens are drafted and browser verification is in progress.
+  tests). Management screens and all 9 Chromium checks pass; the first complete
+  lifecycle passed and the repeatability run is in progress.
 - Next implementation milestone: Stage 3 accounts, session authentication, catalog
   management, and shared permissions, using the verified test entry point. See
   [README.md](README.md) for commands and
@@ -39,7 +40,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | --- | --- | --- | --- |
 | 1 | Data model and API operation design | Done | [Design and worked examples](docs/domain_design.md); documentation checks recorded below |
 | 2 | Runnable application foundation | Done | Two full Compose test runs; fresh development startup, API/browser checks, restart persistence, and scoped cleanup verified |
-| 3 | Accounts, organization/project setup, and permissions | In progress | Backend migrations/checks and 35 PostgreSQL tests pass; browser/full lifecycle verification pending |
+| 3 | Accounts, organization/project setup, and permissions | In progress | First complete lifecycle passed: 35 PostgreSQL tests, build, 9 Chromium checks, cleanup; repeatability pending |
 | 4 | Task management and task interface | Not started | — |
 | 5 | Timesheet engine | Not started | — |
 | 6 | Timesheet interface | Not started | — |
@@ -147,7 +148,8 @@ email user model, migrations, session middleware, versioned API, MutationLock,
 and sequential Compose test lifecycle. Stage 2 verified public health requests;
 Stage 3 backend checks now verify authenticated requests, CSRF, account
 administration, and grants. The sequence below records implementation progress;
-browser and complete lifecycle acceptance remain pending.
+all 9 Chromium checks and the first complete lifecycle now pass. The second
+complete run is in progress before completion is recorded.
 
 - [x] Add `projects` and `access` modules with organizations, projects, and unique
   user/organization and user/project grants. Use new migrations without rewriting
@@ -169,7 +171,7 @@ browser and complete lifecycle acceptance remain pending.
   Apply password validation and hashing; passwords must not appear in responses
   or logs. Verify rejection of inactive accounts and invalidation of existing
   sessions after password reset/deactivation. The exact bootstrap/reset approach
-  is an implementation proposal in the architecture, not a new product rule.
+  follows the implementation decisions in the architecture.
 - [x] Implement independent effective task/remark read and write checks with
   organization OR project inheritance, and self/others timesheet checks. Evaluate
   current database grants on each request. Keep whole-timesheet authorization
@@ -178,7 +180,7 @@ browser and complete lifecycle acceptance remain pending.
   catalog selectors for regular users. Include choices needed for authorized
   write-only operations without exposing task/remark content. Reject attempts
   to set inherited grants or unrelated account fields through these endpoints.
-- [ ] Add login, account/reset, catalog, and grant-management screens. Extend the
+- [x] Add login, account/reset, catalog, and grant-management screens. Extend the
   shared frontend API client for session requests, CSRF headers/token refresh,
   and authentication/permission failures. Verify cookies and trusted origins
   through Vite's real Compose proxy; explicitly configure the internal browser
@@ -193,7 +195,7 @@ browser and complete lifecycle acceptance remain pending.
   remark task-read prerequisites, self-access, and all others-timesheet flag
   combinations. Exercise active-session grant/admin revocation and deactivation;
   verify competing grant/account operations with independent transactions.
-- [ ] Add separate-session Chromium workflows for login/logout, account creation
+- [x] Add separate-session Chromium workflows for login/logout, account creation
   and password reset, catalog/grant management, and access changes without a new
   login. Exercise missing/invalid CSRF and unsafe untrusted-origin requests as
   well as successful mutations through the real frontend/API/PostgreSQL stack.
@@ -224,8 +226,21 @@ account/timesheet rollback, bootstrap command/races, concurrent grant replacemen
 a blocked writer after administrator revocation, and an isolated Stage 2 schema
 upgrade. Generic Django command precedence and PostgreSQL activity-snapshot
 sampling were corrected after the initial checks. Frontend TypeScript/production
-build passed; browser checks and two complete lifecycle runs remain pending.
+build passed. Browser and complete lifecycle acceptance were pending at that
+backend milestone; subsequent results are recorded below.
 Commit: `feat: implement Stage 3 account and permission backend`.
+
+Interface milestone evidence (2026-10-08): the login, account/create/edit/reset,
+organization/project, and grant-management screens are implemented. The first
+complete clean `sh scripts/test.sh` run exited 0: 35 PostgreSQL tests, TypeScript/
+production build, all 9 Chromium checks, and automatic cleanup passed. Label-filtered
+Docker inspection confirmed no test containers, networks, or volumes remained.
+The browser suite exercises separate sessions, CSRF/origins through the Compose
+proxy, account deactivation/reset, catalog protection/rename/delete, inherited
+and write-only grants, and live grant/admin revocation. A TypeScript header typing
+issue and an exact-label catalog test locator were corrected. The repeatability
+run, starting with live test services, remains in progress. Stage 3 is not yet Done.
+Commit: `feat: add Stage 3 account and grant management screens`.
 
 ## Stage 4: Tasks and Their Interface
 
@@ -400,3 +415,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-08 | Stage 2 lifecycle verification completed | Diagnostic documentation reviewed/committed as `df58d99`. Two full test-script runs passed (13 PostgreSQL tests, build, 3 Chromium checks each), with no test resources left. Fresh development startup/migrations, 3 development Chromium checks, proxy connectivity, isolation, and restart persistence passed; final cleanup retains development data and unrelated resources. Docker/Git/host-loopback access used explicit sandbox approvals. Documentation links/anchors, configuration, shell syntax, diff, and whitespace checked. Commit: `docs: complete Stage 2 lifecycle verification`. Stage 2 completed; Stage 3 implementation remained unstarted. |
 | 2026-10-08 | Stage 3 plan reviewed against verified foundation | Clarified existing scaffolding, session/CSRF proxy checks, transactional account/grant services, minimal timesheet backfill, administrator bootstrap/reset proposals, fixture isolation, and completion boundaries for later endpoints. Removed obsolete session instructions while retaining infrastructure findings and milestone evidence. Documentation consistency, local links/anchors, and whitespace checked; no runtime tests run for this documentation review. Stage 3 implementation remains Not started. Commit: `docs: refine Stage 3 plan and remove stale handovers`. |
 | 2026-10-08 | Stage 3 backend implemented and verified | Session/CSRF, account/bootstrap/reset, project/organization/grant APIs and shared policies implemented; additive migrations/backfill and transactional domain services verified. System/drift checks and 35 PostgreSQL tests pass, including permission matrix, upgrade, rollback, and independent-connection races. Browser/full lifecycle verification pending; Stage 3 remains In progress. Commit: `feat: implement Stage 3 account and permission backend`. |
+| 2026-10-08 | Stage 3 management interface verified | Added session-aware frontend client and login/account/catalog/grant screens. First full clean test script exited 0 with 35 PostgreSQL tests, build, 9 Chromium checks, and inspected cleanup. Corrected browser test header typing and catalog select locator; repeatability run is in progress. Stage 3 remains In progress. Commit: `feat: add Stage 3 account and grant management screens`. |

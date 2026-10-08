@@ -4,7 +4,7 @@ body { margin: 0; }
 main { max-width: 1100px; min-height: 100vh; padding: 30px 40px; margin: auto; display: flex; flex-direction: column; }
 header { display: flex; justify-content: space-between; gap: 20px; color: #65766e; font-size: 14px; }
 .brand { font-weight: 750; color: #183c35; font-size: 18px; }
-section { flex: 1; padding: 95px 0 70px; max-width: 760px; }
+.welcome { padding: 95px 0 70px; max-width: 760px; }
 .eyebrow { text-transform: uppercase; font-size: 12px; letter-spacing: .15em; color: #526e60; }
 h1 { font-size: clamp(32px, 5vw, 58px); line-height: 1.12; letter-spacing: -.04em; font-weight: 600; margin: 24px 0; }
 .intro { max-width: 590px; font-size: 18px; line-height: 1.7; color: #566b61; }
@@ -16,4 +16,28 @@ button { background: #1d4e45; color: white; border: 0; border-radius: 8px; paddi
 button:disabled { opacity: .55; cursor: wait; }
 button:focus-visible { outline: 3px solid #89b49e; outline-offset: 3px; }
 footer { border-top: 1px solid #dce2d8; padding-top: 20px; font-size: 13px; color: #65766e; }
-@media (max-width: 550px) { main { padding: 24px; } section { padding-top: 65px; } header { flex-wrap: wrap; } }
+@media (max-width: 550px) { main { padding: 24px; } .welcome { padding-top: 45px; } header { flex-wrap: wrap; } }
+
+.workspace { width: 100%; padding: 24px 0 40px; }
+.welcome { padding: 42px 0 25px; }
+h1 { font-size: clamp(30px, 4vw, 48px); }
+.connection { margin: 20px 0 14px; }
+.session, nav, .inline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.session { border-top: 1px solid #dce2d8; padding: 20px 0; }
+nav { padding-bottom: 12px; }
+nav button[aria-pressed="false"], .secondary { background: #e3e9df; color: #183c35; }
+form { padding: 18px 0; }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+label { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; max-width: 520px; font-size: 15px; }
+input, select { font: inherit; color: inherit; padding: 10px; border: 1px solid #a9b9aa; background: white; border-radius: 5px; max-width: 100%; }
+.checks { display: flex; gap: 10px 20px; flex-wrap: wrap; margin-bottom: 12px; }
+.checks label { flex-direction: row; align-items: center; }
+input[type="checkbox"] { width: 18px; height: 18px; }
+table { border-collapse: collapse; width: 100%; margin: 24px 0; display: block; overflow-x: auto; }
+caption { text-align: left; font-weight: 650; margin-bottom: 12px; }
+th, td { text-align: left; padding: 10px; border-bottom: 1px solid #dce2d8; }
+.catalog { padding: 0; list-style: none; }
+.inline { padding: 6px 0; }
+.inline input { min-width: 140px; flex: 1; }
+[role="alert"] { color: #183c35; background: #e6ebdf; border-left: 3px solid #526e60; padding: 14px; }
+footer { margin-top: auto; }
