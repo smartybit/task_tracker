@@ -1,0 +1,19 @@
+:root { font-family: system-ui, sans-serif; color: #183c35; background: #f5f6f0; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1100px; min-height: 100vh; padding: 30px 40px; margin: auto; display: flex; flex-direction: column; }
+header { display: flex; justify-content: space-between; gap: 20px; color: #65766e; font-size: 14px; }
+.brand { font-weight: 750; color: #183c35; font-size: 18px; }
+section { flex: 1; padding: 95px 0 70px; max-width: 760px; }
+.eyebrow { text-transform: uppercase; font-size: 12px; letter-spacing: .15em; color: #526e60; }
+h1 { font-size: clamp(32px, 5vw, 58px); line-height: 1.12; letter-spacing: -.04em; font-weight: 600; margin: 24px 0; }
+.intro { max-width: 590px; font-size: 18px; line-height: 1.7; color: #566b61; }
+.connection { display: flex; align-items: center; gap: 12px; margin: 36px 0 20px; line-height: 1.5; }
+.dot { flex: 0 0 9px; height: 9px; border-radius: 50%; background: #9b9b80; }
+.dot.connected { background: #28865c; }
+.dot.error { background: #b24832; }
+button { background: #1d4e45; color: white; border: 0; border-radius: 8px; padding: 12px 18px; font: inherit; cursor: pointer; }
+button:disabled { opacity: .55; cursor: wait; }
+button:focus-visible { outline: 3px solid #89b49e; outline-offset: 3px; }
+footer { border-top: 1px solid #dce2d8; padding-top: 20px; font-size: 13px; color: #65766e; }
+@media (max-width: 550px) { main { padding: 24px; } section { padding-top: 65px; } header { flex-wrap: wrap; } }

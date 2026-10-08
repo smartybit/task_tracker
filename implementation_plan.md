@@ -11,20 +11,24 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Last updated: 2026-10-08.
 - Planning documents and the implementation roadmap are prepared.
 - Stage 1 design is complete: 1 of 9 implementation stages complete.
-- The repository currently contains documentation only. No application, database
-  migrations, or executable test suite has been created or run.
-- The reusable test environment and its per-stage use are described below;
-  implementation of that environment begins in Stage 2.
-- Next action: Stage 2, scaffold the containerized application and test harness.
-  The initial Docker version probe was denied, but the approved Docker info
-  diagnostic succeeded; verify container execution before relying on the setup.
+- Stage 2 now has Django/REST Framework, account/core migrations, a health API,
+  a React/TypeScript/Vite shell, locked dependencies, and isolated test configuration.
+  Task, permission, timesheet, reporting, and content workflows are not implemented.
+- Container-level PostgreSQL/backend, frontend-build, and Chromium checks are
+  verified. Full Compose startup and the combined reset/test/cleanup script remain
+  unverified because this session denies Compose startup access to the Docker socket.
+- Next action: verify the documented Compose workflows, then finish the foundation
+  before moving to Stage 3. See [README.md](README.md) for commands and limitations.
+- Cleanup limitation: stop the three named temporary foundation containers from
+  a Docker-enabled terminal; this session denied both interrupt forwarding and
+  `docker stop`. README lists their exact names and loopback-only ports.
 
 ## Progress Overview
 
 | Stage | Result | Status | Completion evidence |
 | --- | --- | --- | --- |
 | 1 | Data model and API operation design | Done | [Design and worked examples](docs/domain_design.md); documentation checks recorded below |
-| 2 | Runnable application foundation | Not started | — |
+| 2 | Runnable application foundation | In progress | Component checks pass; full Compose workflow pending |
 | 3 | Accounts, organization/project setup, and permissions | Not started | — |
 | 4 | Task management and task interface | Not started | — |
 | 5 | Timesheet engine | Not started | — |
@@ -74,13 +78,13 @@ design milestone only, not evidence of functioning features or executed tests.
 
 ## Stage 2: Application Foundation
 
-- [ ] Scaffold Django/REST Framework and React/TypeScript/Vite with PostgreSQL.
+- [x] Scaffold Django/REST Framework and React/TypeScript/Vite with PostgreSQL.
 - [ ] Add reproducible development startup using Docker Compose, dependency
   lockfiles, configuration templates, and appropriate ignored/generated paths.
 - [ ] Establish the backend modules and versioned API structure from Stage 1.
-- [ ] Introduce the initial account/database migrations and a minimal frontend
+- [x] Introduce the initial account/database migrations and a minimal frontend
   shell that can communicate with the backend.
-- [ ] Set up the test harness and isolated PostgreSQL test data. Document verified
+- [x] Set up the test harness and isolated PostgreSQL test data. Document verified
   setup, migration, build, and test commands.
 - [ ] Implement shared test configuration, database/upload isolation, seed/reset
   and readiness handling, selected test tooling, and result capture. Add an initial
@@ -94,6 +98,13 @@ documented test/reset workflow without touching development data.
 Completion check: a fresh development setup starts successfully, migrations run,
 the frontend reaches the API, the frontend builds, and the initial automated
 checks run against PostgreSQL. No unimplemented feature is presented as complete.
+
+Current evidence: backend and frontend images build; account/core migrations,
+system/migration checks, PostgreSQL foundation tests, TypeScript/production build,
+and Chromium smoke workflows run through the component commands in README.
+Only account/core backend modules are introduced so far; remaining feature modules
+will grow in their respective stages. Full Compose startup/reset/cleanup and its
+single test entry point require verification before Stage 2 is marked Done.
 
 ## Stage 3: Accounts and Permissions
 
@@ -283,3 +294,4 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 | 2026-10-08 | Reusable test setup documented | Architecture defines shared services, isolation, fixtures, execution lifecycle, and evidence; all nine stages identify their test environment. Documentation consistency, local links, and whitespace checked in the commit titled `docs: describe reusable test setup across implementation stages`. No runtime or application tests implemented or run; next action remains Stage 1. |
 | 2026-10-08 | Search infrastructure direction recorded | Architecture and Stage 8 specify PostgreSQL-backed search through Django, without a separate search service for v1. Diff, local link/heading, and whitespace checked; no application tests run. Commit: `docs: record PostgreSQL search approach`. Next: Stage 1. |
 | 2026-10-08 | Stage 1 design completed | Domain records, API/access/error contracts, timeline commands, locking, and worked acceptance examples reviewed against requirements and charter; 26 Markdown links/anchors and whitespace checked. No application/database/browser tests run. Environment probe: Python 3.13.5 and Compose v5.5.1 available; initial Docker version denied, approved Docker info succeeded (29.8.0); host Node/npm absent. Commit: `docs: complete initial domain and API design`. Next: Stage 2 and container execution checks. |
+| 2026-10-08 | Stage 2 foundation implemented and component-verified | Built Django/React images; PostgreSQL 17.11 migrations and migration-drift/system checks passed; 13 backend tests passed; TypeScript and Vite production build passed; 3 Playwright 1.64.0 checks passed against real API/database services, including the internal Compose hostname. Backend checks/seed entry point exercised, Compose files validated, shell syntax/local links/whitespace checked. Commands/environment documented in README. Compose startup was denied by session Docker socket permissions, so full orchestration/reset/cleanup script is not claimed verified and Stage 2 remains In progress. Commit: `feat: scaffold Dockerized Django and React foundation`. Next: verify Compose workflows and finish Stage 2 before accounts/permissions implementation. |

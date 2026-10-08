@@ -1,0 +1,56 @@
+name: task-tracker-dev
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: task_tracker_dev
+      POSTGRES_USER: task_tracker_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-development-only-password}
+    volumes:
+      - development-db:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U task_tracker_dev -d task_tracker_dev"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  web:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    image: task-tracker-web:dev
+    environment:
+      APP_ENV: development
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-development-only-not-for-deployment}
+      DJANGO_DEBUG: "true"
+      POSTGRES_DB: task_tracker_dev
+      POSTGRES_USER: task_tracker_dev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-development-only-password}
+      POSTGRES_HOST: db
+      WORKING_TIME_ZONE: ${WORKING_TIME_ZONE:-UTC}
+      UPLOAD_ROOT: /tmp/development-uploads
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    ports:
+      - "127.0.0.1:5173:5173"
+    volumes:
+      - ./frontend/src:/app/src:ro
+      - ./frontend/index.html:/app/index.html:ro
+      - ./frontend/vite.config.ts:/app/vite.config.ts:ro
+    depends_on:
+      web:
+        condition: service_healthy
+volumes:
+  development-db:

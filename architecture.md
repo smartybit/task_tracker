@@ -124,8 +124,11 @@ for search results and snippets.
 
 Introduce this shared environment in Stage 2 of the
 [implementation plan](implementation_plan.md#stage-2-application-foundation), then
-extend its fixtures and checks as features arrive. This describes intended setup,
-not an environment already implemented or tests already run. The
+extend its fixtures and checks as features arrive. Initial container images,
+PostgreSQL/backend checks, and browser smoke tests are implemented; the complete
+Compose startup/reset workflow remains unverified. See [README.md](README.md) for
+commands and limitations and the tracker for actual results. The remaining setup
+below is a target, not a claim that later feature tests exist. The
 [testing charter](testing_charter.md) defines the scenarios and acceptance priorities.
 
 ### Services and Isolation
@@ -179,9 +182,10 @@ not an environment already implemented or tests already run. The
 
 ### Setup, Execution, and Evidence
 
-- Select and lock backend, component, and browser test tooling during Stage 2,
-  including an initial browser smoke-check target. No test runner or supported
-  browser matrix has been selected yet.
+- Initial tooling is Django's built-in test runner, TypeScript/build checks, and
+  Playwright 1.64.0 with Chromium smoke tests. Component-specific tooling and broader
+  browser coverage remain deferred until needed; Chromium is the current test
+  target, not a claim of cross-browser acceptance.
 - Add verified repository entry points for building/starting services, migrations,
   seeding/resetting test data, running each test layer, and cleaning up test-owned
   resources. Document exact commands once implemented and successfully exercised;
