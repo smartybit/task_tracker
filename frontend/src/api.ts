@@ -59,7 +59,7 @@ export async function allPages<T>(path: string): Promise<T[]> {
   const result: T[] = [];
   let next: number | null = 1;
   while (next !== null) {
-    const page: { results: T[]; next: number | null } = await api(`${path}?page=${next}`);
+    const page: { results: T[]; next: number | null } = await api(`${path}${path.includes("?") ? "&" : "?"}page=${next}`);
     result.push(...page.results);
     next = page.next;
   }

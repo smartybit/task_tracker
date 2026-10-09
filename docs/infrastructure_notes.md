@@ -97,6 +97,40 @@ run. Final Docker inspection retained both development/downloader volumes and
 all five unrelated container IDs; no development migrations or fixture resets
 were run. Stage 3 is complete; Stage 4 remains unstarted.
 
+## Stage 4 Verification Findings: 2026-10-09
+
+Use role/name selectors for wrapped select and prefilled textarea controls in
+Chromium tests.
+An exact `getByLabel` match can include option text or initial textarea content
+and wait indefinitely even though the control's accessible name is correct. The first Stage 4
+browser attempt passed the nine existing checks, then timed out in the new task
+workflows at these selectors. The obsolete attempt was stopped by tearing down
+only the test stack; subsequent connection failures in that attempt were caused
+by this teardown, not by application behavior. Corrected scenarios use explicit
+role/name selectors. The suite allows 90 seconds for account/project setup plus
+full workflows, retaining the normal short assertion deadlines. The first full
+Stage 4 attempt passed all 54 backend tests but the existing account lifecycle
+scenario exceeded its old 30-second limit after reaching account deactivation;
+the shared scenario deadline was increased accordingly.
+
+Compose `down --volumes` does not stop a still-running one-off browser container.
+The first teardown retained the test network until that browser exited with its
+`--rm` cleanup. Inspect label-filtered containers/networks after completion and
+repeat scoped cleanup if necessary. Do not treat the first `down` exit code alone
+as proof that the complete test project was removed.
+
+A subsequent two-scenario rerun's Compose client exited 130 while its one-off
+browser container continued running. The retained `.last-run.json` reported
+`passed` with no failed tests and a desktop screenshot was produced; the browser
+container then removed itself. This is component evidence, not a successful
+lifecycle command. Full lifecycle runs retain command logs separately under `/tmp`.
+No host permissions or Docker daemon configuration were changed.
+
+Backend component verification passed fresh migrations/system/drift checks,
+52 PostgreSQL regressions, and two additional focused write-only regressions.
+Stage 4 full lifecycle acceptance remains pending; current results are maintained
+in the implementation tracker.
+
 ## Docker Access Is Session-Specific
 
 Before approved lifecycle verification, an earlier agent session produced these

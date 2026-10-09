@@ -95,6 +95,24 @@ These cases were not part of the successful Stage 3 suite.
   upgrade preserving existing users, grants, and timesheet rows. Check permanent
   first-use protection after the last referencing task changes status or is deleted.
 
+### Stage 4 Browser Acceptance
+
+Exercise task creation/editing and ownership transfer through the real frontend,
+including persistence after reload. Use a three-level tree, collapse/expand it,
+and combine project and multiple-status filters; matching children remain visible
+when their parents are filtered out. Check status history, blocked finalization,
+ancestor-reopening previews, cancellation, cycle rejection, subtree project moves,
+and protected/eligible deletion.
+
+Use independent browser contexts for stale task revisions and revoke grants from
+another session. Cover read-only controls, write-only creation without content
+responses, denied actions from stale screens, and administrators without data
+grants. Invalidate a preview with another domain mutation and require a new review.
+Configure unused statuses through the management UI and verify used-status controls
+are protected. Exercise keyboard input/focus, repeated confirmation clicks, and
+recovery from a failed request without losing the draft. Capture desktop and narrow
+viewport screenshots for inspection; Chromium remains the acceptance browser.
+
 ### 4. Reconcile Reports and CSV with Recorded Work
 
 - Require project task read access for every reported project. Without Read Others'
@@ -137,7 +155,8 @@ shared services, isolation, fixture/reset handling, and result capture. The
 [implementation plan](implementation_plan.md#shared-test-environment) maps that
 environment to each stage. Initial executable foundation checks exist; see
 [README.md](README.md) for verified setup commands and the tracker for actual
-results. Stage 2 and Stage 3 checks passed; task, time-entry, report, and content
+results. Stage 2 and Stage 3 checks passed. Stage 4 task checks are implemented
+and undergoing full acceptance verification; time-entry, report, and content
 workflow checks remain planned.
 
 - Use focused automated tests for business rules and meaningful boundary cases.

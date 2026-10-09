@@ -14,10 +14,39 @@ Administrators have no automatic application-data grants. See the tracker for
 current verification results. Stage 3 acceptance passed two complete test runs,
 each with 35 PostgreSQL backend tests and 9 Chromium checks.
 
-Task management, task statuses, time recording, reports, remarks, images, and
-search remain unimplemented. Timesheets currently contain only the per-user
-coordination record; no time-entry workflow is available. No personal account is
+Stage 4 adds task creation/editing, ownership transfer, flat/tree lists, project
+and multiple-status filters, hierarchy/project moves, status history, and protected
+status catalogs. Its acceptance verification is in progress; see the tracker.
+
+Time recording, reports, remarks, images, and search remain unimplemented. Minimal
+time-record relationships support task deletion protection; no time-entry workflow
+is available. No personal account is
 created automatically, and public registration is unavailable.
+
+## Task Management
+
+After sign-in, regular users see their task workspace; administrators select
+**Tasks**. Task access follows current project/organization grants. Administrators
+need explicit grants to view or modify tasks. **Refresh tasks** reloads current
+access and data; **Refresh access** also refreshes account/catalog management.
+
+Create a task in a writable project, optionally choose a parent, and review the
+preview before confirming. Click a task to open its description, status history,
+and permitted editing controls. Use the project/status filters and Flat/Tree view
+button to find work. With status filters active, matching tasks whose parents are
+excluded appear at the top level.
+
+Status changes, moves, and deletion require a preview and confirmation. Choose a
+non-final status for any final ancestors that must reopen. A move's destination
+project is explicit and applies to the subtree; every owner's eligibility is
+checked. Tasks with children or any recorded time cannot be deleted. A stale task
+or preview refreshes the workspace and requires another review.
+
+Administrators configure statuses under **Statuses**. Once used, a status remains
+protected even after its tasks change status or are deleted. Write-only project
+access permits task creation with a safe acknowledgement; browsing descriptions
+and lists requires task read access. Advanced write-only changes remain available
+through the revision-aware API described in the domain design.
 
 ## Runtime and Dependencies
 
@@ -77,7 +106,7 @@ password. Share a reset password directly; no email is sent. Password resets and
 deactivation revoke existing sessions; reactivation requires a new sign-in.
 Catalogs manages organizations/projects; an organization with projects cannot be
 deleted, and existing projects cannot change organizations through a field edit.
-Task-status catalogs belong to Stage 4.
+Statuses manages task-status catalogs; projects referenced by tasks cannot be deleted.
 
 Current limitation: account updates do not protect the last active administrator
 from deactivation or demotion, and no supported recovery command exists. Keep an

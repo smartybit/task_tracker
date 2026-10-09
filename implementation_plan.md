@@ -286,7 +286,7 @@ Commit: `docs: record Stage 3 completion and verification`.
   models as needed to verify the restriction even before time recording is usable;
   reuse the existing Timesheet row and defer recording commands to Stage 5.
   Protect projects referenced by tasks against catalog deletion.
-- [ ] Build flat/tree task lists, project and multiple-status filters, and the
+- [x] Build flat/tree task lists, project and multiple-status filters, and the
   task description window.
 - [x] Verify hierarchy/project changes and ownership after access loss. Exercise
   concurrent task operations where they can invalidate the business rules.
@@ -316,6 +316,18 @@ and write-only/revoked command responses (54 tests now defined). Interface sourc
 and TypeScript/production build are complete; browser and repeatable full lifecycle
 acceptance remain pending. Stage 4 stays In progress; Stage 5 is Not started.
 Commit: `feat: implement Stage 4 task and status backend`.
+
+Interface milestone (2026-10-09): task workspace and status administration
+implemented. The first full script attempt passed all 54 PostgreSQL tests,
+TypeScript/production build, and all seven new task browser scenarios; eight of
+nine existing browser checks also passed. The existing account lifecycle scenario
+reached deactivation but exceeded its 30-second deadline, so the attempt exited 1.
+Scoped cleanup was inspected and no test containers/networks/volumes remained.
+The shared browser scenario deadline is now 90 seconds, with short assertion
+deadlines unchanged. Desktop/narrow screenshots were inspected. Two sequential
+successful full runs with this configuration are still required. Stage 4 In
+progress; Stage 5 Not started.
+Commit: `feat: add Stage 4 task workspace and status management`.
 
 ## Stage 5: Timesheet Engine
 
@@ -479,3 +491,5 @@ defined in Current Position and the stage sections above.
 | 2026-10-08 | Post-Stage 3 lessons incorporated | Updated shared test setup to reflect implemented coverage and strengthened Stage 4 plans for service reuse, real endpoint permissions, status protection, Stage 3 schema upgrades, and repeatable scoped cleanup. Account-service review identified last-active-admin lockout; recorded a proposed safeguard and recovery decision without changing agreed behavior. Checked documentation consistency, 47 local Markdown links/anchors, and whitespace; no runtime tests run for this documentation-only change. Stage 4 remains Not started. Commit: `docs: incorporate Stage 3 lessons into remaining plan`. |
 
 | 2026-10-09 | Stage 4 backend implemented | Additive task/status and time-reference migrations, strict revision-aware command/preview endpoints, scoped owner selection, permanent status triggers, and atomic hierarchy/history/deletion rules. Fresh migrations and system/drift checks passed; full 52-test PostgreSQL regression suite passed, including five task races and Stage 3 upgrade. Two added focused write-only regressions passed; 54 tests now defined. Browser/full lifecycle acceptance pending; Stage 4 In progress, Stage 5 Not started. Commit: `feat: implement Stage 4 task and status backend`. |
+
+| 2026-10-09 | Stage 4 interface implemented and component-verified | Added flat/tree task workspace, project/multiple-status filters, description/history panel, owner/status/move/deletion flows, safe creation in write-only projects, and status catalogs. First full script attempt passed 54 PostgreSQL tests, build, all seven new Chromium scenarios, and eight existing checks; one existing account lifecycle scenario exceeded 30 seconds after reaching deactivation. Attempt exited 1 and scoped cleanup was inspected. Shared scenario deadline adjusted to 90 seconds; assertions remain bounded. Desktop/narrow screenshots inspected. Two successful full runs pending; Stage 4 In progress, Stage 5 Not started. Commit: `feat: add Stage 4 task workspace and status management`. |
