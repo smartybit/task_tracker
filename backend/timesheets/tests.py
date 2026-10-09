@@ -414,6 +414,11 @@ class Stage5Tests(TimesheetFixtures, TestCase):
                 self.assertEqual(planned.status_code, 200 if write else 403)
                 if write:
                     self.assertEqual('before' in planned.data, read)
+                    failed = client.post(cmd_path + 'preview/', {**data, 'at': '2026-10-09T09:00Z'}, format='json')
+                    self.assertEqual(failed.status_code, 400)
+                    if not read:
+                        self.assertEqual(set(failed.data['fields']), {'timeline'})
+                        self.assertNotIn(str(row.pk), str(failed.data))
                     result = client.post(cmd_path, {**data, 'confirm': True, 'expected_domain_revision': planned.data['domain_revision']}, format='json')
                     self.assertEqual(result.status_code, 200, result.data)
                     self.assertEqual(set(result.data), {'user', 'revision'})

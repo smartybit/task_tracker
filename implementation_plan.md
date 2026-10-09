@@ -439,6 +439,13 @@ connection races and a Stage 4 lifecycle upgrade are now defined. Full expanded
 suite twice, running-stack reset and cleanup inspection remain pending. Stage 5
 stays In progress until that acceptance completes; Stage 6 remains Not started.
 
+Review follow-up: validation against stored neighboring rows now removes row IDs
+from errors for write-only callers. Readers retain row-associated draft errors.
+The actual endpoint permission-matrix regression includes that failure path.
+Source `601ed20` passed all 82 PostgreSQL tests and the production build in the
+first full invocation; Chromium/lifecycle completion is still pending. The final
+error-response follow-up will receive its own focused check and repeated full runs.
+
 ## Stage 6: Timesheet Interface
 
 - [ ] Build the right-hand Task / Start Time / End Time table and Day selector.

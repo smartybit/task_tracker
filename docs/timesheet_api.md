@@ -75,7 +75,8 @@ task action. Historical selections and Edit day do not change task statuses.
 Post a `boundary`, `delete_last`, or `resume` command to
 `/api/v1/timesheets/{user}/commands/preview/` first. It returns `revision`,
 `domain_revision`, `user`, and `advice`. Readers also receive `before` and `after`
-day data. Write-only callers receive no stored timeline content. Preview performs
+day data. Write-only callers receive no stored timeline content; validation errors use a generic `timeline` key instead
+of stored row identifiers. Preview performs
 all validation but no writes or revision increments.
 
 Apply that command through `/commands/` with `confirm: true` and

@@ -376,6 +376,17 @@ def prepare(actor, owner, data):
     return actor, sheet, values
 
 
+def safe_plan(actor, sheet, values):
+    try:
+        return plan(actor, sheet, values)
+    except DomainError as exc:
+        # Whole-sheet write does not authorize discovering stored row identifiers
+        # through validation against a different day or session.
+        if exc.code == 'invalid_timeline' and not can_timesheet(actor, sheet.user_id):
+            exc.fields = {'timeline': [exc.message]}
+        raise
+
+
 def persist(sheet, sessions, rows):
     old_sessions, old_rows = load(sheet, normalized=False)
     fields = ('session_id', 'kind', 'task_id', 'started_at', 'ended_at')
@@ -401,7 +412,7 @@ def command(actor, owner, data):
             raise DomainError('confirmation_required', 'Preview and confirm the affected changes first.', 409)
         if values.get('expected_domain_revision') != MutationLock.objects.get(pk='domain').revision:
             raise DomainError('stale_preview', 'Access or data changed. Preview the changes again.', 409)
-    sessions, rows = plan(actor, sheet, values)
+    sessions, rows = safe_plan(actor, sheet, values)
     persist(sheet, sessions, rows)
     return {'user': str(owner), 'revision': sheet.revision}
 
@@ -412,7 +423,7 @@ def preview(actor, owner, data):
     actor, sheet, values = prepare(actor, owner, data)
     if values['command'] not in PREVIEWED:
         raise DomainError('invalid_input', 'This command does not use a preview.')
-    sessions, rows = plan(actor, sheet, values)
+    sessions, rows = safe_plan(actor, sheet, values)
     result = {'user': str(owner), 'revision': sheet.revision, 'domain_revision': lock.revision,
               'advice': 'Convert the closing marker to a break.' if values['command'] == 'resume' else 'Review the affected boundaries.'}
     if can_timesheet(actor, owner):
