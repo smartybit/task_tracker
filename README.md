@@ -166,6 +166,42 @@ requires the dedicated test database/user and never seeds development accounts.
 The test runner creates and destroys its own `test_task_tracker_test` database;
 browser fixtures use the separately migrated `task_tracker_test` database.
 
+### Verification Helpers
+
+Reusable helpers from Stage 4 are maintained in `scripts/`. They resolve the
+repository from their own location and can also be invoked from another directory
+using their absolute paths.
+
+For a bounded full test run with a captured log and exit status:
+
+```sh
+sh scripts/test-runner.sh verification-1 full
+```
+
+This runs the same `scripts/test.sh` workflow with a 20-minute limit, foreground
+supervision, and closed standard input. Results default to ignored
+`.artifacts/verification/verification-1.log` and `.status`; the wrapper returns
+the test command's exit status. Use a new label for each run. An optional third
+argument selects an output directory, relative to the caller's working directory.
+Keep the wrapper in the foreground and run sequentially. A missing status file
+means completion was not recorded; inspect test-owned resources after interruptions
+as described in the infrastructure notes.
+
+For the focused account-revocation browser scenario on an already running,
+prepared **test** stack, use `sh scripts/test-runner.sh account-1 account`.
+This mode has a three-minute limit and leaves the existing stack running.
+
+Check inline local Markdown links and heading anchors in root/docs files with
+`python3 scripts/check-links.py` (requires host Python 3). This is a small local
+link checker, not a complete Markdown validator or external URL checker.
+
+For Docker access troubleshooting, run `bash scripts/docker-diagnostics.sh` from
+your normal terminal without sudo. It collects read-only host/socket/context and
+daemon information, with a 20-second limit per command when `timeout` is available.
+Unavailable or failed checks are reported and do not stop subsequent checks; its
+final exit code does not establish that Docker access works. The bounded test
+wrapper requires GNU `timeout` with `--foreground` support.
+
 ### Historical Component Verification
 
 The following loopback-only temporary container arrangement was used for initial

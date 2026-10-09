@@ -113,6 +113,16 @@ captures its log plus a separate exit-status file:
 timeout --foreground 1200 sh scripts/test.sh < /dev/null
 ```
 
+The temporary helpers are now maintained as
+[`scripts/test-runner.sh`](../scripts/test-runner.sh),
+[`scripts/check-links.py`](../scripts/check-links.py), and
+[`scripts/docker-diagnostics.sh`](../scripts/docker-diagnostics.sh).
+The runner resolves the checkout from its location and defaults new log/status
+files to ignored `.artifacts/verification/`; see
+[Verification Helpers](../README.md#verification-helpers) for usage and the
+focused account mode's prepared-stack requirement. Historical results below
+remain at their original paths and were produced by the original temporary runner.
+
 Successful logs/status files remain under `/tmp/task-tracker-stage4-verified1`
 and `verified2` with `.log`/`.status` extensions. Keep foreground supervision,
 command completion, and scoped cleanup distinct from service health. The first

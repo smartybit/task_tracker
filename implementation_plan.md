@@ -10,6 +10,13 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 - Last updated: 2026-10-09.
 - Stages 1–4 are complete: 4 of 9 implementation stages complete.
+- Stage 4 follow-up: preserved the temporary verification runner, local Markdown
+  link checker, and read-only Docker diagnostics under `scripts/`, with portable
+  paths and documented usage. Shell syntax, 50 local links/anchors, and isolated
+  helper checks passed (both modes, success/failure status capture, closed input,
+  external working directories, invalid arguments, overwrite protection, and
+  diagnostic continuation). Application suites were not rerun for this tooling-only
+  change; Stage 5 remains Not started.
 - Accounts/session authentication, organization/project catalogs, grants, and task
   management are implemented. Tasks include owners, descriptions, flat/tree lists,
   project/multiple-status filters, hierarchy/project moves, configured statuses,
