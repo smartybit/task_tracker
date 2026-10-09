@@ -329,6 +329,19 @@ successful full runs with this configuration are still required. Stage 4 In
 progress; Stage 5 Not started.
 Commit: `feat: add Stage 4 task workspace and status management`.
 
+Session-regression follow-up (2026-10-09): a longer run established that the
+account scenario waited for Refresh access after an in-flight task request had
+already invalidated the colleague's session and returned to sign-in. The test now
+reloads after deactivation/password reset and verifies sign-in independently of
+which request detects revocation first. The focused account workflow passed.
+The preceding full attempt again passed all 54 backend checks; its command client
+later exited 143 while the browser container continued. Its retained browser
+result identified only the account scenario as failed. Do not count that attempt
+as successful lifecycle acceptance. Final runs use a bounded background wrapper
+with separate log and exit-status files so a client disconnect cannot hide results.
+Stage 4 remains In progress; two successful full runs are pending.
+Commit: `test: handle prompt session revocation during task loading`.
+
 ## Stage 5: Timesheet Engine
 
 - [ ] Implement task starts/switches, breaks, end-of-day markers, and personal or
@@ -493,3 +506,5 @@ defined in Current Position and the stage sections above.
 | 2026-10-09 | Stage 4 backend implemented | Additive task/status and time-reference migrations, strict revision-aware command/preview endpoints, scoped owner selection, permanent status triggers, and atomic hierarchy/history/deletion rules. Fresh migrations and system/drift checks passed; full 52-test PostgreSQL regression suite passed, including five task races and Stage 3 upgrade. Two added focused write-only regressions passed; 54 tests now defined. Browser/full lifecycle acceptance pending; Stage 4 In progress, Stage 5 Not started. Commit: `feat: implement Stage 4 task and status backend`. |
 
 | 2026-10-09 | Stage 4 interface implemented and component-verified | Added flat/tree task workspace, project/multiple-status filters, description/history panel, owner/status/move/deletion flows, safe creation in write-only projects, and status catalogs. First full script attempt passed 54 PostgreSQL tests, build, all seven new Chromium scenarios, and eight existing checks; one existing account lifecycle scenario exceeded 30 seconds after reaching deactivation. Attempt exited 1 and scoped cleanup was inspected. Shared scenario deadline adjusted to 90 seconds; assertions remain bounded. Desktop/narrow screenshots inspected. Two successful full runs pending; Stage 4 In progress, Stage 5 Not started. Commit: `feat: add Stage 4 task workspace and status management`. |
+
+| 2026-10-09 | Stage 4 session regression corrected | A trace showed that background task requests can detect deactivation before the colleague clicks Refresh access. Updated the existing account browser scenario to reload and assert sign-in after deactivation/password reset; focused workflow passed. The prior full attempt passed 54 backend tests but its command client exited 143 while Chromium continued; its retained browser result identified only the account scenario as failed. Full acceptance remains pending. Commit: `test: handle prompt session revocation during task loading`. |

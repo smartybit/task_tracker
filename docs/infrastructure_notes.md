@@ -113,6 +113,16 @@ Stage 4 attempt passed all 54 backend tests but the existing account lifecycle
 scenario exceeded its old 30-second limit after reaching account deactivation;
 the shared scenario deadline was increased accordingly.
 
+The longer subsequent run established the account scenario's underlying wait:
+a task request still in flight at deactivation promptly returned the colleague
+to sign-in, so the test waited for a Refresh access button that had disappeared.
+Reload the colleague page after deactivation/password reset and assert sign-in;
+this verifies invalidation whether a background request has already detected it
+or the reload is the next request. Use an independent synthetic account name when
+rerunning that scenario. The 90-second scenario limit remains appropriate for
+complete task workflows that measured over 30 seconds; increasing a timeout alone
+does not resolve an obsolete UI-state assumption.
+
 Compose `down --volumes` does not stop a still-running one-off browser container.
 The first teardown retained the test network until that browser exited with its
 `--rm` cleanup. Inspect label-filtered containers/networks after completion and
@@ -125,6 +135,15 @@ browser container continued running. The retained `.last-run.json` reported
 container then removed itself. This is component evidence, not a successful
 lifecycle command. Full lifecycle runs retain command logs separately under `/tmp`.
 No host permissions or Docker daemon configuration were changed.
+
+Another full-run client exited 143 after the backend/build phase while its
+browser container continued. No test-runner process remained on the host; the
+browser's retained result identified only the account scenario as failed. The
+corrected account scenario subsequently passed in 27 seconds. For final acceptance,
+launch a bounded wrapper with `nohup`, redirect logs under `/tmp`, and write a
+separate exit-status file after `timeout 1200 sh scripts/test.sh` returns. Inspect
+both that status and scoped Docker cleanup. This changes process supervision,
+not daemon/host permissions or the checks inside the repository test entry point.
 
 Backend component verification passed fresh migrations/system/drift checks,
 52 PostgreSQL regressions, and two additional focused write-only regressions.

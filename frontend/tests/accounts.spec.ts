@@ -60,7 +60,7 @@ test("the Compose proxy enforces CSRF on login and authenticated mutations", asy
 });
 
 test("administrator creates, edits, deactivates, and resets an account through the UI", async ({ page, browser }) => {
-  const email = "ui-account@example.test";
+  const email = `ui-account-${Date.now()}@example.test`;
   await login(page);
   const create = page.getByRole("form", { name: "Create account", exact: true });
   await create.getByLabel("Account email").fill(email);
@@ -83,7 +83,8 @@ test("administrator creates, edits, deactivates, and resets an account through t
     await edit.getByLabel("Active account").uncheck();
     await edit.getByRole("button", { name: "Save account" }).click();
     await expect(page.getByRole("row").filter({ hasText: email })).toContainText("Inactive");
-    await colleague.getByRole("button", { name: "Refresh access" }).click();
+    // A task request may already have returned this revoked session to sign-in.
+    await colleague.reload();
     await expect(colleague.getByRole("form", { name: "Sign in", exact: true })).toBeVisible();
     await edit.getByLabel("Active account").check();
     await edit.getByRole("button", { name: "Save account" }).click();
@@ -93,7 +94,8 @@ test("administrator creates, edits, deactivates, and resets an account through t
     await reset.getByLabel("New password").fill("new-browser-stage-three-password");
     await reset.getByRole("button", { name: "Reset password", exact: true }).click();
     await expect(page.getByRole("alert")).toHaveText("Changes saved.");
-    await colleague.getByRole("button", { name: "Refresh access" }).click();
+    // A task request may already have returned this revoked session to sign-in.
+    await colleague.reload();
     await expect(colleague.getByRole("form", { name: "Sign in", exact: true })).toBeVisible();
     await login(colleague, email, "new-browser-stage-three-password");
   } finally { await other.close(); }
