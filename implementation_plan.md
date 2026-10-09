@@ -8,7 +8,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 ## Current Position
 
-- Last updated: 2026-10-08.
+- Last updated: 2026-10-09.
 - Stages 1–3 are complete: 3 of 9 implementation stages complete.
 - Email/password sessions, administrator bootstrap/account/password management,
   organization/project catalogs, grant configuration, and management screens are
@@ -27,11 +27,11 @@ actual progress; it does not turn proposals into confirmed requirements.
   the later reset of running services and both full runs passed.
 - Application milestones: backend `0709a4e`, management interface `5653aa5`.
   Completion evidence is in `docs: record Stage 3 completion and verification`.
-- Stage 4 and later stages remain Not started. Tasks/statuses, time recording,
-  reporting endpoints, remarks, images, and search are not implemented. Timesheets
-  currently have only the persistent per-user record; feature-endpoint access
-  enforcement will be verified as those stages introduce it.
-- Next planned stage: Stage 4 task management. No Stage 4 work was undertaken.
+- Stage 4 is In progress, authorized on 2026-10-09. Implement task management and
+  its interface, then verify the expanded suite. Stage 5 and later remain Not
+  started; do not implement recording commands, reports, remarks, images, or search.
+- Task/status backend implemented and component-verified. Current action: verify
+  the task interface and run two sequential full lifecycle acceptance checks.
   [README.md](README.md) documents startup/bootstrap/management commands;
   [infrastructure notes](docs/infrastructure_notes.md#stage-3-verification-findings-2026-10-08)
   preserve actual verification findings and session access considerations.
@@ -46,7 +46,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 1 | Data model and API operation design | Done | [Design and worked examples](docs/domain_design.md); documentation checks recorded below |
 | 2 | Runnable application foundation | Done | Two full Compose test runs; fresh development startup, API/browser checks, restart persistence, and scoped cleanup verified |
 | 3 | Accounts, organization/project setup, and permissions | Done | Two full lifecycle runs: 35 PostgreSQL tests, build, 9 Chromium checks each; running-stack reset and cleanup verified |
-| 4 | Task management and task interface | Not started | — |
+| 4 | Task management and task interface | In progress | Backend/interface implementation and expanded verification underway |
 | 5 | Timesheet engine | Not started | — |
 | 6 | Timesheet interface | Not started | — |
 | 7 | Reporting and CSV export | Not started | — |
@@ -272,25 +272,25 @@ Commit: `docs: record Stage 3 completion and verification`.
 
 ## Stage 4: Tasks and Their Interface
 
-- [ ] Reuse the Stage 3 session/client, current-grant selectors, and domain mutation
+- [x] Reuse the Stage 3 session/client, current-grant selectors, and domain mutation
   services. Check mutable permissions and expected task/domain revisions under
   the existing lock; return safe acknowledgements for write-only operations.
-- [ ] Implement task creation/editing, owners, project membership, hierarchy,
+- [x] Implement task creation/editing, owners, project membership, hierarchy,
   configured statuses, and status-change history.
-- [ ] Seed the five agreed initial statuses through additive migrations. Preserve
+- [x] Seed the five agreed initial statuses through additive migrations. Preserve
   permanent first-use protection, including after all referencing tasks change
   status or are deleted, following the Stage 1 database-trigger design.
-- [ ] Enforce one project per hierarchy, cycle prevention, owner eligibility,
+- [x] Enforce one project per hierarchy, cycle prevention, owner eligibility,
   final-state rules, ancestor reopening, and immutability of used statuses.
-- [ ] Implement deletion eligibility checks. Introduce supporting time-record
+- [x] Implement deletion eligibility checks. Introduce supporting time-record
   models as needed to verify the restriction even before time recording is usable;
   reuse the existing Timesheet row and defer recording commands to Stage 5.
   Protect projects referenced by tasks against catalog deletion.
 - [ ] Build flat/tree task lists, project and multiple-status filters, and the
   task description window.
-- [ ] Verify hierarchy/project changes and ownership after access loss. Exercise
+- [x] Verify hierarchy/project changes and ownership after access loss. Exercise
   concurrent task operations where they can invalidate the business rules.
-- [ ] Extend permission checks through actual task list/tree/detail/history and
+- [x] Extend permission checks through actual task list/tree/detail/history and
   mutation endpoints, including no admin bypass, write-only responses, stale
   previews/revisions, and revocation while a writer waits for the lock.
 
@@ -306,6 +306,16 @@ Completion check: permitted users manage tasks through the interface, forbidden
 operations are rejected by the API, and task/history invariants remain valid.
 Fresh and upgrade migrations and the expanded repeatable suite pass; task deletion
 protection uses real database references rather than mocked time-record checks.
+
+Backend milestone (2026-10-09): task/status APIs, atomic hierarchy changes,
+permanent status triggers, and real time-reference deletion protection implemented.
+Fresh migrations, system/drift checks, and the full 52-test PostgreSQL suite passed,
+including both schema upgrades and five task concurrency scenarios. Two subsequent
+focused regressions passed for source-content protection in write-only move previews
+and write-only/revoked command responses (54 tests now defined). Interface source
+and TypeScript/production build are complete; browser and repeatable full lifecycle
+acceptance remain pending. Stage 4 stays In progress; Stage 5 is Not started.
+Commit: `feat: implement Stage 4 task and status backend`.
 
 ## Stage 5: Timesheet Engine
 
@@ -467,3 +477,5 @@ defined in Current Position and the stage sections above.
 | 2026-10-08 | Stage 3 management interface verified | Added session-aware frontend client and login/account/catalog/grant screens. First full clean test script exited 0 with 35 PostgreSQL tests, build, 9 Chromium checks, and inspected cleanup. Corrected browser test header typing and catalog select locator; repeatability was pending at this milestone. Stage 3 was In progress. Commit: `feat: add Stage 3 account and grant management screens`. |
 | 2026-10-08 | Stage 3 completed | Source `5653aa5` passed two sequential full test-script runs, each with 35 PostgreSQL tests, TypeScript/Vite build, 9 Chromium checks, and inspected cleanup. The second run reset running services successfully; initial reset interruption (143) did not reproduce. Upgrade/backfill, CSRF/session behavior, permission matrix, rollback, and concurrency verified. Both development/downloader volumes and all unrelated container IDs preserved. Configuration, shell syntax, 45 local Markdown links/anchors, diff, and whitespace checked. Stage 3 Done; Stage 4 remains Not started. Commit: `docs: record Stage 3 completion and verification`. |
 | 2026-10-08 | Post-Stage 3 lessons incorporated | Updated shared test setup to reflect implemented coverage and strengthened Stage 4 plans for service reuse, real endpoint permissions, status protection, Stage 3 schema upgrades, and repeatable scoped cleanup. Account-service review identified last-active-admin lockout; recorded a proposed safeguard and recovery decision without changing agreed behavior. Checked documentation consistency, 47 local Markdown links/anchors, and whitespace; no runtime tests run for this documentation-only change. Stage 4 remains Not started. Commit: `docs: incorporate Stage 3 lessons into remaining plan`. |
+
+| 2026-10-09 | Stage 4 backend implemented | Additive task/status and time-reference migrations, strict revision-aware command/preview endpoints, scoped owner selection, permanent status triggers, and atomic hierarchy/history/deletion rules. Fresh migrations and system/drift checks passed; full 52-test PostgreSQL regression suite passed, including five task races and Stage 3 upgrade. Two added focused write-only regressions passed; 54 tests now defined. Browser/full lifecycle acceptance pending; Stage 4 In progress, Stage 5 Not started. Commit: `feat: implement Stage 4 task and status backend`. |

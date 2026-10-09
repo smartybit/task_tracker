@@ -110,6 +110,46 @@ Recheck the current actor, grants, object state, and expected revisions after
 acquiring the domain lock. Stage 3 policy-helper coverage does not demonstrate
 authorization or safe serialization through task, time, or reporting endpoints.
 
+## Stage 4 Implementation Decisions
+
+- Task/status services reuse the domain coordination row, current-grant policies,
+  strict input validation, and session/CSRF client. Descriptive edits and ownership
+  transfers require the task revision. Creation, status changes, moves, and deletion
+  use separate preview endpoints and require explicit confirmation with the preview's
+  domain revision; existing tasks additionally require their task revision.
+- Previews hold the same coordination lock but perform no writes or revision bumps.
+  Confirmation rechecks permissions, owners, hierarchy, and revisions under that
+  lock. Preview rows require read access in both the existing and proposed project;
+  write-only callers receive acknowledgements without protected content. Successful
+  writes serialize according to the destination's current read permission.
+- Store parent pointers and derive subtree/ancestor changes in the service. Explicit
+  project moves change the whole moved subtree and validate every affected owner's
+  destination write access. Adding/moving a non-final task or reopening a descendant
+  requires a selected non-final status for every affected final ancestor. All status
+  changes, including creation and propagated reopening, create history rows atomically.
+- Seed the five initial statuses with additive migrations. PostgreSQL triggers mark
+  first use on task insertion/status assignment and reject subsequent status changes
+  or deletion, including attempts to clear the permanent marker. Protected foreign
+  keys block catalog, child-task, and time-record deletion paths.
+- Introduce WorkSession/TimeEntry persistence relationships and basic kind/duration/
+  running-row constraints solely to exercise deletion protection with real records.
+  There are no recording services or endpoints in Stage 4. Session agreement,
+  overlap/continuity enforcement, and recording/correction commands remain Stage 5.
+- Expose an assignment directory only to project task writers, containing eligible
+  active users' IDs and display names. It exposes no account-management fields or
+  email addresses. Status catalogs are readable by signed-in users; configuration
+  remains administrator-only.
+- The task workspace loads all authorized pages, applies project/multiple-status
+  filters, and builds flat/tree views from parent IDs. A filtered-out parent makes
+  its matching descendant a displayed root, so the filter never hides matching work.
+  The API also supports project/repeated-status filters and stable 50-item pages;
+  both flat and tree results carry parent IDs. No report totals are introduced.
+- The description panel includes status history and separate edit/owner/status/move/
+  deletion controls. Compound changes display a cancellable confirmation panel.
+  Stale revisions/previews refresh current state and require a new review; failed
+  transient requests preserve input for retry. Administrators use the Tasks and
+  Statuses tabs alongside the existing management screens.
+
 ## Proposed Data and Transaction Approach
 
 - Model organizations, projects, tasks, statuses, users, access grants, remarks,

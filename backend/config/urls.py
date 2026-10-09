@@ -5,7 +5,16 @@ from access.views import GrantsView, OrganizationGrantView, ProjectGrantView
 from core.views import HealthView
 from projects.views import OrganizationsView, OrganizationView, ProjectsView, ProjectView
 
+from tasks.views import StatusesView, StatusView, OwnersView, TasksView, TaskView, HistoryView, CommandView, PreviewView
+
 urlpatterns = [
+    path('api/v1/statuses/', StatusesView.as_view()),
+    path('api/v1/statuses/<uuid:pk>/', StatusView.as_view()),
+    path('api/v1/projects/<uuid:pk>/eligible-owners/', OwnersView.as_view()),
+    path('api/v1/tasks/', TasksView.as_view()),
+    path('api/v1/tasks/preview/', PreviewView.as_view(), {'kind': 'create'}),
+    path('api/v1/tasks/<uuid:pk>/', TaskView.as_view()),
+    path('api/v1/tasks/<uuid:pk>/history/', HistoryView.as_view()),
     path('api/v1/health/', HealthView.as_view(), name='health'),
     path('api/v1/auth/csrf/', CSRFView.as_view()),
     path('api/v1/auth/login/', LoginView.as_view()),
@@ -22,3 +31,8 @@ urlpatterns = [
     path('api/v1/projects/', ProjectsView.as_view()),
     path('api/v1/projects/<uuid:pk>/', ProjectView.as_view()),
 ]
+
+for command in ('owner', 'status', 'move'):
+    urlpatterns.append(path(f'api/v1/tasks/<uuid:pk>/{command}/', CommandView.as_view(), {'kind': command}))
+for command in ('status', 'move', 'delete'):
+    urlpatterns.append(path(f'api/v1/tasks/<uuid:pk>/{command}/preview/', PreviewView.as_view(), {'kind': command}))

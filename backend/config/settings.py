@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "projects",
     "access",
     "timesheets",
+    "tasks",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

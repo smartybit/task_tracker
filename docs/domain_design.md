@@ -7,7 +7,9 @@ user-confirmed product requirements. Stage 2 implemented the initial User and
 MutationLock models and a versioned health API. Stage 3 adds session/account,
 organization/project, and grant APIs, shared access policies, and the minimal
 Timesheet record; verification status is tracked in the implementation plan.
-The remaining feature operation catalogue below remains a design contract. Refine it
+Stage 4 implements tasks/statuses, preview/confirmation operations, and the minimal
+time-record relationships used for deletion protection. Recording commands and
+remaining feature operations below remain a design contract. Refine it
 with verified migrations and tests as each feature stage starts.
 
 ## Modules and Records
@@ -100,6 +102,8 @@ references, and applicable business invariants before committing.
 | `organizations`, `projects`, scoped `grants` | Read permitted catalog choices; administrator create/update/delete or replace a user's local flags | Non-admin selectors expose only choices needed for authorized operations; grant management is admin-only. Referenced organizations/projects cannot cascade-delete tasks. |
 | `statuses` | Read catalog; administrator create/update/delete unused status | Used status returns `status_already_used` on any change or deletion. Seeded status names and final flags match requirements. |
 | `tasks`, `tasks/{id}`, `tasks/{id}/history` | Filtered list/tree or details; create title/description/project/parent/status with creator as owner; edit descriptive fields | Separate read/write gates. Missing project, ineligible owner, cross-project parent, or cycle rejects the whole change. Status/project/parent/owner changes use dedicated operations below. |
+| `POST tasks/preview`, `POST tasks/{id}/{status,move,delete}/preview` | Proposed command values (plus task revision for an existing task); domain revision, permitted affected rows, safe target acknowledgement | No writes or revision bumps; current task write required. Confirmation uses `confirm: true` and `expected_domain_revision`. Deletion applies via `DELETE tasks/{id}`; creation/status/move apply via their normal routes. |
+| `projects/{id}/eligible-owners` | Eligible active user IDs and display names | Project task write; no account-management fields or emails. |
 | `tasks/{id}/owner` | Proposed owner and expected revision; acknowledgement | Task write and new owner's effective task write. Later access loss does not invalidate unrelated task edits. |
 | `tasks/{id}/status` | Selected status, optional non-final ancestor status and preview/confirmation | Task write for every changed task. Finalization requires all descendants final; reopening propagates to final ancestors. Reject invalid/used-status edits separately from valid assignments of used statuses. |
 | `tasks/{id}/move` | New parent or root, explicit destination project if changed, revisions, preview/confirmation | Write in source/destination projects and owner eligibility for every project-changed task. Move subtree atomically; same project unless explicitly changed. Preserve final-ancestor invariant or reject. |
