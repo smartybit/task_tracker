@@ -9,35 +9,35 @@ actual progress; it does not turn proposals into confirmed requirements.
 ## Current Position
 
 - Last updated: 2026-10-09.
-- Stages 1–3 are complete: 3 of 9 implementation stages complete.
-- Email/password sessions, administrator bootstrap/account/password management,
-  organization/project catalogs, grant configuration, and management screens are
-  implemented. Shared policies enforce independent task/remark grants,
-  organization inheritance, self/others timesheet access, and report project gates.
-- Stage 3 completion is verified with two sequential successful full
-  `sh scripts/test.sh` runs: 35 PostgreSQL tests, TypeScript/production build,
-  and all 9 Chromium checks per run. The second run also reset running test services.
-- Fresh migrations and an isolated upgrade from the Stage 2 schema passed,
-  including timesheet backfill for existing users. Account/timesheet rollback,
-  CSRF/session behavior, all 256 local/inherited grant combinations, and real
-  concurrent administration operations are covered.
-- Test cleanup was inspected after both successful runs. No task-tracker test
-  containers, networks, or volumes remain; development data and unrelated Docker
-  resources were preserved. One earlier reset attempt exited 143 before checks;
-  the later reset of running services and both full runs passed.
-- Application milestones: backend `0709a4e`, management interface `5653aa5`.
-  Completion evidence is in `docs: record Stage 3 completion and verification`.
-- Stage 4 is In progress, authorized on 2026-10-09. Implement task management and
-  its interface, then verify the expanded suite. Stage 5 and later remain Not
-  started; do not implement recording commands, reports, remarks, images, or search.
-- Task/status backend implemented and component-verified. Current action: verify
-  the task interface and run two sequential full lifecycle acceptance checks.
-  [README.md](README.md) documents startup/bootstrap/management commands;
-  [infrastructure notes](docs/infrastructure_notes.md#stage-3-verification-findings-2026-10-08)
-  preserve actual verification findings and session access considerations.
-- Post-Stage 3 documentation review identified an unresolved last-active-admin
-  lockout policy. The proposed guard/recovery follow-up below is unimplemented
-  and was not covered by the completed Stage 3 checks.
+- Stages 1–4 are complete: 4 of 9 implementation stages complete.
+- Accounts/session authentication, organization/project catalogs, grants, and task
+  management are implemented. Tasks include owners, descriptions, flat/tree lists,
+  project/multiple-status filters, hierarchy/project moves, configured statuses,
+  status history, ancestor reopening, and protected deletion.
+- Stage 4 source `c2d5ca3` passed two sequential complete `sh scripts/test.sh`
+  runs, each with 54 PostgreSQL tests, TypeScript/production build, and 16 Chromium
+  checks. The first successful run reset healthy running test services. The bounded
+  foreground runner uses `timeout --foreground` and closed standard input.
+- Actual task endpoints cover all 256 local/inherited grant combinations, no
+  administrator bypass, safe write-only responses/previews, stale revisions,
+  revocation, and independent-connection hierarchy/deletion/finalization races.
+  Fresh migrations and isolated Stage 2 and Stage 3 upgrades passed. Real time
+  references protect task deletion; PostgreSQL triggers protect statuses permanently.
+- Browser acceptance covers the seven task workflows plus nine existing checks.
+  Desktop/narrow screenshots were inspected; Chromium is the accepted browser.
+- Cleanup was inspected after both successful runs. No test containers, networks,
+  or volumes remain. All five original unrelated container IDs and both original
+  volumes, including development data, were preserved. Earlier failed/interrupted
+  attempts and their verified fixes are recorded in the Stage 4 milestones and
+  [infrastructure notes](docs/infrastructure_notes.md#stage-4-verification-findings-2026-10-09).
+- Local milestones: backend `bcd6b87`, interface `72bf07a`, session regression
+  `c2d5ca3`. Completion evidence is recorded below and in
+  `docs: record Stage 4 completion and verification`.
+- Stop at Stage 4 as requested. Stage 5 and later remain Not started. Supporting
+  time-record relationships exist only for deletion protection; recording commands,
+  timesheet UI, reports, remarks, images, and search remain unimplemented.
+- The last-active-admin safeguard/recovery proposal remains an unresolved Stage 3
+  follow-up; this work does not change that policy.
 
 ## Progress Overview
 
@@ -46,7 +46,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 1 | Data model and API operation design | Done | [Design and worked examples](docs/domain_design.md); documentation checks recorded below |
 | 2 | Runnable application foundation | Done | Two full Compose test runs; fresh development startup, API/browser checks, restart persistence, and scoped cleanup verified |
 | 3 | Accounts, organization/project setup, and permissions | Done | Two full lifecycle runs: 35 PostgreSQL tests, build, 9 Chromium checks each; running-stack reset and cleanup verified |
-| 4 | Task management and task interface | In progress | Backend/interface implementation and expanded verification underway |
+| 4 | Task management and task interface | Done | Two full lifecycle runs: 54 PostgreSQL tests, build, 16 Chromium checks each; running-stack reset and cleanup verified |
 | 5 | Timesheet engine | Not started | — |
 | 6 | Timesheet interface | Not started | — |
 | 7 | Reporting and CSV export | Not started | — |
@@ -337,10 +337,34 @@ which request detects revocation first. The focused account workflow passed.
 The preceding full attempt again passed all 54 backend checks; its command client
 later exited 143 while the browser container continued. Its retained browser
 result identified only the account scenario as failed. Do not count that attempt
-as successful lifecycle acceptance. Final runs use a bounded background wrapper
-with separate log and exit-status files so a client disconnect cannot hide results.
+as successful lifecycle acceptance. The attempted background wrapper did not
+survive to write its status file; final runs use a bounded foreground terminal
+with separate log/exit-status files.
 Stage 4 remains In progress; two successful full runs are pending.
 Commit: `test: handle prompt session revocation during task loading`.
+
+Completion verified (2026-10-09): source `c2d5ca3` passed two sequential full
+repository test-script runs, each with exit 0, 54 PostgreSQL tests,
+TypeScript/production build, and all 16 Chromium checks. The first successful run
+reset healthy running test services. Both fresh migrations and isolated Stage 2/
+Stage 3 upgrades passed. Task endpoint permissions, permanent status protection,
+real time-reference deletion checks, and five task concurrency scenarios passed.
+UI acceptance includes keyboard/focus, repeated confirmations, failed-request
+recovery, stale tabs/previews, and live grant/session changes. Desktop and narrow
+screenshots were inspected; cross-browser acceptance is not claimed.
+
+After each successful run, label-filtered Docker inspection found no test
+containers, networks, or volumes. All five original unrelated container IDs and
+both original volumes were preserved; no development migrations or fixture resets
+were performed. Full logs/status files remain at
+`/tmp/task-tracker-stage4-verified1.log`, `.status`, and the corresponding
+`verified2` paths. The verified agent wrapper keeps a foreground terminal attached
+and runs `timeout --foreground 1200 sh scripts/test.sh < /dev/null`.
+Both Compose configurations, shell syntax, local Markdown links/anchors, scoped
+diffs, and whitespace were checked. Earlier failed/interrupted attempts are
+retained above and in the infrastructure notes. No Stage 4 blocker remains.
+Stage 4 Done; stop here. Stage 5 and later remain Not started.
+Commit: `docs: record Stage 4 completion and verification`.
 
 ## Stage 5: Timesheet Engine
 
@@ -508,3 +532,5 @@ defined in Current Position and the stage sections above.
 | 2026-10-09 | Stage 4 interface implemented and component-verified | Added flat/tree task workspace, project/multiple-status filters, description/history panel, owner/status/move/deletion flows, safe creation in write-only projects, and status catalogs. First full script attempt passed 54 PostgreSQL tests, build, all seven new Chromium scenarios, and eight existing checks; one existing account lifecycle scenario exceeded 30 seconds after reaching deactivation. Attempt exited 1 and scoped cleanup was inspected. Shared scenario deadline adjusted to 90 seconds; assertions remain bounded. Desktop/narrow screenshots inspected. Two successful full runs pending; Stage 4 In progress, Stage 5 Not started. Commit: `feat: add Stage 4 task workspace and status management`. |
 
 | 2026-10-09 | Stage 4 session regression corrected | A trace showed that background task requests can detect deactivation before the colleague clicks Refresh access. Updated the existing account browser scenario to reload and assert sign-in after deactivation/password reset; focused workflow passed. The prior full attempt passed 54 backend tests but its command client exited 143 while Chromium continued; its retained browser result identified only the account scenario as failed. Full acceptance remains pending. Commit: `test: handle prompt session revocation during task loading`. |
+
+| 2026-10-09 | Stage 4 completed | Source `c2d5ca3` passed two sequential full test-script runs, each exiting 0 with 54 PostgreSQL tests, TypeScript/Vite build, 16 Chromium checks, and inspected cleanup. The first successful run reset healthy running services. Fresh/Stage 2/Stage 3 migrations, actual endpoint grant matrix, permanent status triggers, real time-reference deletion protection, five task races, and complete task UI workflows passed. Desktop/narrow screenshots inspected. Both original volumes and all five unrelated container IDs preserved; no test resources remain. Foreground timeout/closed-input execution verified; earlier failures retained in infrastructure notes. Configuration, shell syntax, local links/anchors, diff, and whitespace checked. Stage 4 Done; Stage 5 remains Not started. Commit: `docs: record Stage 4 completion and verification`. |

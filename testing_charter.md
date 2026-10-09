@@ -155,9 +155,10 @@ shared services, isolation, fixture/reset handling, and result capture. The
 [implementation plan](implementation_plan.md#shared-test-environment) maps that
 environment to each stage. Initial executable foundation checks exist; see
 [README.md](README.md) for verified setup commands and the tracker for actual
-results. Stage 2 and Stage 3 checks passed. Stage 4 task checks are implemented
-and undergoing full acceptance verification; time-entry, report, and content
-workflow checks remain planned.
+results. Stage 2–4 checks passed, including two complete Stage 4 lifecycle runs
+with 54 PostgreSQL tests and 16 Chromium checks each. Time-record relationships
+are tested for deletion protection; recording, report, and content workflow checks
+remain planned.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

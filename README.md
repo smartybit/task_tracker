@@ -11,12 +11,12 @@ password administration, organization/project catalogs, and organization/project
 grant management. Shared backend policies cover independent task/remark grants,
 organization inheritance, own-timesheet access, and global others-timesheet flags.
 Administrators have no automatic application-data grants. See the tracker for
-current verification results. Stage 3 acceptance passed two complete test runs,
-each with 35 PostgreSQL backend tests and 9 Chromium checks.
+current verification results. Stage 4 acceptance passed two complete test runs,
+each with 54 PostgreSQL backend tests, the production build, and 16 Chromium checks.
 
 Stage 4 adds task creation/editing, ownership transfer, flat/tree lists, project
 and multiple-status filters, hierarchy/project moves, status history, and protected
-status catalogs. Its acceptance verification is in progress; see the tracker.
+status catalogs. Its acceptance verification is complete; see the tracker.
 
 Time recording, reports, remarks, images, and search remain unimplemented. Minimal
 time-record relationships support task deletion protection; no time-entry workflow
@@ -147,12 +147,17 @@ This recreates **only** the `task-tracker-tests` project, waits for service heal
 checks migrations, runs backend tests, seeds three synthetic accounts, two
 organizations, three projects, and representative grants, builds the
 frontend, and runs browser checks. Cleanup removes that test project and temporary
-data even on failure. Run sequentially, not concurrently with another invocation.
+data through its cleanup trap. Run sequentially, not concurrently with another
+invocation. Inspect cleanup after interruptions: a one-off browser container may
+outlive its command client. See the infrastructure notes for the verified
+noninteractive terminal fallback.
 Failure screenshots/traces remain in ignored `frontend/test-results/`.
 Stage 3 adds account/CSRF, permission-matrix, migration-upgrade, rollback, and
 concurrency checks, plus separate-session browser administration workflows.
-Later stages add hierarchy, time-entry, image, and report fixtures. Browser
-mutation scenarios create separate synthetic accounts so password/grant changes
+Stage 4 adds deep task trees, permanent status protection, task endpoint permissions,
+owner/project moves, real time-reference deletion checks, hierarchy races, and
+Stage 3 schema upgrades. Later stages add recording, image, and report fixtures.
+Browser mutation scenarios create separate synthetic accounts so password/grant changes
 do not alter another scenario’s credentials. The guarded `seed_test_data` command
 restores the three baseline fixture accounts and grants when repeated.
 

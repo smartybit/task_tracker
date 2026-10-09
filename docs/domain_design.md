@@ -207,8 +207,10 @@ deletion. Keep file bytes out of transaction error responses and logs.
 
 ## Worked Acceptance Examples
 
-These are expected outcomes for future fixtures, not tests already executed.
-Times use a controlled fixed zone; all durations are independently calculated.
+These examples define expected outcomes. Task/status scenarios now have Stage 4
+coverage; timeline/report examples remain future fixtures. Executed verification
+is recorded in the implementation tracker. Times use a controlled fixed zone;
+all durations are independently calculated.
 
 | Scenario | Input / action | Expected committed result |
 | --- | --- | --- |
@@ -255,5 +257,7 @@ The deployment working zone and backup responsibility/recovery expectations rema
 open as recorded in the requirements and architecture. They do not block schema/API
 design. Search language configuration, supplementary UI libraries, and server/proxy
 are chosen when their stages need them. The initial test runners are Django and
-Playwright/Chromium, verified in Stage 2. None of the worked business examples
-above constitutes PostgreSQL, browser, or concurrency verification yet.
+Playwright/Chromium, introduced in Stage 2 and extended through Stage 4. Worked
+examples are design contracts; actual PostgreSQL, browser, and concurrency
+evidence is recorded in the implementation tracker. Task/status acceptance
+passed in Stage 4; timeline, report, and content acceptance remain planned.

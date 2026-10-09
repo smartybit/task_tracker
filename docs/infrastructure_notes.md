@@ -99,56 +99,72 @@ were run. Stage 3 is complete; Stage 4 remains unstarted.
 
 ## Stage 4 Verification Findings: 2026-10-09
 
-Use role/name selectors for wrapped select and prefilled textarea controls in
-Chromium tests.
-An exact `getByLabel` match can include option text or initial textarea content
-and wait indefinitely even though the control's accessible name is correct. The first Stage 4
-browser attempt passed the nine existing checks, then timed out in the new task
-workflows at these selectors. The obsolete attempt was stopped by tearing down
-only the test stack; subsequent connection failures in that attempt were caused
-by this teardown, not by application behavior. Corrected scenarios use explicit
-role/name selectors. The suite allows 90 seconds for account/project setup plus
-full workflows, retaining the normal short assertion deadlines. The first full
-Stage 4 attempt passed all 54 backend tests but the existing account lifecycle
-scenario exceeded its old 30-second limit after reaching account deactivation;
-the shared scenario deadline was increased accordingly.
+Stage 4 source `c2d5ca3` passed two sequential complete test-script runs, each
+with exit 0, 54 PostgreSQL tests, TypeScript/production build, and 16 Chromium
+checks. The first successful run reset healthy running services. After each run,
+label-filtered inspection found no test containers, networks, or volumes; both
+original volumes and all five unrelated container IDs were preserved. No
+Docker-daemon, socket, group, or host-permission changes were made.
 
-The longer subsequent run established the account scenario's underlying wait:
-a task request still in flight at deactivation promptly returned the colleague
-to sign-in, so the test waited for a Refresh access button that had disappeared.
-Reload the colleague page after deactivation/password reset and assert sign-in;
-this verifies invalidation whether a background request has already detected it
-or the reload is the next request. Use an independent synthetic account name when
-rerunning that scenario. The 90-second scenario limit remains appropriate for
-complete task workflows that measured over 30 seconds; increasing a timeout alone
-does not resolve an obsolete UI-state assumption.
+The verified foreground-terminal wrapper uses this noninteractive command and
+captures its log plus a separate exit-status file:
+
+```sh
+timeout --foreground 1200 sh scripts/test.sh < /dev/null
+```
+
+Successful logs/status files remain under `/tmp/task-tracker-stage4-verified1`
+and `verified2` with `.log`/`.status` extensions. Keep foreground supervision,
+command completion, and scoped cleanup distinct from service health. The first
+terminal attempt used plain `timeout`, which created another process group; its
+shell stopped with job-control state `T` when a Compose exec client tried to read
+the foreground terminal. Unsandboxed inspection of the exact runner PIDs
+established that state. After terminating only the stuck check clients, continuing
+that test process group let its pending termination and cleanup finish (exit 143).
+No application-check result was obtained from that interrupted wrapper. A
+standalone check with closed input passed; `--foreground` plus closed input then
+passed both complete runs.
+
+Earlier Compose command clients exited 130 or 143 while one-off browsers continued.
+A two-scenario rerun's retained `.last-run.json` reported passed with no failed
+tests; another full attempt's retained browser result identified only the account
+scenario as failed. These are component results, not successful lifecycle
+commands. Restricted-session process probes did not reliably establish host runner
+state. A `nohup` wrapper failed to produce its completion-status file even though
+the account browser finished; a small `setsid` background probe also produced no
+completion file. Do not rely on detached host processes in this session.
+
+Use role/name selectors for wrapped selects and prefilled textareas. Exact
+`getByLabel` queries can include option text or initial textarea content while the
+accessible combobox/textbox name remains correct. The first browser attempt passed
+the nine existing checks, then timed out on these selectors. Its obsolete test
+stack was torn down; subsequent connection failures in that attempt were caused
+by teardown. Corrected selectors passed the task workflows. Complete status/tree
+workflows measured over 30 seconds, so the shared scenario deadline is 90 seconds;
+normal short assertion deadlines are unchanged.
+
+The initial full attempt passed all 54 backend tests and 15 browser checks but
+exceeded the existing account scenario's 30-second deadline after deactivation.
+A longer run revealed the underlying wait: an in-flight task request had already
+returned the revoked colleague session to sign-in, so Refresh access no longer
+existed. Reload after deactivation/password reset and assert sign-in; this verifies
+invalidation regardless of which request detects it first. Use a separate synthetic
+account when rerunning that scenario. The corrected focused scenario passed in
+27 seconds and passed again in both complete runs. Raising the deadline alone
+did not resolve the obsolete UI-state assumption.
 
 Compose `down --volumes` does not stop a still-running one-off browser container.
-The first teardown retained the test network until that browser exited with its
-`--rm` cleanup. Inspect label-filtered containers/networks after completion and
-repeat scoped cleanup if necessary. Do not treat the first `down` exit code alone
-as proof that the complete test project was removed.
+An early teardown retained its network until that browser exited through `--rm`.
+Inspect label-filtered containers/networks/volumes after completion and repeat
+scoped cleanup if necessary; a `down` exit code alone is insufficient evidence.
 
-A subsequent two-scenario rerun's Compose client exited 130 while its one-off
-browser container continued running. The retained `.last-run.json` reported
-`passed` with no failed tests and a desktop screenshot was produced; the browser
-container then removed itself. This is component evidence, not a successful
-lifecycle command. Full lifecycle runs retain command logs separately under `/tmp`.
-No host permissions or Docker daemon configuration were changed.
-
-Another full-run client exited 143 after the backend/build phase while its
-browser container continued. No test-runner process remained on the host; the
-browser's retained result identified only the account scenario as failed. The
-corrected account scenario subsequently passed in 27 seconds. For final acceptance,
-launch a bounded wrapper with `nohup`, redirect logs under `/tmp`, and write a
-separate exit-status file after `timeout 1200 sh scripts/test.sh` returns. Inspect
-both that status and scoped Docker cleanup. This changes process supervision,
-not daemon/host permissions or the checks inside the repository test entry point.
-
-Backend component verification passed fresh migrations/system/drift checks,
-52 PostgreSQL regressions, and two additional focused write-only regressions.
-Stage 4 full lifecycle acceptance remains pending; current results are maintained
-in the implementation tracker.
+The initial restricted build also failed writing Docker buildx activity under the
+user's Docker configuration directory; approved escalation resolved it. Docker
+inspection and Git writes continued to require session-specific approval when
+restricted. Backend component checks passed fresh migrations, 52 regressions,
+and two additional write-only regressions before full acceptance. Development
+volumes were never migrated, reset, or seeded. Stage 4 is complete; Stage 5 remains
+Not started.
 
 ## Docker Access Is Session-Specific
 
