@@ -85,6 +85,8 @@ These cases were not part of the successful Stage 3 suite.
 - Verify new-day recording defaults to an independent session, explicit Continue
   previous session supports overnight work, and closed-session resumption retains
   the advice to convert its End of Working Day marker to a break.
+- Verify the configurable UTC default, Europe/Berlin, and reallocation of stored
+  spans after a zone change, including stable draft identifiers and read-only GET.
 - Close work that crosses midnight and verify each day's allocation without losing
   a minute. Merely crossing midnight, logging out, or restarting the application
   must not invent an end time or recorded hours.
@@ -224,5 +226,5 @@ clearly. Verify startup and persistence in the deployment configuration.
 Native Android/desktop clients, offline synchronization, general file attachments,
 email delivery, approvals, immutable auditing, and daylight-saving behavior are
 outside the first-version charter. Backup/restore acceptance checks depend on the
-still-open backup responsibility and recovery requirements; the deployment working
-time zone also remains to be selected.
+still-open backup responsibility and recovery requirements; the shared working
+time zone is configurable through settings (UTC default).

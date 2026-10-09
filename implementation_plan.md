@@ -15,14 +15,14 @@ actual progress; it does not turn proposals into confirmed requirements.
   and independent new-day recording with historical unfinished sessions. Friday
   can be completed on Monday without changing Monday's recording. Documentation
   consistency, 57 local Markdown links/anchors, and whitespace checks passed;
-  no application tests or migrations ran. Stages 5 and 6 remain Not started.
+  no application tests or migrations ran. Stage 5 is now In progress; Stage 6 remains Not started.
 - Stage 4 follow-up: preserved the temporary verification runner, local Markdown
   link checker, and read-only Docker diagnostics under `scripts/`, with portable
   paths and documented usage. Shell syntax, 50 local links/anchors, and isolated
   helper checks passed (both modes, success/failure status capture, closed input,
   external working directories, invalid arguments, overwrite protection, and
   diagnostic continuation). Application suites were not rerun for this tooling-only
-  change; Stage 5 remains Not started.
+  change; Stage 5 had not started at that tooling milestone.
 - Accounts/session authentication, organization/project catalogs, grants, and task
   management are implemented. Tasks include owners, descriptions, flat/tree lists,
   project/multiple-status filters, hierarchy/project moves, configured statuses,
@@ -46,9 +46,9 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Local milestones: backend `bcd6b87`, interface `72bf07a`, session regression
   `c2d5ca3`. Completion evidence is recorded below and in
   `docs: record Stage 4 completion and verification`.
-- Stop at Stage 4 as requested. Stage 5 and later remain Not started. Supporting
-  time-record relationships exist only for deletion protection; recording commands,
-  timesheet UI, reports, remarks, images, and search remain unimplemented.
+- Stage 5 started on 2026-10-09 at the user’s request. Implement the backend
+  engine and verify migrations, permissions, atomic corrections and concurrency.
+  Stage 6 UI and later stages remain outside this implementation milestone.
 - The last-active-admin safeguard/recovery proposal remains an unresolved Stage 3
   follow-up; this work does not change that policy.
 
@@ -60,7 +60,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 2 | Runnable application foundation | Done | Two full Compose test runs; fresh development startup, API/browser checks, restart persistence, and scoped cleanup verified |
 | 3 | Accounts, organization/project setup, and permissions | Done | Two full lifecycle runs: 35 PostgreSQL tests, build, 9 Chromium checks each; running-stack reset and cleanup verified |
 | 4 | Task management and task interface | Done | Two full lifecycle runs: 54 PostgreSQL tests, build, 16 Chromium checks each; running-stack reset and cleanup verified |
-| 5 | Timesheet engine | Not started | — |
+| 5 | Timesheet engine | In progress | Lifecycle migration, recording/correction services and PostgreSQL verification underway |
 | 6 | Timesheet interface | Not started | — |
 | 7 | Reporting and CSV export | Not started | — |
 | 8 | Remarks, references, images, and search | Not started | — |
@@ -387,25 +387,25 @@ Commit: `docs: record Stage 4 completion and verification`.
 
 ## Stage 5: Timesheet Engine
 
-- [ ] Implement task starts/switches, breaks, end-of-day markers, and personal or
+- [x] Implement task starts/switches, breaks, end-of-day markers, and personal or
   permitted other-user timesheet operations.
-- [ ] Add active/unfinished/closed session lifecycle and additive migrations replacing
+- [x] Add active/unfinished/closed session lifecycle and additive migrations replacing
   Stage 4's global `one_running_session` / `one_running_entry` null-end constraints.
   Preserve existing records without inventing end times; permit one active session
   per user and one unfinished tail per session.
-- [ ] Implement independent new-day starts by default, explicit overnight
+- [x] Implement independent new-day starts by default, explicit overnight
   continuation, and session-targeted historical append/close using supplied times.
   Historical corrections must not replace today's active recording.
-- [ ] Implement ordinary shared-boundary edits and last-record deletion with preview,
+- [x] Implement ordinary shared-boundary edits and last-record deletion with preview,
   plus atomic `replace_day` commands carrying complete rows/markers and revision.
   Do not expose individual middle-insert/delete commands or automatic draft repair.
-- [ ] Validate complete day replacements, known intervals, session markers, and
+- [x] Validate complete day replacements, known intervals, session markers, and
   fixed neighboring-day connections; allow independent edge changes/empty days
   and valid unfinished tails. Return row-associated errors with no partial writes.
-- [ ] Preserve zero reported duration for active and historical unfinished tails
+- [x] Preserve zero reported duration for active and historical unfinished tails
   until explicit closure; unknown ends must not reserve all subsequent time.
-- [ ] Implement closed-entry midnight splitting in the configured shared zone.
-- [ ] Apply multi-record changes in transactions with protection against competing
+- [x] Implement closed-entry midnight splitting in the configured shared zone.
+- [x] Apply multi-record changes in transactions with protection against competing
   edits, including operations across days and different task projects.
 - [ ] Verify continuity, overlap rejection, end-of-day resumption, invalid changes,
   rollback, Friday-to-Monday corrections, lifecycle/schema upgrades, and concurrent
@@ -422,7 +422,22 @@ and durations; successful, failed, and competing operations preserve integrity.
 Invalid day drafts never reach storage, accepted drafts commit atomically, and
 Friday corrections preserve Monday's rows and active-session identity. New lifecycle
 constraints replace the Stage 4 schema without data loss or fabricated closures.
-The deployment working time zone must be selected for final time-behavior acceptance.
+Shared-zone configuration is sufficient by agreement on 2026-10-09; verify the
+UTC default and an explicit Europe/Berlin configuration for time-behavior acceptance.
+
+Implementation milestone (2026-10-09): backend lifecycle migrations, strict
+recording/correction commands, previews, coherent day reads, known-interval
+exclusion and entry/session agreement triggers are implemented. Shared working
+zone configuration in `.env` is sufficient by user decision; UTC default and
+Europe/Berlin are covered, including existing spans after a configuration change.
+The 25 focused PostgreSQL checks passed, followed by three added rollback,
+subsecond-duration and simultaneous-day-save checks. Initial fresh migrations,
+system/drift checks and 19 task regressions passed. Two initial fixture failures
+were corrected: transaction flush requires restoring the domain lock, and upgrade
+historical models need the matching account migration state. Six independent-
+connection races and a Stage 4 lifecycle upgrade are now defined. Full expanded
+suite twice, running-stack reset and cleanup inspection remain pending. Stage 5
+stays In progress until that acceptance completes; Stage 6 remains Not started.
 
 ## Stage 6: Timesheet Interface
 
@@ -534,8 +549,8 @@ data, loses records, corrupts timelines, or produces incorrect totals.
   and recovery policy before production use. A focused account-lifecycle follow-up
   should implement the agreed policy with serialized concurrent-removal tests;
   it is planned work, not part of Stage 3's existing completion evidence.
-- Select the shared working time zone or fixed offset before finalizing Stage 5
-  behavior; use an explicitly controlled test zone while that decision is pending.
+- Shared zone is configurable in `.env`/backend settings by agreement on
+  2026-10-09; verify UTC and Europe/Berlin with controlled clocks in Stage 5.
 - Resolve backup responsibility and recovery expectations before production use
   in Stage 9. This does not block earlier implementation stages.
 - Select supplementary frontend libraries, the application server, and reverse

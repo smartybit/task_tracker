@@ -11,7 +11,8 @@ Proposals below preserve the approaches discussed so far and remain revisable.
 gates, operation contracts, transaction boundaries, and worked acceptance examples.
 It selects initial approaches for delegated behavior without changing the agreed
 product rules. The timesheet design was revised on 2026-10-09 to reflect the agreed
-Edit day and unfinished-day workflows; those operations remain unimplemented.
+Edit day and unfinished-day workflows. Stage 5 implements their backend engine;
+Stage 6 interface work remains planned.
 Later sections retain the broader architecture context.
 
 Initially, business mutations use a persistent database coordination lock, with
@@ -152,7 +153,7 @@ authorization or safe serialization through task, time, or reporting endpoints.
   transient requests preserve input for retry. Administrators use the Tasks and
   Statuses tabs alongside the existing management screens.
 
-## Stage 5 and 6 Design Decisions: Not Implemented
+## Stage 5 Implementation and Stage 6 Interface Design
 
 The [agreed editing rules](requirements.md#timesheet-editing) and
 [unfinished-day behavior](requirements.md#unfinished-days-and-overnight-work)
@@ -163,18 +164,20 @@ design. Stage 5 owns backend implementation; Stage 6 owns the interface.
   unfinished historical tail has no known end and zero duration, while a separate
   current session can record work. Permit one active session per timesheet and
   one open tail per session; do not infer an end to satisfy uniqueness.
-- The existing Stage 4 persistence models still use `one_running_session` and
-  `one_running_entry` constraints based on null end timestamps per timesheet.
-  Stage 5 must add lifecycle state and replace those constraints through additive,
-  data-preserving migrations. They do not implement the new lifecycle today.
+- Additive migrations replace Stage 4’s global null-end constraints with one
+  active session per timesheet, one open tail per session, and a lifecycle/end
+  check. Existing closed sessions are backfilled as closed, open sessions remain
+  active, and entry IDs/timestamps and sheet revisions are preserved. PostgreSQL
+  `btree_gist` supports a known-interval exclusion constraint; null ends are
+  excluded from its range expression. Triggers enforce entry/session sheet agreement.
 - New-day starts leave an earlier session unfinished by default. Explicit
   continuation supports genuine overnight work. Session-targeted append/close
   commands use historical timestamps without changing today's active session.
 - Ordinary corrections retain shared-boundary edits and last-row deletion with
   preview/confirmation. Middle corrections use one `replace_day` command carrying
   the date, complete draft rows/session markers, and expected timesheet revision.
-- Keep drafts in frontend memory. Edit day reuses the timesheet table presentation
-  in a modal and a task picker with search and project/status filters. Draft gaps
+- Stage 6 will keep drafts in frontend memory. Edit day reuses the timesheet
+  table presentation in a modal and a task picker with search and project/status filters. Draft gaps
   and overlaps are visible but do not reach PostgreSQL or affect totals. Sort after
   field editing, with stable row keys to preserve focus and associate errors.
 - Saving locks the domain coordination row followed by the target Timesheet row,
@@ -191,6 +194,18 @@ design. Stage 5 owns backend implementation; Stage 6 owns the interface.
 - Rejected saves leave records/revisions unchanged and return row-associated
   validation errors. Stale saves retain the client draft and require reload/review;
   do not merge or replay it automatically. Cancel has no backend mutation.
+
+- The shared zone is configured through `WORKING_TIME_ZONE` in `.env`/the
+  backend environment; UTC is the default. Restart the backend after changing it.
+  Known spans are normalized for reads as well as writes, so a configuration
+  change or an older unsplit span still produces correct daily allocation.
+  Virtual split IDs are deterministic for stable drafts; GET never writes them.
+  Accepted commands persist normalized spans in the same transaction. UTC and
+  Europe/Berlin acceptance uses controlled clocks outside DST transitions.
+- Command inputs, preview confirmation, editable day payloads, and safe read/write
+  responses are documented in [the timesheet API](docs/timesheet_api.md).
+  Only changed/new entries are rewritten; retained IDs survive accepted corrections.
+  Reads and previews coordinate with domain writers to give coherent responses.
 
 ## Proposed Data and Transaction Approach
 
@@ -322,10 +337,9 @@ defines the scenarios and acceptance priorities.
   invalid drafts and competing day saves/recording. Keep independently calculated
   totals and expected CSV records, including rounding cases, rather than deriving
   expectations from the report implementation itself.
-- Control the backend clock and use an explicit shared test zone. Until the
-  deployment zone is selected, use a documented fixed test zone; then include the
-  selected deployment configuration in acceptance checks. Use controlled browser
-  time or explicit historical timestamps where a workflow depends on the clock.
+- Control the backend clock and use explicit shared test zones. Verify the
+  configurable UTC default and Europe/Berlin midnight allocation. Use controlled
+  browser time or explicit historical timestamps where a workflow depends on the clock.
 - Reset scenario data independently so tests do not rely on execution order.
   Include valid, invalid, and size-boundary image samples when images are added.
 - Retain the isolated Stage 2-to-Stage 3 upgrade regression and add upgrades from
@@ -373,9 +387,7 @@ No Android implementation has been selected or included in the first version.
 1. Who handles VDS backups, and what recovery procedure is expected?
 2. Select the application server, reverse proxy, and any supplementary frontend
    libraries during implementation; these were not fixed by the stack decision.
-3. Choose the deployment working time zone or fixed UTC offset, as identified
-   in the requirements. Daylight-saving behavior remains outside product scope.
-4. Define administrator recovery alongside the last-active-administrator product
+3. Define administrator recovery alongside the last-active-administrator product
    decision. Current account updates can remove the last active administrator;
    bootstrap rejects any existing administrator, including an inactive one.
    This code-review finding was not covered by Stage 3 verification. Neither a

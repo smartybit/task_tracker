@@ -2,6 +2,8 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.contrib.postgres.constraints import ExclusionConstraint
+from django.contrib.postgres.fields import DateTimeRangeField, RangeOperators
 
 
 class Timesheet(models.Model):
@@ -10,16 +12,17 @@ class Timesheet(models.Model):
 
 
 class WorkSession(models.Model):
-    """Persistence relationships only; recording commands arrive in Stage 5."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     timesheet = models.ForeignKey(Timesheet, on_delete=models.PROTECT, related_name='sessions')
     started_at = models.DateTimeField()
     ended_at = models.DateTimeField(null=True, blank=True)
+    state = models.CharField(max_length=10, choices=[('active', 'Active'), ('unfinished', 'Unfinished'), ('closed', 'Closed')], default='active')
 
     class Meta:
         constraints = [
             models.CheckConstraint(condition=models.Q(ended_at__isnull=True) | models.Q(ended_at__gt=models.F('started_at')), name='session_positive_duration'),
-            models.UniqueConstraint(fields=['timesheet'], condition=models.Q(ended_at__isnull=True), name='one_running_session'),
+            models.UniqueConstraint(fields=['timesheet'], condition=models.Q(state='active'), name='one_active_session'),
+            models.CheckConstraint(condition=models.Q(state='closed', ended_at__isnull=False) | models.Q(state__in=['active', 'unfinished'], ended_at__isnull=True), name='session_state_matches_end'),
         ]
 
 
@@ -36,5 +39,9 @@ class TimeEntry(models.Model):
         constraints = [
             models.CheckConstraint(condition=(models.Q(kind='task', task__isnull=False) | models.Q(kind='break', task__isnull=True)), name='entry_kind_matches_task'),
             models.CheckConstraint(condition=models.Q(ended_at__isnull=True) | models.Q(ended_at__gt=models.F('started_at')), name='entry_positive_duration'),
-            models.UniqueConstraint(fields=['timesheet'], condition=models.Q(ended_at__isnull=True), name='one_running_entry'),
+            models.UniqueConstraint(fields=['session'], condition=models.Q(ended_at__isnull=True), name='one_unfinished_tail'),
+            ExclusionConstraint(name='known_entries_do_not_overlap', expressions=[
+                ('timesheet', RangeOperators.EQUAL),
+                (models.Func('started_at', 'ended_at', models.Value('[)'), function='TSTZRANGE', output_field=DateTimeRangeField()), RangeOperators.OVERLAPS),
+            ], condition=models.Q(ended_at__isnull=False)),
         ]

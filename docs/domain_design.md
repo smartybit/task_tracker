@@ -8,15 +8,16 @@ MutationLock models and a versioned health API. Stage 3 adds session/account,
 organization/project, and grant APIs, shared access policies, and the minimal
 Timesheet record; verification status is tracked in the implementation plan.
 Stage 4 implements tasks/statuses, preview/confirmation operations, and the minimal
-time-record relationships used for deletion protection. Recording commands and
-remaining feature operations below remain a design contract. Refine it
-with verified migrations and tests as each feature stage starts.
+time-record relationships used for deletion protection. Stage 5 implements the
+recording/correction engine and revised lifecycle. Remaining feature operations
+are a design contract; verification status belongs in the implementation tracker.
 
 The timesheet sections were revised on 2026-10-09 for the agreed
 [Edit day](../requirements.md#timesheet-editing) and
 [unfinished-day](../requirements.md#unfinished-days-and-overnight-work) behavior.
 They supersede Stage 1's automatic middle-edit and globally single-open-entry
-proposals. The Stage 4 schema remains unchanged; Stages 5 and 6 are Not started.
+proposals. Stage 5 adds lifecycle migrations and backend commands; the Stage 6
+interface remains Not started.
 
 ## Modules and Records
 
@@ -35,7 +36,7 @@ derive them through current relationships so historical attribution stays correc
 | tasks / Task | title, description, project, parent (nullable), owner, creator, status, revision | Protect project, owner, creator, parent, and status references. Same-project acyclic tree; only creation, ownership transfer, and project changes check owner eligibility. |
 | tasks / TaskStatusChange | task, previous/new status, actor, changed_at | Record initial status and subsequent changes, including propagated ancestor changes; delete history only with an eligible task. |
 | timesheets / Timesheet | user (unique), revision | Persistent per-user lock target, created with the account; ownership grants unconditional self-access. |
-| timesheets / WorkSession | timesheet, started_at, ended_at (nullable), planned lifecycle state (active/unfinished/closed) | Continuity is required inside a session, not between sessions. One active recording session per user; multiple unfinished historical sessions are permitted. A closed session's end represents its End of Working Day marker. Lifecycle state requires a Stage 5 migration. |
+| timesheets / WorkSession | timesheet, started_at, ended_at (nullable), lifecycle state (active/unfinished/closed) | Continuity is required inside a session, not between sessions. One active recording session per user; multiple unfinished historical sessions are permitted. A closed session's end represents its End of Working Day marker. Stage 5 adds the lifecycle field and revised constraints. |
 | timesheets / TimeEntry | timesheet, session, kind (task/break), task (nullable), started_at, ended_at (nullable) | Timesheet agrees with session; task required exactly for task entries; closed end greater than start; known intervals cannot overlap. One open tail per session, with unknown end/zero duration until closure; its session determines whether it is active recording or historical unfinished work. Task foreign key protects deletion, including hidden records. |
 | remarks / Remark | task, author, body, starred, created_at, edited_at, revision | Shared stars; original author/time survive edits. Task deletion may remove remarks only after its eligibility and content-write checks. |
 | content / Image | containing task OR remark, private storage key, verified format, byte size, uploader | Exactly one containing object; no standalone task attachment collection or public media URL. Deletion cleanup follows its containing object. |
@@ -77,8 +78,8 @@ labels and timestamps, but links/details and project report access remain separa
   sessions and CSRF protection, including login. No token/mobile authentication or
   email delivery is introduced now.
 - Use ISO dates and offset-aware timestamps. Store instants in UTC and derive days
-  in the configured shared working zone. UTC is a temporary test/development
-  default, not a decision about the deployment zone; DST acceptance is out of scope.
+  in the configured shared working zone. `WORKING_TIME_ZONE` is configurable
+  in `.env`/backend settings, with UTC as the default; DST acceptance is out of scope.
 - Paginate lists and search with stable ordering. Reject unknown mutation fields;
   clients cannot set creator, calculated duration, inherited grants, or first-use
   markers directly.
@@ -240,12 +241,12 @@ validate that it agrees with their session. Enforce one active session per times
 and one open tail per session, with lifecycle-consistent end timestamps. Continuity,
 tree cycles, common-project rules, and final ancestors require service validation.
 
-Stage 4 currently has `one_running_session` and `one_running_entry` uniqueness on
-null ends per timesheet and no session lifecycle field. Stage 5 must add lifecycle
-state, backfill existing records without inventing ends, and replace those global
-null-end constraints with the revised rules through additive migrations. The
-overlap backstop must support multiple unfinished days. These are planned changes,
-not existing implementation or verified migrations.
+Stage 5 replaces Stage 4’s global null-end uniqueness through additive migrations.
+Existing closed sessions become closed and existing open sessions remain active,
+without inventing ends. Known-range exclusion allows multiple unknown tails;
+entry/session agreement is also protected in PostgreSQL. The concrete command
+payload is documented in [the timesheet API](timesheet_api.md); execution evidence
+belongs in the implementation tracker.
 Protect permanent status first-use/immutability against accidental direct changes
 with a database trigger when statuses are implemented.
 
@@ -321,11 +322,11 @@ proposals. The Friday/Monday scenario is also specified in
 
 ## Remaining Decisions and Implementation Boundary
 
-The deployment working zone and backup responsibility/recovery expectations remain
-open as recorded in the requirements and architecture. They do not block schema/API
+The shared working zone is configurable in settings, defaulting to UTC. Backup
+responsibility/recovery expectations remain open in the architecture. They do not block schema/API
 design. Search language configuration, supplementary UI libraries, and server/proxy
 are chosen when their stages need them. The initial test runners are Django and
 Playwright/Chromium, introduced in Stage 2 and extended through Stage 4. Worked
 examples are design contracts; actual PostgreSQL, browser, and concurrency
 evidence is recorded in the implementation tracker. Task/status acceptance
-passed in Stage 4; timeline, report, and content acceptance remain planned.
+passed in Stage 4; timeline acceptance is tracked in Stage 5; report and content acceptance remain planned.

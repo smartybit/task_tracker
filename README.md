@@ -18,9 +18,10 @@ Stage 4 adds task creation/editing, ownership transfer, flat/tree lists, project
 and multiple-status filters, hierarchy/project moves, status history, and protected
 status catalogs. Its acceptance verification is complete; see the tracker.
 
-Time recording, reports, remarks, images, and search remain unimplemented. Minimal
-time-record relationships support task deletion protection; no time-entry workflow
-is available. No personal account is
+Stage 5 adds the backend timesheet engine: recording, breaks, closing markers,
+independent unfinished days, overnight continuation, previews, and atomic day
+corrections. The browser timesheet interface is Stage 6. Reports, remarks, images,
+and search remain unimplemented. No personal account is
 created automatically, and public registration is unavailable.
 
 ## Task Management
@@ -47,6 +48,20 @@ protected even after its tasks change status or are deleted. Write-only project
 access permits task creation with a safe acknowledgement; browsing descriptions
 and lists requires task read access. Advanced write-only changes remain available
 through the revision-aware API described in the domain design.
+
+## Timesheet API and Configuration
+
+The backend engine is available through the authenticated, CSRF-protected API;
+Stage 6 will add its browser controls. See [command contracts and examples](docs/timesheet_api.md).
+Own-sheet access is implicit. Global Read/Write Others’ Timesheets flags govern
+other sheets independently; administrators have no data bypass.
+
+Set `WORKING_TIME_ZONE=Europe/Berlin` (or another IANA zone) in `.env` and recreate
+the backend with `docker compose up -d web`. UTC is the default. All users share
+this setting. Timestamps remain absolute instants; changing the zone reallocates
+known spans to its calendar days, without fabricating ends for unfinished work.
+Tests explicitly use UTC and verify Europe/Berlin outside DST transitions.
+Daylight-saving acceptance remains outside scope.
 
 ## Runtime and Dependencies
 
@@ -156,7 +171,9 @@ Stage 3 adds account/CSRF, permission-matrix, migration-upgrade, rollback, and
 concurrency checks, plus separate-session browser administration workflows.
 Stage 4 adds deep task trees, permanent status protection, task endpoint permissions,
 owner/project moves, real time-reference deletion checks, hierarchy races, and
-Stage 3 schema upgrades. Later stages add recording, image, and report fixtures.
+Stage 3 schema upgrades. Stage 5 adds controlled multi-day timelines, atomic
+correction and permission checks, UTC/Berlin midnight allocation, lifecycle upgrades,
+and independent-connection recording/day-save races. Later stages add image and report fixtures.
 Browser mutation scenarios create separate synthetic accounts so password/grant changes
 do not alter another scenario’s credentials. The guarded `seed_test_data` command
 restores the three baseline fixture accounts and grants when repeated.
@@ -266,8 +283,8 @@ notes record the original names and observed cleanup. The current Compose test
 entry point performs its own scoped cleanup.
 
 The temporary ports and host networking above are Linux verification conveniences,
-not production configuration. The configured working zone is UTC only as a
-temporary development/test default; the deployment zone still needs selection.
+not production configuration. The shared working zone is configurable as described
+in [Timesheet API and Configuration](#timesheet-api-and-configuration).
 
 ## Design and Verification References
 

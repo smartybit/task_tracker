@@ -176,6 +176,27 @@ and two additional write-only regressions before full acceptance. Development
 volumes were never migrated, reset, or seeded. Stage 4 is complete; Stage 5 remains
 Not started.
 
+## Stage 5 Verification Findings: 2026-10-09
+
+Focused engine checks reuse the test Compose project and source-mounted backend;
+no development volume is migrated. Fresh lifecycle migrations, system/drift checks,
+and 19 task regressions passed. An initial 24-check engine attempt passed timeline
+scenarios but failed four concurrency fixtures and the upgrade fixture: transaction
+flush removes the seeded coordination row, and historical model state must include
+`accounts.0002_user_session_version` to match the database. Restore the lock in
+transaction fixtures and retain other apps’ latest migration targets when testing
+Stage 4-to-Stage 5 upgrades. Corrected 24- and expanded 25-check runs passed;
+three subsequent checks passed storage-failure rollback, subsecond totals, and
+competing complete-day saves. These are component results; full lifecycle
+acceptance is recorded separately in the tracker.
+
+The shared working zone is configured through `WORKING_TIME_ZONE`; UTC is the
+default and Europe/Berlin is also verified outside DST transitions. Normalization
+on reads uses deterministic fragment IDs for older unsplit spans or zone changes;
+reads do not change timestamps, revisions or stored rows. Accepted commands persist
+normalization atomically. Do not rewrite old migration history or infer unknown
+end times when configuring the zone.
+
 ## Docker Access Is Session-Specific
 
 Before approved lifecycle verification, an earlier agent session produced these

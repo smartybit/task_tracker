@@ -6,8 +6,12 @@ from core.views import HealthView
 from projects.views import OrganizationsView, OrganizationView, ProjectsView, ProjectView
 
 from tasks.views import StatusesView, StatusView, OwnersView, TasksView, TaskView, HistoryView, CommandView, PreviewView
+from timesheets import views as timesheet_views
 
 urlpatterns = [
+    path('api/v1/timesheets/<uuid:user_id>/days/<str:day>/', timesheet_views.DayView.as_view()),
+    path('api/v1/timesheets/<uuid:user_id>/commands/', timesheet_views.CommandView.as_view()),
+    path('api/v1/timesheets/<uuid:user_id>/commands/preview/', timesheet_views.PreviewView.as_view()),
     path('api/v1/statuses/', StatusesView.as_view()),
     path('api/v1/statuses/<uuid:pk>/', StatusView.as_view()),
     path('api/v1/projects/<uuid:pk>/eligible-owners/', OwnersView.as_view()),

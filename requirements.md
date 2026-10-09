@@ -129,7 +129,9 @@ The following requirements reflect agreed product behavior.
 - End of Working Day closes the last entry. It does not record task work.
 - When adding work after an End of Working Day marker, the application should
   advise converting that marker to a break.
-- All users share a single time zone. Daylight-saving behavior is outside scope.
+- All users share a single configurable time zone. Configuration in a settings
+  file is sufficient; a settings UI is not required (agreed 2026-10-09).
+  Daylight-saving behavior is outside scope.
 - Work crossing midnight is split into entries for the two calendar days.
 
 ### Timesheet Editing
@@ -370,8 +372,7 @@ than additional user-confirmed requirements.
 
 ## Open Product Questions
 
-1. Which shared time zone or fixed UTC offset should be configured for deployment?
-2. Should account updates reject deactivation or demotion of the last active
+1. Should account updates reject deactivation or demotion of the last active
    administrator? Proposed safeguard: preserve at least one active administrator,
    including when two administrators update accounts concurrently. Define an
    operator recovery policy for already locked-out installations as well. This
