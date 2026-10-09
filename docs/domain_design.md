@@ -12,6 +12,12 @@ time-record relationships used for deletion protection. Recording commands and
 remaining feature operations below remain a design contract. Refine it
 with verified migrations and tests as each feature stage starts.
 
+The timesheet sections were revised on 2026-10-09 for the agreed
+[Edit day](../requirements.md#timesheet-editing) and
+[unfinished-day](../requirements.md#unfinished-days-and-overnight-work) behavior.
+They supersede Stage 1's automatic middle-edit and globally single-open-entry
+proposals. The Stage 4 schema remains unchanged; Stages 5 and 6 are Not started.
+
 ## Modules and Records
 
 Use UUID public identifiers, database foreign keys, and creation/update timestamps
@@ -29,8 +35,8 @@ derive them through current relationships so historical attribution stays correc
 | tasks / Task | title, description, project, parent (nullable), owner, creator, status, revision | Protect project, owner, creator, parent, and status references. Same-project acyclic tree; only creation, ownership transfer, and project changes check owner eligibility. |
 | tasks / TaskStatusChange | task, previous/new status, actor, changed_at | Record initial status and subsequent changes, including propagated ancestor changes; delete history only with an eligible task. |
 | timesheets / Timesheet | user (unique), revision | Persistent per-user lock target, created with the account; ownership grants unconditional self-access. |
-| timesheets / WorkSession | timesheet, started_at, ended_at (nullable) | Defines the recorded interval; continuity is required inside it, not between sessions. A closed session's end represents its End of Working Day marker. |
-| timesheets / TimeEntry | timesheet, session, kind (task/break), task (nullable), started_at, ended_at (nullable) | Timesheet agrees with session; task required exactly for task entries; closed end greater than start; no overlapping entries and at most one running entry per timesheet. Task foreign key protects deletion, including hidden records. |
+| timesheets / WorkSession | timesheet, started_at, ended_at (nullable), planned lifecycle state (active/unfinished/closed) | Continuity is required inside a session, not between sessions. One active recording session per user; multiple unfinished historical sessions are permitted. A closed session's end represents its End of Working Day marker. Lifecycle state requires a Stage 5 migration. |
+| timesheets / TimeEntry | timesheet, session, kind (task/break), task (nullable), started_at, ended_at (nullable) | Timesheet agrees with session; task required exactly for task entries; closed end greater than start; known intervals cannot overlap. One open tail per session, with unknown end/zero duration until closure; its session determines whether it is active recording or historical unfinished work. Task foreign key protects deletion, including hidden records. |
 | remarks / Remark | task, author, body, starred, created_at, edited_at, revision | Shared stars; original author/time survive edits. Task deletion may remove remarks only after its eligibility and content-write checks. |
 | content / Image | containing task OR remark, private storage key, verified format, byte size, uploader | Exactly one containing object; no standalone task attachment collection or public media URL. Deletion cleanup follows its containing object. |
 | content / Reference | source task OR remark, target kind and stable UUID | Validate source ownership; resolve target permissions on every access. Target identifiers survive deletion for an unavailable placeholder; no target cascade. |
@@ -81,13 +87,16 @@ labels and timestamps, but links/details and project report access remain separa
   business-rule conflicts. Session-authentication failures may use DRF's `403`;
   include a stable `authentication_required` code rather than depending on status
   alone. Error shape: `{code, message, fields?}` with non-sensitive details.
-- Compound operations have a preview mode, returning permitted affected rows and
-  required confirmations without writing. Apply repeats validation inside the
-  transaction; a preview is never authorization for a later write.
+- Compound operations requiring preview return permitted affected rows and required
+  confirmations without writing. Apply repeats validation inside the transaction;
+  a preview is never authorization for a later write. Edit day's visible draft is
+  its review step: Save changes submits one validated atomic replacement, without
+  persisting an invalid draft or requiring a second preview window.
 - Timesheet commands require `expected_revision`. Task mutations use task revisions;
   tree-changing previews also carry the domain revision. Successful commands return
   new revisions. Stale commands fail without changes; the UI refreshes and asks for
-  confirmation again instead of silently replaying historical edits.
+  review again instead of silently replaying historical edits. Preserve any Edit
+  day draft when refreshing; never overwrite it with refreshed server rows.
 
 ## Operation Catalogue
 
@@ -108,8 +117,8 @@ references, and applicable business invariants before committing.
 | `tasks/{id}/status` | Selected status, optional non-final ancestor status and preview/confirmation | Task write for every changed task. Finalization requires all descendants final; reopening propagates to final ancestors. Reject invalid/used-status edits separately from valid assignments of used statuses. |
 | `tasks/{id}/move` | New parent or root, explicit destination project if changed, revisions, preview/confirmation | Write in source/destination projects and owner eligibility for every project-changed task. Move subtree atomically; same project unless explicitly changed. Preserve final-ancestor invariant or reject. |
 | `DELETE tasks/{id}` with deletion preview | Expected revision and confirmation of eligible remark/image removal | Task write plus task read and remark write if remarks will be removed. Any child or any user's time entry blocks deletion, including hidden references; generic conflict without protected record details. |
-| `timesheets/{user}/days/{date}` | Whole day rows, daily work total, revisions, permitted task labels and open/end markers | Timesheet read gate, never project-filtered. Protected task content is not embedded. |
-| `timesheets/{user}/commands` | Typed start/switch/break/end-day/insert/boundary/delete/resume command, expected revision and optional preview | Timesheet write gate. New task selection requires task read. No read gate on editing retained references; write-only responses are acknowledgements. See timeline semantics below. |
+| `timesheets/{user}/days/{date}` | Whole day rows, session identifiers/lifecycle, daily work total, revision, task labels and open/end markers, midnight connections | Timesheet read gate, never project-filtered. Expose unfinished-day warnings without embedding protected task content. |
+| `timesheets/{user}/commands` | Typed start/switch/break/end-day/append/boundary/delete_last/resume/continue/replace_day command, explicit target date/session, expected revision and preview where required | Timesheet write gate. New task selection requires task read; retained references require no additional task read. `replace_day` carries the complete selected-day rows/markers with stable row identifiers; there is no individual middle-insert/delete command. Write-only responses are acknowledgements. |
 | `tasks/{id}/remarks`, `remarks/{id}`, `remarks/{id}/star` | Ordered remarks, create/edit body, delete, toggle shared star | Task read plus corresponding remark flag. Preserve original author/time; return body only if remark read is also granted. |
 | Description/remark `images`, `images/{id}/download` | Multipart upload; protected download/delete | Containing-object read/write gates; verified PNG/JPEG/WebP, maximum 2 MiB. Reject invalid, oversized, or foreign-source image identifiers. |
 | `references/resolve` | Stable target identifiers; visible target or generic unavailable result | Resolve each target independently with task/remark read rules; never leak restricted titles, authors, snippets, or image previews. Source edits check source write access. |
@@ -120,47 +129,84 @@ references, and applicable business invariants before committing.
 ## Timeline Semantics
 
 Commands accept timestamps, not caller-calculated durations. Successful commands
-normalize the complete affected session, split closed spans at local midnight,
-validate continuity, and commit together. The daily UI may show a synthetic
+validate the complete resulting timeline, normalize explicitly closed overnight
+spans at local midnight, and commit together. The daily UI may show a synthetic
 `end_of_day` row keyed to its WorkSession; it is not a work-duration entry.
 
-- **Start/switch:** choose a readable task and start instant. In a running session,
-  close the current entry and start the new one at the same boundary. With no
-  session, create one. Reject duplicate/reversed boundaries instead of producing
-  zero-length closed entries. A new task entry reports zero until closed.
-- **Break:** identical boundary handling with kind `break` and no task. Breaks can
-  remain open but never contribute work hours.
-- **End day:** close the running entry and session together at the chosen instant.
-  No open entry remains; the marker is the session's closing boundary.
+- **Lifecycle:** active recording is distinct from unfinished historical sessions
+  and closed sessions. An unfinished session has one tail with an unknown end;
+  it does not reserve all future time. Closed sessions have no open tails. Permit
+  one active recording session per timesheet and one open tail per session.
+- **Start new day:** a new selected day's recording starts an independent active
+  session by default. Mark any earlier active session unfinished without supplying
+  its end. Do not block new recording or invent an interval between days.
+- **Switch/break:** within the explicitly targeted session, close its tail and
+  start a task or break at the same boundary. Reject duplicate/reversed boundaries.
+  A task with an unset end contributes zero; breaks never contribute work hours.
+- **Historical append:** ask for a start on the selected historical date. Close
+  that session's unfinished tail at the supplied boundary and create its next tail.
+  The historical session remains unfinished and today's active session is unchanged.
+  Ordinary append cannot insert inside an existing interval.
+- **End day:** close the targeted session's tail and session together at an explicit
+  instant; the marker is the session's closing boundary. Closing historical work
+  does not change today's active session or its entries.
+- **Continue previous session:** explicitly opt into genuine overnight recording
+  rather than the default independent new day. Validate against other sessions and
+  active-recording uniqueness; do not silently merge conflicting sessions.
 - **Resume:** when continuing a closed session, require explicit conversion of its
   end marker to a break. Reopen the session, fill from the former closing boundary
   to the new work start with a break, then start the selected task. Starting a new
   day's separate session does not fill the overnight interval. Do not silently
   bypass the conversion advice when resuming the same closed day.
-- **Insert:** within an existing entry, shorten it at the insertion instant and
-  assign the remainder up to the next boundary to the selected task or break.
-  In an open entry, the newly inserted remainder becomes the running entry.
-  At an existing boundary, require explicit replacement rather than guessing.
-  Outside a session, request explicit session creation or boundary extension;
-  reject spans that overlap another session.
-- **Boundary edit:** change the adjoining end/start together, including across day
-  fragments. First/last-boundary edits also adjust the session boundary. Reject
-  reordering entries, overlap with another session, or non-positive closed spans.
-- **Delete:** default to extending the immediately preceding entry to the removed
-  entry's end (or make it open if deleting the running entry). With no predecessor,
-  replace the removed interval with a break. An explicit replace-with-break option
-  avoids incorrectly attributing removed work to its predecessor. Normalize across
-  midnight again; the operation never leaves a hole inside the session.
-- **Final task:** historical corrections remain allowed. Selecting a final task
+- **Boundary edit:** ordinary edits change adjoining end/start together. First/last
+  boundary edits also adjust an independent session edge. Preview affected changes;
+  reject reordering, overlaps, or non-positive closed spans.
+- **Delete last:** ordinary deletion is limited to the last task/break row of the
+  selected session. Extend its predecessor to the removed row's end, or leave it
+  open when deleting an open tail; preserve historical/active lifecycle. Delete an
+  independent session if its sole row is removed. Do not remove connected overnight
+  coverage. Use Edit day for a different attribution or any middle deletion.
+- **Replace day:** submit the date, expected revision, and complete rows/session
+  markers, associating retained IDs only with the targeted timesheet/day. New rows
+  have stable client keys for validation errors. Revalidate task selections and the
+  resulting timeline, including other sessions and neighboring-day connections.
+  Preserve retained record identities; apply accepted changes together and bump
+  the timesheet revision. Invalid/stale submissions change nothing. Retaining a
+  valid unfinished tail is allowed; gaps do not implicitly create new sessions.
+- **Final task:** historical additions/corrections remain allowed without status
+  changes, including an unfinished historical tail. Selecting a final task
   for new current work returns `task_reopen_required`; reopening is a separate
   task-write action, not something a timesheet-only user can authorize implicitly.
   If the actor cannot reopen it, they can choose another task or a break.
 
+### Edit Day Draft and Daily Boundaries
+
+Edit day opens a modal copy of the selected day's Task / Start Time / End Time
+table, with breaks and closing markers. Allow arbitrary row insertion/deletion and
+time edits in frontend memory without automatic neighbor adjustments. Highlight
+gaps, overlaps, missing fields, and invalid durations without blocking draft edits.
+Sort by start after a field edit completes; keep incomplete rows at the bottom,
+preserve focus, and use stable row keys. The task picker searches readable tasks
+and filters by project/status, including final tasks.
+
+Save changes submits one complete draft. Require positive closed durations,
+continuity inside each session, valid markers, and no known overlaps. Independent
+session edges may change or their day may become empty. Fixed midnight connections
+to adjacent days must remain covered; reassign their work or replace it with breaks
+rather than removing it. Correct neighboring days separately. An overnight carry-in
+keeps its actual start, with the outside-day portion protected from a one-day edit.
+
+Cancel never writes. Confirm dismissal of a changed draft. Validation, permission,
+network, and revision errors retain the draft. A conflict requires refreshing and
+reviewing stored work alongside the draft; never silently merge or replay it.
+
 Open entries retain their actual start even across midnight and contribute zero.
 Only explicit closure creates the midnight-split closed rows. Preview identifies
 all affected days. The UI must not fabricate a midnight stop or daily recorded hours.
-The current day can show an ongoing entry from a previous day as a carry-in row
-with its real start and zero duration; that display is not a new stored entry.
+An explicitly continued overnight entry may appear as a carry-in row with its real
+start and zero duration; this is not a new stored entry. An unfinished historical
+tail instead stays on its historical day with an Unfinished warning. It is not
+automatically shown as today's active work.
 
 ## Transactions, Concurrency, and Constraints
 
@@ -186,11 +232,20 @@ and PostgreSQL concurrency regressions demonstrate equivalent integrity.
 
 Add database checks for entry kind/task consistency, positive closed durations,
 and uniqueness; use protected foreign keys for task time records and child tasks.
-Use a PostgreSQL exclusion constraint on half-open time ranges per timesheet as a
-backstop against overlaps, treating a running range as unbounded. Store the
-timesheet foreign key on entries for this constraint and validate that it agrees
-with their session. Enforce one running entry/session per timesheet. Continuity,
+Use PostgreSQL exclusion protection on known half-open intervals per timesheet as
+a backstop against overlaps. An unfinished historical tail has an unknown interval;
+do not interpret every null end as an unbounded range. Check its actual span against
+all other sessions when closing it. Store the timesheet foreign key on entries and
+validate that it agrees with their session. Enforce one active session per timesheet
+and one open tail per session, with lifecycle-consistent end timestamps. Continuity,
 tree cycles, common-project rules, and final ancestors require service validation.
+
+Stage 4 currently has `one_running_session` and `one_running_entry` uniqueness on
+null ends per timesheet and no session lifecycle field. Stage 5 must add lifecycle
+state, backfill existing records without inventing ends, and replace those global
+null-end constraints with the revised rules through additive migrations. The
+overlap backstop must support multiple unfinished days. These are planned changes,
+not existing implementation or verified migrations.
 Protect permanent status first-use/immutability against accidental direct changes
 with a database trigger when statuses are implemented.
 
@@ -212,14 +267,26 @@ coverage; timeline/report examples remain future fixtures. Executed verification
 is recorded in the implementation tracker. Times use a controlled fixed zone;
 all durations are independently calculated.
 
+The historical middle-edit examples below now describe explicit day drafts, not
+automatic neighbor adjustment. Git history preserves the superseded Stage 1
+proposals. The Friday/Monday scenario is also specified in
+[requirements](../requirements.md#friday-to-monday-example).
+
 | Scenario | Input / action | Expected committed result |
 | --- | --- | --- |
-| Insert forgotten work | A 09:00–10:00, B 10:00–11:00; insert C at 09:30 | A 09:00–09:30, C 09:30–10:00, B unchanged; total remains 2 hours. |
-| Delete middle entry | A 09:00–10:00, B 10:00–10:30, C 10:30–11:00; delete B | A extends to 10:30, C unchanged; total 2 hours. Replace-with-break instead gives 1.5 work hours. |
-| Delete first entry | A 09:00–10:00, B 10:00–11:00; delete A | Break 09:00–10:00, B unchanged; 1 work hour. |
+| Insert forgotten work in Edit day | A 09:00–10:00, B 10:00–11:00; add C 09:30–10:00 to the draft | Overlap is highlighted; saving fails unchanged until the user also shortens A to 09:30. Saving that complete valid draft gives A 09:00–09:30, C 09:30–10:00, B unchanged; 2 work hours. |
+| Delete middle entry in Edit day | A 09:00–10:00, B 10:00–10:30, C 10:30–11:00; remove B from the draft | A and C do not move automatically. Gap blocks save. Explicitly extend A to 10:30 for 2 work hours, or add a break 10:00–10:30 for 1.5 work hours, then save atomically. |
+| Delete first entry in Edit day | A 09:00–10:00, B 10:00–11:00 in an independent session; remove A | User may move the independent session start to 10:00, or explicitly replace A with a break. Either valid draft records 1 work hour; no neighbor changes occur automatically. |
+| Delete last ordinary record | A 09:00–10:00, B from 10:00 with unset end; delete B after preview | A becomes the session's open tail from 09:00, duration zero. Its session retains active/unfinished lifecycle. Deleting an independent session's sole row clears the session. |
+| Cancel or reject a draft | Change rows into a gap/overlap, then cancel or attempt save | Cancel discards the draft; invalid save retains it with errors. Stored rows, revision, and totals remain unchanged. |
 | Invalid boundary | Same A/B; move their boundary to 11:30 | Conflict; entries, revisions, and total remain unchanged. |
 | Open and overnight | Start A at 23:30, inspect at 00:15, then close at 00:30 | Before closure: end unset, 0 hours. After: 23:30–00:00 and 00:00–00:30, 0.5 hours each day, 1 hour total. |
 | Resume closed session | A 09:00–17:00, closing marker at 17:00; explicitly resume B at 18:00 | A unchanged, break 17:00–18:00, B open/zero; 8 work hours until B closes. |
+| Friday unfinished, Monday recording | Friday meeting 09:00–12:00, break 12:00–12:43, email from 12:43 with unset end; start Monday work at 09:00 | Monday becomes the active session; Friday is unfinished with 3 recorded work hours and a zero-duration email tail. No weekend interval or end is invented. |
+| Complete Friday on Monday | Previous example; select Friday, append task at Friday 14:00, End of Working Day at Friday 17:00 | Email closes 12:43–14:00; task records 14:00–17:00. Friday records 7h 17m of work. Monday's rows and active session remain unchanged. |
+| Historical final task | Append a Completed task to an unfinished Friday session, then close it | Task and ancestor statuses remain unchanged; current task read and timesheet write are checked. A still-unfinished tail contributes zero and never takes over Monday recording. |
+| Fixed midnight connection | A closed overnight span is split at midnight; edit one day | A valid draft retains the fixed connected midnight edge; removing its required coverage blocks save. Other-day intervals are not silently rewritten. |
+| Close unfinished work into later work | Friday has an unknown tail; Monday has recorded work; supply an end extending into Monday's work | Reject the overlapping closure without changing either session or revision. Missing end alone did not reserve the weekend. |
 | Final ancestor reopening | Root and child Completed; grandchild Completed -> In Progress | All three become In Progress with individual history rows; unrelated branches unchanged. Denied change leaves all unchanged. |
 | Finalization blocked | Root -> Completed while grandchild is Waiting for Customer Response | Conflict even if its immediate child is final; no history or status changes. |
 | Owner loses access | Owner U has write at assignment, then all their task grants are removed | Owner remains U; U cannot read/edit; another authorized writer can edit description. Reassignment to U or move requiring U's eligibility fails until eligible. |
@@ -228,7 +295,8 @@ all durations are independently calculated.
 | Whole sheet vs report | Viewer has Read Others' Timesheets and read access to P only; colleague records P 1h and Q 2h | Whole sheet shows both task labels and 3h; Q details unavailable; reports/CSV include P 1h only. |
 | Own-only report | Same records, but viewer lacks Read Others' Timesheets | Reports/CSV contain only viewer's own work in readable projects, even if Write Others' Timesheets is granted. |
 | CSV special/open rows | Closed A 09:00–10:30, break 10:30–11:00, open B from 11:00; another session has a closing marker | Closed A exports 1.5h; open B exports blank end/0h. No break or end marker row. Person/project/task UI filters do not narrow the authorized dump. |
-| Concurrent commands | Two starts use timesheet revision 7 | One commits revision 8; the other gets stale-revision conflict. Exactly one running entry and no overlap remain. |
+| Concurrent commands | Two current starts use timesheet revision 7 | One commits revision 8; the other gets stale-revision conflict. Exactly one active recording session remains; historical unfinished tails may coexist. |
+| Day save races current recording | Friday draft uses revision 7; Monday switch commits revision 8 before Save changes | Reject stale Friday save without applying rows. Retain the draft for reload/review; Monday's new recording is preserved. |
 | Delete race | Task deletion races child creation or first time record | Serialized result: either deletion succeeds and creation fails, or creation succeeds and deletion is blocked. No orphan child or time record. |
 
 ## Reporting and Search Details to Carry Forward

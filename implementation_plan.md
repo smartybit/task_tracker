@@ -10,6 +10,12 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 - Last updated: 2026-10-09.
 - Stages 1–4 are complete: 4 of 9 implementation stages complete.
+- Timesheet design revised by agreement on 2026-10-09: ordinary shared-boundary
+  edits and last-row deletion, an atomic Edit day draft for middle corrections,
+  and independent new-day recording with historical unfinished sessions. Friday
+  can be completed on Monday without changing Monday's recording. Documentation
+  consistency, 57 local Markdown links/anchors, and whitespace checks passed;
+  no application tests or migrations ran. Stages 5 and 6 remain Not started.
 - Stage 4 follow-up: preserved the temporary verification runner, local Markdown
   link checker, and read-only Docker diagnostics under `scripts/`, with portable
   paths and documented usage. Shell syntax, 50 local links/anchors, and isolated
@@ -93,6 +99,12 @@ report totals that can later become automated fixtures.
 Completion check: the design covers the agreed requirements and gives each
 critical operation a clear input, result, access rule, and failure behavior.
 Technical details can evolve as implementation provides evidence.
+
+The timesheet portion of this initial design was superseded by the agreed
+[editing](requirements.md#timesheet-editing) and
+[unfinished-day](requirements.md#unfinished-days-and-overnight-work) decisions on
+2026-10-09. Domain examples and the Stage 5/6 plan now reflect them; the original
+Stage 1 milestone and historical verification records remain valid design history.
 
 Design result: [domain model and API operations](docs/domain_design.md), linked
 from the architecture, covers the schema, command semantics, authorization matrix,
@@ -377,43 +389,76 @@ Commit: `docs: record Stage 4 completion and verification`.
 
 - [ ] Implement task starts/switches, breaks, end-of-day markers, and personal or
   permitted other-user timesheet operations.
-- [ ] Implement historical insertion, shared-boundary edits, deletion, and the
-  selected neighboring-entry adjustment rules behind isolated backend operations.
-- [ ] Preserve zero reported duration for running entries until explicit closure.
+- [ ] Add active/unfinished/closed session lifecycle and additive migrations replacing
+  Stage 4's global `one_running_session` / `one_running_entry` null-end constraints.
+  Preserve existing records without inventing end times; permit one active session
+  per user and one unfinished tail per session.
+- [ ] Implement independent new-day starts by default, explicit overnight
+  continuation, and session-targeted historical append/close using supplied times.
+  Historical corrections must not replace today's active recording.
+- [ ] Implement ordinary shared-boundary edits and last-record deletion with preview,
+  plus atomic `replace_day` commands carrying complete rows/markers and revision.
+  Do not expose individual middle-insert/delete commands or automatic draft repair.
+- [ ] Validate complete day replacements, known intervals, session markers, and
+  fixed neighboring-day connections; allow independent edge changes/empty days
+  and valid unfinished tails. Return row-associated errors with no partial writes.
+- [ ] Preserve zero reported duration for active and historical unfinished tails
+  until explicit closure; unknown ends must not reserve all subsequent time.
 - [ ] Implement closed-entry midnight splitting in the configured shared zone.
 - [ ] Apply multi-record changes in transactions with protection against competing
   edits, including operations across days and different task projects.
 - [ ] Verify continuity, overlap rejection, end-of-day resumption, invalid changes,
-  rollback, and concurrent requests using independent PostgreSQL connections.
+  rollback, Friday-to-Monday corrections, lifecycle/schema upgrades, and concurrent
+  day saves/recording using independent PostgreSQL connections.
 
 Test environment: real PostgreSQL transactions with controlled clocks and an
 explicit test zone, known multi-day timelines, and independently calculated
-durations. Coordinate competing requests through independent connections and
-verify committed state and rollback, not just individual response codes.
+durations. Include multiple unfinished historical days alongside active recording.
+Coordinate competing requests through independent connections and verify committed
+state and rollback, not just individual response codes.
 
 Completion check: reproducible timeline examples produce correct stored intervals
 and durations; successful, failed, and competing operations preserve integrity.
+Invalid day drafts never reach storage, accepted drafts commit atomically, and
+Friday corrections preserve Monday's rows and active-session identity. New lifecycle
+constraints replace the Stage 4 schema without data loss or fabricated closures.
 The deployment working time zone must be selected for final time-behavior acceptance.
 
 ## Stage 6: Timesheet Interface
 
 - [ ] Build the right-hand Task / Start Time / End Time table and Day selector.
 - [ ] Add task drag-and-drop, task switching, break and end-of-day actions.
-- [ ] Add historical insertion, manual boundary editing, deletion, and previews
-  of affected entries with clear validation feedback.
+- [ ] Add ordinary shared-boundary editing and last-record deletion with previews;
+  historical append/close asks for selected-day timestamps. New days start
+  independently; offer explicit Continue previous session for overnight work.
+- [ ] Add Edit day as a modal copy of the selected day, available on historical
+  and running days. Support arbitrary draft insertion/deletion/time edits, visible
+  gap/overlap errors, stable focus, and sorting after field editing completes.
+- [ ] Add a searchable task picker with project/status filters, including final
+  tasks for historical work without reopening them. Retain restricted references
+  while protecting task details and checking new-selection permissions.
+- [ ] Implement Save changes/Cancel, changed-draft dismissal confirmation, atomic
+  whole-day submission, and draft preservation after errors/stale revisions.
+  Require reload/review rather than automatic replay or overwriting newer work.
+- [ ] Display active/unfinished/closed sessions and partial totals/unfinished
+  warnings; preserve fixed midnight connections in the one-day editor.
 - [ ] Support viewing/editing other users' timesheets according to the global flags,
   while keeping restricted task details protected.
 - [ ] Add browser workflow checks for recording work and correcting past work.
-  Explore competing tabs and recovery after a failed request.
+  Cover Friday corrections while Monday records, draft validation/cancel, final
+  task selection, sorting/focus, competing tabs, and failed-request recovery.
 
 Test environment: real automated browsers against the shared frontend/API and
 reset test database. Use independent sessions or tabs, controlled timestamps, and
 seeded cross-project timesheets to exercise edits, permission boundaries, and
-failed-request recovery.
+failed-request recovery. Include a historical unfinished session alongside today's
+active session; no test should treat the unknown historical end as weekend work.
 
 Completion check: users can complete the task-to-timesheet workflow through the
-browser, including historical corrections. This is the first useful work-tracking
-milestone; the remaining first-version features are still outstanding.
+browser, including ordinary historical additions and advanced Edit day corrections.
+Invalid drafts are editable but cannot be saved, Cancel leaves stored work intact,
+and completing Friday preserves Monday recording. This is the first useful
+work-tracking milestone; the remaining first-version features are still outstanding.
 
 ## Stage 7: Reporting and CSV Export
 
@@ -541,3 +586,5 @@ defined in Current Position and the stage sections above.
 | 2026-10-09 | Stage 4 session regression corrected | A trace showed that background task requests can detect deactivation before the colleague clicks Refresh access. Updated the existing account browser scenario to reload and assert sign-in after deactivation/password reset; focused workflow passed. The prior full attempt passed 54 backend tests but its command client exited 143 while Chromium continued; its retained browser result identified only the account scenario as failed. Full acceptance remains pending. Commit: `test: handle prompt session revocation during task loading`. |
 
 | 2026-10-09 | Stage 4 completed | Source `c2d5ca3` passed two sequential full test-script runs, each exiting 0 with 54 PostgreSQL tests, TypeScript/Vite build, 16 Chromium checks, and inspected cleanup. The first successful run reset healthy running services. Fresh/Stage 2/Stage 3 migrations, actual endpoint grant matrix, permanent status triggers, real time-reference deletion protection, five task races, and complete task UI workflows passed. Desktop/narrow screenshots inspected. Both original volumes and all five unrelated container IDs preserved; no test resources remain. Foreground timeout/closed-input execution verified; earlier failures retained in infrastructure notes. Configuration, shell syntax, local links/anchors, diff, and whitespace checked. Stage 4 Done; Stage 5 remains Not started. Commit: `docs: record Stage 4 completion and verification`. |
+
+| 2026-10-09 | Timesheet editing and unfinished-day decisions agreed | Updated authoritative requirements, architecture, domain/API contracts and examples, testing charter, and Stage 5/6 plans for ordinary shared-boundary edits/last deletion, Edit day drafts with atomic validation/save, final-task historical selection, and independent new-day recording alongside unfinished historical sessions. Added the Friday-to-Monday example and planned migration away from Stage 4 global null-end uniqueness; superseded middle-edit proposals are identified and preserved in Git history. Documentation consistency, 57 local Markdown links/anchors, worked duration arithmetic, and whitespace checked. No code/schema/services changed; no application tests or migrations run. Stages 5 and 6 remain Not started. Commit: `docs: revise timesheet editing and unfinished-day rules`. |

@@ -10,7 +10,9 @@ Proposals below preserve the approaches discussed so far and remain revisable.
 [Domain model and API design](docs/domain_design.md) specifies records, access
 gates, operation contracts, transaction boundaries, and worked acceptance examples.
 It selects initial approaches for delegated behavior without changing the agreed
-product rules. Later sections retain the broader architecture context.
+product rules. The timesheet design was revised on 2026-10-09 to reflect the agreed
+Edit day and unfinished-day workflows; those operations remain unimplemented.
+Later sections retain the broader architecture context.
 
 Initially, business mutations use a persistent database coordination lock, with
 per-user timesheet locking inside that transaction. This conservative small-team
@@ -150,6 +152,46 @@ authorization or safe serialization through task, time, or reporting endpoints.
   transient requests preserve input for retry. Administrators use the Tasks and
   Statuses tabs alongside the existing management screens.
 
+## Stage 5 and 6 Design Decisions: Not Implemented
+
+The [agreed editing rules](requirements.md#timesheet-editing) and
+[unfinished-day behavior](requirements.md#unfinished-days-and-overnight-work)
+replace automatic middle insertion/deletion and the original single-open-entry
+design. Stage 5 owns backend implementation; Stage 6 owns the interface.
+
+- Represent session lifecycle explicitly as active, unfinished, or closed. An
+  unfinished historical tail has no known end and zero duration, while a separate
+  current session can record work. Permit one active session per timesheet and
+  one open tail per session; do not infer an end to satisfy uniqueness.
+- The existing Stage 4 persistence models still use `one_running_session` and
+  `one_running_entry` constraints based on null end timestamps per timesheet.
+  Stage 5 must add lifecycle state and replace those constraints through additive,
+  data-preserving migrations. They do not implement the new lifecycle today.
+- New-day starts leave an earlier session unfinished by default. Explicit
+  continuation supports genuine overnight work. Session-targeted append/close
+  commands use historical timestamps without changing today's active session.
+- Ordinary corrections retain shared-boundary edits and last-row deletion with
+  preview/confirmation. Middle corrections use one `replace_day` command carrying
+  the date, complete draft rows/session markers, and expected timesheet revision.
+- Keep drafts in frontend memory. Edit day reuses the timesheet table presentation
+  in a modal and a task picker with search and project/status filters. Draft gaps
+  and overlaps are visible but do not reach PostgreSQL or affect totals. Sort after
+  field editing, with stable row keys to preserve focus and associate errors.
+- Saving locks the domain coordination row followed by the target Timesheet row,
+  rechecks current grants and revisions, validates the resulting timeline and
+  adjacent-day boundaries, then applies all changes and increments the revision.
+  Preserve retained entry identifiers; never replace another day's independent work.
+- A one-day replacement preserves fixed midnight connections and may retain a
+  valid unfinished tail. Closing real overnight work still normalizes its closed
+  spans across midnight; no synthetic stop is created merely by changing dates.
+- Database overlap protection must apply to known intervals without treating an
+  unfinished historical tail as an infinite reservation. Validate its actual span
+  against later sessions when it is closed. Keep PostgreSQL overlap backstops and
+  service continuity checks consistent with this distinction.
+- Rejected saves leave records/revisions unchanged and return row-associated
+  validation errors. Stale saves retain the client draft and require reload/review;
+  do not merge or replay it automatically. Cancel has no backend mutation.
+
 ## Proposed Data and Transaction Approach
 
 - Model organizations, projects, tasks, statuses, users, access grants, remarks,
@@ -158,14 +200,15 @@ authorization or safe serialization through task, time, or reporting endpoints.
   and acyclic-hierarchy rules through the business operations that change the tree.
 - Keep a status's first-use marker so immutability does not depend on whether
   any task still references it. Record task status changes while the task exists.
-- Persist a running entry's start timestamp with an unset end timestamp. Compute
-  its report duration as zero; closing the entry establishes its duration.
+- Persist an active or historical unfinished entry's start with an unset end.
+  Its duration is zero until explicit closure establishes the actual interval;
+  session lifecycle distinguishes it from today's recording.
 - Represent time intervals as start-inclusive and end-exclusive. Chronological
   segments are bounded by neighboring start times and an optional closing boundary.
   Split closed overnight work at exactly midnight in the configured working zone.
-- Use database transactions for timesheet neighbor adjustments, ancestor reopening,
-  hierarchy/project changes, and deletion checks. Complete each operation together
-  or roll it back completely.
+- Use database transactions for timesheet boundary edits and whole-day saves,
+  ancestor reopening, hierarchy/project changes, and deletion checks. Complete
+  each operation together or roll it back completely.
 - Serialize competing edits to a user's timesheet by locking a persistent
   per-user timesheet record for the transaction. Protect hierarchy and deletion
   operations against concurrent changes with suitable locking and constraints.
@@ -274,10 +317,11 @@ defines the scenarios and acceptance priorities.
   users and administrators, two organizations, several projects, grant combinations,
   and task trees at least three levels deep. Extend fixtures only as their models
   and features become available.
-- Add multi-day timelines with closed/open entries, breaks, closing markers, and
-  midnight work. Keep small independently calculated totals and expected CSV
-  records, including rounding cases, rather than deriving expectations from the
-  report implementation itself.
+- Add multi-day timelines with active/unfinished/closed sessions, breaks, closing
+  markers, midnight work, and the Friday-to-Monday correction example. Include
+  invalid drafts and competing day saves/recording. Keep independently calculated
+  totals and expected CSV records, including rounding cases, rather than deriving
+  expectations from the report implementation itself.
 - Control the backend clock and use an explicit shared test zone. Until the
   deployment zone is selected, use a documented fixed test zone; then include the
   selected deployment configuration in acceptance checks. Use controlled browser

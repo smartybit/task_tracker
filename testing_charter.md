@@ -27,6 +27,10 @@ selected during implementation.
   permitted task labels and timestamps in the timesheet.
 - Require task read plus the relevant remark permission for remark operations.
   Check that task read alone permits recording time without task write or ownership.
+- Verify historical task selection includes final tasks without reopening them;
+  new selections require current task read. Existing timesheet references remain
+  editable after task access loss without exposing protected details. Recheck
+  permissions when an Edit day draft is saved, including write-without-read APIs.
 - Check permissions through direct API requests as well as the interface, including
   search snippets, reference previews, downloads, reports, and CSV exports.
 - Transfer ownership to an eligible user, then revoke that user's access. Ownership
@@ -59,19 +63,54 @@ These cases were not part of the successful Stage 3 suite.
 
 ### 2. Preserve Timesheet Integrity
 
-- Start tasks, switch tasks, insert breaks, and close the day. An open task has an
-  unset end time and contributes zero hours until explicitly closed.
-- Insert, edit, and delete historical entries at the beginning, middle, and end
-  of a session. Check continuity, positive closed durations, and absence of overlap.
-  Breaks fill non-working intervals; time outside a recorded session needs no filler.
-- Verify the selected neighboring-entry adjustment rules and the advice to convert
-  an end-of-day marker to a break before resuming work.
+- Start tasks, switch tasks, append breaks, and close the targeted session. Active
+  and historical unfinished tails have unset ends and contribute zero until closed.
+- Verify ordinary shared-boundary edits and last-record deletion with preview;
+  earlier rows cannot be individually inserted/deleted through ordinary controls
+  or a bypass API. A last deletion extends the predecessor or clears an independent
+  sole-row session, without changing today's active session during historical edits.
+- In Edit day, freely add, change, and delete rows at the beginning/middle/end.
+  Draft gaps/overlaps and invalid durations are highlighted without preventing edits
+  or automatically moving neighbors. Invalid saves leave rows/revisions/totals
+  unchanged; valid saves apply the complete day atomically. Cancel never writes.
+- Check continuity, positive closed durations, session markers, fixed midnight
+  connections, changes to independent session edges, and clearing independent days.
+  Breaks fill internal gaps; outside-session time needs no filler. Do not infer new
+  sessions from draft gaps. A valid unfinished tail may remain after saving.
+- Exercise Friday-to-Monday correction: start Monday without completing Friday,
+  then append Friday's forgotten task at 14:00 and close Friday at 17:00. Verify
+  Friday's 7h 17m of work, no weekend filler/work, and unchanged Monday records and
+  active-session identity. Cover multiple unfinished historical days and reject
+  a supplied historical end that overlaps later known work.
+- Verify new-day recording defaults to an independent session, explicit Continue
+  previous session supports overnight work, and closed-session resumption retains
+  the advice to convert its End of Working Day marker to a break.
 - Close work that crosses midnight and verify each day's allocation without losing
   a minute. Merely crossing midnight, logging out, or restarting the application
   must not invent an end time or recorded hours.
-- Exercise simultaneous edits from two clients, including task starts and boundary
-  changes. Accepted results preserve the timeline; rejected operations leave no
-  partial changes. Check the selected one-running-entry rule.
+- Exercise simultaneous current starts, historical appends, boundary changes, and
+  whole-day saves using independent PostgreSQL connections. Accepted results
+  preserve the timeline; stale/failed operations leave no partial changes. Check
+  one active session per user and one unfinished tail per session, including
+  migration from the existing Stage 4 global null-end uniqueness constraints.
+
+### Stage 6 Browser Acceptance: Planned
+
+- Open Edit day for historical and running days; test add/remove/time edits,
+  sorting after field completion, incomplete rows, focus, keyboard navigation,
+  validation highlighting, and changed-draft dismissal confirmation.
+- Select readable tasks with search and project/status filters, including final
+  tasks. Retain existing inaccessible references without opening protected details.
+- Verify a failed save preserves input, invalid drafts never change persisted
+  work, successful saves refresh the day, and Cancel leaves the original intact.
+- Record Monday in another tab while editing Friday; a stale save must preserve
+  the draft and require reload/review without overwriting Monday's recording.
+- Exercise ordinary historical additions with explicit selected-day timestamps,
+  last-record deletion, unfinished warnings/partial totals, explicit overnight
+  continuation, and fixed midnight boundaries in the day editor.
+
+These are future acceptance scenarios, not checks executed during Stage 4 or the
+documentation revision of 2026-10-09.
 
 ### 3. Enforce Task and Status Rules
 

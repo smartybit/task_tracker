@@ -89,8 +89,10 @@ The following requirements reflect agreed product behavior.
   Start Time, and End Time columns.
 - A Day field selects the date whose timesheet entries are displayed.
 - Dragging a task into the timesheet creates an entry starting at the current time
-  when recording current work. Historical insertion uses the proposed rules below.
-- Users can manually adjust entry start and end times.
+  when recording current work. Appending to a past day asks for a time on that
+  selected date; middle insertion uses the Edit day dialog described below.
+- Users can manually adjust entry start and end times through ordinary shared
+  boundary edits or the Edit day dialog.
 
 ### Timesheets
 
@@ -109,14 +111,18 @@ The following requirements reflect agreed product behavior.
 - Task read permission is sufficient to select a task for time recording; task
   write permission and task ownership are not required. Editing existing timesheet
   records remains permitted through timesheet access if task access is later lost.
-- Timesheet entries must not overlap or leave unrecorded gaps within a recorded
-  working session. Breaks explicitly represent time without a task.
-- Users can insert, edit, and delete historical entries. Detailed adjustment
-  behavior is delegated to the implementation and may change in a later version.
-- Starting another entry closes the preceding entry at the new start time.
-- A running task entry contributes zero duration to timesheets and reported totals
-  until explicitly closed by a break, End of Working Day, or the start of another
-  task. Preserve its start time and leave its end time unset while it is running.
+- Saved, known timesheet intervals must not overlap or leave unrecorded gaps within
+  a recorded working session. Breaks explicitly represent time without a task.
+  An unfinished last entry has an unknown end, not a known gap or an interval
+  extending indefinitely; its interval is validated when explicitly closed.
+- Users can correct historical entries through the agreed editing workflow below.
+- Starting another entry in the targeted session closes that session's preceding
+  entry at the new start time. Starting a separate day does not close an earlier
+  unfinished day.
+- A task entry with an unset end contributes zero duration to timesheets and
+  reported totals until explicitly closed by a break, End of Working Day, or the
+  start of another task in its session. Preserve its start time and leave its end
+  unset while active or historically unfinished.
 - Do not automatically infer an end time when the user logs out or leaves an
   entry running overnight. Duration is determined when the entry is closed.
 - Break is a filler entry with no associated task.
@@ -125,6 +131,86 @@ The following requirements reflect agreed product behavior.
   advise converting that marker to a break.
 - All users share a single time zone. Daylight-saving behavior is outside scope.
 - Work crossing midnight is split into entries for the two calendar days.
+
+### Timesheet Editing
+
+The following editing decisions were agreed on 2026-10-09. They replace the earlier
+proposals for automatic middle insertion/deletion and one globally open entry.
+
+- Ordinary timesheet controls allow appending tasks/breaks, End of Working Day,
+  time-boundary edits, and deletion of the last task/break record. Middle insertion
+  and deletion require **Edit day…**.
+- Ordinary shared-boundary edits change the earlier end and adjoining start
+  together. Reject non-positive closed durations, reordering, or overlaps; preview
+  affected changes before confirmation.
+- Ordinary Delete last record extends the predecessor through the removed interval.
+  If the removed row has no end, its predecessor becomes the unfinished tail of
+  that session; a historical correction does not replace today's active recording.
+  Deleting the only row clears an independent session. Preserve connected overnight
+  portions instead of removing coverage required by a neighboring day.
+- Edit day opens a modal copy of the selected user's selected calendar day, using
+  the usual Task / Start Time / End Time layout with breaks and closing markers.
+  It is available on past days and on today while recording is active.
+- In the modal, users may add, remove, and change rows and enter arbitrary start/end
+  times without automatically modifying neighbors. Temporary gaps, overlaps,
+  incomplete fields, and invalid durations are allowed in the draft only.
+- Highlight invalid rows and gaps/overlaps. Sort rows by start time after a field
+  edit completes, keeping incomplete rows at the bottom and preserving focus.
+- Save changes validates the entire day draft and its connections to stored work.
+  Reject invalid timelines without changing stored rows, revisions, or totals;
+  otherwise save all changes together. A valid draft may retain an unfinished tail
+  with an unset end and zero duration. No extra working sessions are inferred
+  from gaps.
+- Cancel discards the draft. Confirm dismissal when it contains changes. Preserve
+  the draft after validation errors, failed requests, or concurrent-edit conflicts;
+  require reload and review rather than silently overwriting newer work.
+- Users may change independent session edges and clear independent days. Existing
+  continuations across midnight keep their midnight boundary fixed in this one-day
+  editor. Connected portions may be reassigned or replaced with breaks, but cannot
+  be removed to leave a gap. Edit neighboring days separately.
+- Gaps inside a session must be covered by explicit Break rows before saving.
+  Time before a session's first row and after its closing marker needs no filler.
+- Provide a task picker with text search and project/status filters, including
+  Completed and Canceled tasks. Historical additions/corrections against final
+  tasks leave their statuses unchanged. Starting new current recording against a
+  final task requires a separate permitted task-reopening action.
+- New task selections require current task read permission; retaining an existing
+  task reference requires timesheet access, even after task access is lost.
+  Timesheet access never permits opening otherwise restricted task details.
+- Multi-record changes complete together or leave all affected records unchanged.
+  Timesheet permissions apply across its projects; no task-write grant is needed
+  to correct its retained records.
+
+### Unfinished Days and Overnight Work
+
+- Distinguish active recording, unfinished historical sessions, and closed sessions.
+  Permit one active recording session per user and one unfinished tail per session;
+  several historical days may remain unfinished.
+- Starting work on a new selected day creates a separate session by default and
+  marks the previous active session unfinished without supplying its missing end.
+  It neither blocks new work nor fabricates work or breaks between days.
+- Offer **Continue previous session…** explicitly for genuine overnight recording.
+  Check the resulting timeline against other sessions before applying it. Merely
+  crossing midnight does not close or otherwise change a running entry.
+- An unfinished historical day remains available for ordinary end-of-session
+  additions and End of Working Day, using user-supplied times on the selected date,
+  or for advanced corrections through Edit day. These operations do not change
+  another day's rows or the user's current recording session.
+- Show an Unfinished warning for historical days with missing ends. Closed entries
+  contribute their durations; the unfinished tail contributes zero until closed.
+  A supplied end must not overlap later work.
+
+### Friday-to-Monday Example
+
+On Friday the user records a meeting 09:00–12:00, a break 12:00–12:43, and email for
+Fred starting 12:43 with no end or End of Working Day. On Monday, starting new work
+creates Monday's independent active session and leaves Friday unfinished.
+
+On Monday the user selects Friday and appends a forgotten task at Friday 14:00.
+The email entry becomes 12:43–14:00. Adding End of Working Day at Friday 17:00
+closes the forgotten task at 17:00. Friday now has 7 hours 17 minutes of task work;
+the break is excluded. Monday's rows and active recording are unchanged; no weekend
+interval is invented. More involved Friday corrections use Edit day.
 
 ### Permissions
 
@@ -192,7 +278,8 @@ The following requirements reflect agreed product behavior.
   apply interactive person, project, or task filters to this dump; users can
   filter the resulting file externally. Access restrictions always apply.
 - CSV columns are Person, Project, Task, Date, Start Time, End Time, and Duration
-  in decimal hours. Running entries have a blank end time and zero duration.
+  in decimal hours. Active and historically unfinished entries have a blank end
+  time and zero duration.
 - Task-linked CSV records require project read access and belong to the viewer
   unless the viewer has Read Others' Timesheets.
 - CSV exports include task-linked records only. Breaks and End of Working Day
@@ -203,21 +290,10 @@ The following requirements reflect agreed product behavior.
 These defaults make the delegated behavior concrete. They are proposals rather
 than additional user-confirmed requirements.
 
-### Time Adjustment Rules
+### Time Representation and Closed-Day Resumption
 
 - Represent intervals as start-inclusive and end-exclusive. A boundary at 10:00
   can end one entry and start the next without overlap or a gap.
-- Permit one running entry per user. Starting task work or a break closes it.
-- Inserting a task at 09:30 within an entry from 09:00 to 10:00 shortens that
-  entry to 09:00–09:30 and assigns 09:30–10:00 to the inserted task. Later entries
-  keep their start times. Historical insertion asks for a start time.
-- Editing a shared boundary adjusts the end of the earlier entry and the start
-  of the next together. Reject changes that create zero or negative durations in
-  closed intervals or reorder unrelated entries. Preview affected rows before
-  applying the edit. A running entry's zero reported duration is intentional.
-- Deleting a middle entry extends its predecessor to the next boundary. If it
-  has no predecessor, replace the removed interval with a break. Offer replacing
-  any removed interval with a break when the preceding work did not continue.
 - Adding work beyond a closed day requires an explicit conversion of the closing
   marker into a break; the break fills the interval before the new work starts.
 - Times before the first entry and after a closing marker are outside the recorded
@@ -229,10 +305,6 @@ than additional user-confirmed requirements.
 - Apply overnight splitting when the entry is explicitly closed. Crossing midnight
   alone does not close the running entry or make it contribute recorded hours.
 - Exclude breaks and end-of-day markers from working-time totals.
-- Apply a multi-entry edit completely or leave all affected entries unchanged.
-  Permit edits when the editor is the timesheet's user or has Write Others'
-  Timesheets permission. Neighboring entries in other projects do not need separate
-  timesheet permissions or permission to modify the tasks themselves.
 
 ### Hierarchy and Reporting
 
@@ -251,8 +323,6 @@ than additional user-confirmed requirements.
   ancestor changes together; leave them unchanged if a required change is denied.
 - Treat status use as permanent: after first use, disallow renaming, changing the
   final flag, or deleting the status, even if no task currently uses it.
-- Allow historical time corrections on final tasks. Starting new work should
-  prompt the user to reopen the task and any affected ancestors.
 - Attribute project totals to the current project of each recorded task and
   recompute rollups after project or parent changes. Include each work entry once.
 - Restrict task and remark searches and hierarchy views to accessible data.
