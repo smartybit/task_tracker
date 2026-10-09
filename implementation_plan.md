@@ -9,13 +9,36 @@ actual progress; it does not turn proposals into confirmed requirements.
 ## Current Position
 
 - Last updated: 2026-10-09.
-- Stages 1–4 are complete: 4 of 9 implementation stages complete.
+- Stages 1–5 are complete: 5 of 9 implementation stages complete.
+- Stage 5 source `2c12aa6` passed two sequential complete test-script runs,
+  `stage5-verified2` and `stage5-verified3`: each exited 0 with 82 PostgreSQL
+  tests, the TypeScript/production build, and 16 Chromium checks. The first
+  final-source run reset healthy running test services; the repeat started clean.
+- The engine now supports task/break recording, active/unfinished/closed sessions,
+  independent new days, explicit overnight continuation, historical append/close,
+  correction previews, last-record deletion and atomic complete-day replacement.
+  Friday corrections preserve Monday recording. Invalid/stale/competing writes
+  preserve continuity, references, revisions and totals.
+- Shared time zone configuration in `.env`/backend settings is sufficient by
+  agreement on 2026-10-09. `WORKING_TIME_ZONE` defaults to UTC; UTC, Europe/Berlin
+  and reallocation after a zone change passed. DST transitions remain outside scope.
+- Stage 5 adds 28 checks, including six independent-connection races, rollback
+  after a storage failure, safe write-only errors, precise durations, and a Stage 4
+  upgrade preserving records/IDs/revisions without fabricating missing ends.
+- Cleanup was inspected after both final-source runs: no test-owned containers,
+  networks or volumes remain. All five original unrelated container IDs and both
+  original volumes were preserved. Development data was not migrated/reset/seeded.
+- Stage 5 local milestones: engine `601ed20`, write-only error fix `2c12aa6`.
+  Detailed contracts are in [the timesheet API](docs/timesheet_api.md).
+  Next action is Stage 6’s timesheet interface; reports, remarks, images and search
+  remain unimplemented.
 - Timesheet design revised by agreement on 2026-10-09: ordinary shared-boundary
   edits and last-row deletion, an atomic Edit day draft for middle corrections,
   and independent new-day recording with historical unfinished sessions. Friday
   can be completed on Monday without changing Monday's recording. Documentation
   consistency, 57 local Markdown links/anchors, and whitespace checks passed;
-  no application tests or migrations ran. Stage 5 is now In progress; Stage 6 remains Not started.
+  no application tests or migrations ran at that documentation milestone.
+  Those rules are now implemented in Stage 5; Stage 6 remains Not started.
 - Stage 4 follow-up: preserved the temporary verification runner, local Markdown
   link checker, and read-only Docker diagnostics under `scripts/`, with portable
   paths and documented usage. Shell syntax, 50 local links/anchors, and isolated
@@ -38,17 +61,16 @@ actual progress; it does not turn proposals into confirmed requirements.
   references protect task deletion; PostgreSQL triggers protect statuses permanently.
 - Browser acceptance covers the seven task workflows plus nine existing checks.
   Desktop/narrow screenshots were inspected; Chromium is the accepted browser.
-- Cleanup was inspected after both successful runs. No test containers, networks,
-  or volumes remain. All five original unrelated container IDs and both original
+- Stage 4 cleanup was inspected after both successful runs. No test containers,
+  networks or volumes remained. All five original unrelated container IDs and both original
   volumes, including development data, were preserved. Earlier failed/interrupted
   attempts and their verified fixes are recorded in the Stage 4 milestones and
   [infrastructure notes](docs/infrastructure_notes.md#stage-4-verification-findings-2026-10-09).
-- Local milestones: backend `bcd6b87`, interface `72bf07a`, session regression
+- Stage 4 local milestones: backend `bcd6b87`, interface `72bf07a`, session regression
   `c2d5ca3`. Completion evidence is recorded below and in
   `docs: record Stage 4 completion and verification`.
-- Stage 5 started on 2026-10-09 at the user’s request. Implement the backend
-  engine and verify migrations, permissions, atomic corrections and concurrency.
-  Stage 6 UI and later stages remain outside this implementation milestone.
+- Stage 5 was implemented on 2026-10-09 at the user’s request. Stage 6 UI
+  and later stages remain outside this implementation milestone.
 - The last-active-admin safeguard/recovery proposal remains an unresolved Stage 3
   follow-up; this work does not change that policy.
 
@@ -60,7 +82,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 2 | Runnable application foundation | Done | Two full Compose test runs; fresh development startup, API/browser checks, restart persistence, and scoped cleanup verified |
 | 3 | Accounts, organization/project setup, and permissions | Done | Two full lifecycle runs: 35 PostgreSQL tests, build, 9 Chromium checks each; running-stack reset and cleanup verified |
 | 4 | Task management and task interface | Done | Two full lifecycle runs: 54 PostgreSQL tests, build, 16 Chromium checks each; running-stack reset and cleanup verified |
-| 5 | Timesheet engine | In progress | Lifecycle migration, recording/correction services and PostgreSQL verification underway |
+| 5 | Timesheet engine | Done | Two full lifecycle runs: 82 PostgreSQL tests, build, 16 Chromium checks each; lifecycle upgrade, six new races, running-stack reset and cleanup verified |
 | 6 | Timesheet interface | Not started | — |
 | 7 | Reporting and CSV export | Not started | — |
 | 8 | Remarks, references, images, and search | Not started | — |
@@ -407,7 +429,7 @@ Commit: `docs: record Stage 4 completion and verification`.
 - [x] Implement closed-entry midnight splitting in the configured shared zone.
 - [x] Apply multi-record changes in transactions with protection against competing
   edits, including operations across days and different task projects.
-- [ ] Verify continuity, overlap rejection, end-of-day resumption, invalid changes,
+- [x] Verify continuity, overlap rejection, end-of-day resumption, invalid changes,
   rollback, Friday-to-Monday corrections, lifecycle/schema upgrades, and concurrent
   day saves/recording using independent PostgreSQL connections.
 
@@ -435,16 +457,56 @@ subsecond-duration and simultaneous-day-save checks. Initial fresh migrations,
 system/drift checks and 19 task regressions passed. Two initial fixture failures
 were corrected: transaction flush requires restoring the domain lock, and upgrade
 historical models need the matching account migration state. Six independent-
-connection races and a Stage 4 lifecycle upgrade are now defined. Full expanded
-suite twice, running-stack reset and cleanup inspection remain pending. Stage 5
-stays In progress until that acceptance completes; Stage 6 remains Not started.
+connection races and a Stage 4 lifecycle upgrade are now defined. At this milestone,
+two full expanded suite runs, running-stack reset and cleanup inspection remained pending. Stage 5
+was In progress; Stage 6 was Not started.
 
 Review follow-up: validation against stored neighboring rows now removes row IDs
 from errors for write-only callers. Readers retain row-associated draft errors.
 The actual endpoint permission-matrix regression includes that failure path.
-Source `601ed20` passed all 82 PostgreSQL tests and the production build in the
-first full invocation; Chromium/lifecycle completion is still pending. The final
-error-response follow-up will receive its own focused check and repeated full runs.
+Source `601ed20` subsequently passed an initial full invocation with 82 PostgreSQL
+tests, the production build and 16 Chromium checks (exit 0, inspected cleanup).
+The error-response follow-up passed its focused endpoint regression and the two
+final-source full runs below.
+
+Completion evidence (2026-10-09, application source `2c12aa6`):
+
+- Two sequential full lifecycle invocations exited 0:
+  `sh scripts/test-runner.sh stage5-verified2 full` and
+  `sh scripts/test-runner.sh stage5-verified3 full`. Each runs the unchanged
+  `sh scripts/test.sh` under foreground supervision with closed input and a
+  bounded timeout. Logs/status files are in ignored `.artifacts/verification/`.
+- Each run passed fresh PostgreSQL migrations, Django system/migration-drift
+  checks, all 82 backend tests (54 existing plus 28 Stage 5), synthetic seeding,
+  TypeScript/Vite production build, and all 16 existing Chromium checks.
+  The timesheet interface/browser acceptance is Stage 6 and remains unimplemented.
+- Independent expected totals passed: Friday 7h 17m while Monday remains active;
+  unknown tails zero; breaks excluded; UTC and Berlin midnight allocations;
+  existing-span reallocation after a zone change; no subsecond truncation.
+- Complete drafts reject gaps, overlaps, invalid durations, markers and foreign
+  identifiers with no writes. Independent edges/empty days and unfinished tails
+  are accepted. Fixed neighboring midnight coverage survives reattribution.
+  Shared-boundary/last-deletion/resumption previews do not write; stale revisions,
+  stale previews, revoked grants and injected storage failures roll back entirely.
+- Actual authenticated/CSRF endpoints passed self/others flag combinations,
+  no administrator bypass, task-read selection/retained restricted references,
+  historical final tasks without reopening, and safe write-only success/errors.
+- Six independent-connection races passed: competing starts, competing whole-day
+  saves, Friday save versus Monday switch, append versus boundary edit, waiting
+  writer after timesheet-write revocation, and recording versus task deletion.
+- The isolated Stage 4 upgrade preserved open/closed record IDs, timestamps and
+  sheet revisions, backfilled lifecycle without invented ends, removed old global
+  null-end uniqueness, and permitted multiple unfinished tails. Fresh schemas and
+  earlier Stage 2/3 upgrades also passed in both complete runs. PostgreSQL excludes
+  overlapping known ranges and protects active/tail uniqueness and sheet agreement.
+- The first final-source run reset healthy db/web/frontend services. After both
+  runs, label-filtered inspection found no test containers, networks or volumes.
+  All five unrelated container IDs and both original volumes were unchanged;
+  development data was not migrated/reset/seeded. No daemon permissions changed.
+- Both Compose configurations, 64 local Markdown links/anchors, and whitespace
+  checks passed. Remaining limitations: Stage 6 UI and later feature stages,
+  DST-transition acceptance, and the existing last-administrator/recovery question.
+  Stage 5 is Done; next action is implementing Stage 6 from its plan below.
 
 ## Stage 6: Timesheet Interface
 
@@ -600,13 +662,9 @@ defined in Current Position and the stage sections above.
 | 2026-10-08 | Stage 3 management interface verified | Added session-aware frontend client and login/account/catalog/grant screens. First full clean test script exited 0 with 35 PostgreSQL tests, build, 9 Chromium checks, and inspected cleanup. Corrected browser test header typing and catalog select locator; repeatability was pending at this milestone. Stage 3 was In progress. Commit: `feat: add Stage 3 account and grant management screens`. |
 | 2026-10-08 | Stage 3 completed | Source `5653aa5` passed two sequential full test-script runs, each with 35 PostgreSQL tests, TypeScript/Vite build, 9 Chromium checks, and inspected cleanup. The second run reset running services successfully; initial reset interruption (143) did not reproduce. Upgrade/backfill, CSRF/session behavior, permission matrix, rollback, and concurrency verified. Both development/downloader volumes and all unrelated container IDs preserved. Configuration, shell syntax, 45 local Markdown links/anchors, diff, and whitespace checked. Stage 3 Done; Stage 4 remains Not started. Commit: `docs: record Stage 3 completion and verification`. |
 | 2026-10-08 | Post-Stage 3 lessons incorporated | Updated shared test setup to reflect implemented coverage and strengthened Stage 4 plans for service reuse, real endpoint permissions, status protection, Stage 3 schema upgrades, and repeatable scoped cleanup. Account-service review identified last-active-admin lockout; recorded a proposed safeguard and recovery decision without changing agreed behavior. Checked documentation consistency, 47 local Markdown links/anchors, and whitespace; no runtime tests run for this documentation-only change. Stage 4 remains Not started. Commit: `docs: incorporate Stage 3 lessons into remaining plan`. |
-
 | 2026-10-09 | Stage 4 backend implemented | Additive task/status and time-reference migrations, strict revision-aware command/preview endpoints, scoped owner selection, permanent status triggers, and atomic hierarchy/history/deletion rules. Fresh migrations and system/drift checks passed; full 52-test PostgreSQL regression suite passed, including five task races and Stage 3 upgrade. Two added focused write-only regressions passed; 54 tests now defined. Browser/full lifecycle acceptance pending; Stage 4 In progress, Stage 5 Not started. Commit: `feat: implement Stage 4 task and status backend`. |
-
 | 2026-10-09 | Stage 4 interface implemented and component-verified | Added flat/tree task workspace, project/multiple-status filters, description/history panel, owner/status/move/deletion flows, safe creation in write-only projects, and status catalogs. First full script attempt passed 54 PostgreSQL tests, build, all seven new Chromium scenarios, and eight existing checks; one existing account lifecycle scenario exceeded 30 seconds after reaching deactivation. Attempt exited 1 and scoped cleanup was inspected. Shared scenario deadline adjusted to 90 seconds; assertions remain bounded. Desktop/narrow screenshots inspected. Two successful full runs pending; Stage 4 In progress, Stage 5 Not started. Commit: `feat: add Stage 4 task workspace and status management`. |
-
 | 2026-10-09 | Stage 4 session regression corrected | A trace showed that background task requests can detect deactivation before the colleague clicks Refresh access. Updated the existing account browser scenario to reload and assert sign-in after deactivation/password reset; focused workflow passed. The prior full attempt passed 54 backend tests but its command client exited 143 while Chromium continued; its retained browser result identified only the account scenario as failed. Full acceptance remains pending. Commit: `test: handle prompt session revocation during task loading`. |
-
 | 2026-10-09 | Stage 4 completed | Source `c2d5ca3` passed two sequential full test-script runs, each exiting 0 with 54 PostgreSQL tests, TypeScript/Vite build, 16 Chromium checks, and inspected cleanup. The first successful run reset healthy running services. Fresh/Stage 2/Stage 3 migrations, actual endpoint grant matrix, permanent status triggers, real time-reference deletion protection, five task races, and complete task UI workflows passed. Desktop/narrow screenshots inspected. Both original volumes and all five unrelated container IDs preserved; no test resources remain. Foreground timeout/closed-input execution verified; earlier failures retained in infrastructure notes. Configuration, shell syntax, local links/anchors, diff, and whitespace checked. Stage 4 Done; Stage 5 remains Not started. Commit: `docs: record Stage 4 completion and verification`. |
-
 | 2026-10-09 | Timesheet editing and unfinished-day decisions agreed | Updated authoritative requirements, architecture, domain/API contracts and examples, testing charter, and Stage 5/6 plans for ordinary shared-boundary edits/last deletion, Edit day drafts with atomic validation/save, final-task historical selection, and independent new-day recording alongside unfinished historical sessions. Added the Friday-to-Monday example and planned migration away from Stage 4 global null-end uniqueness; superseded middle-edit proposals are identified and preserved in Git history. Documentation consistency, 57 local Markdown links/anchors, worked duration arithmetic, and whitespace checked. No code/schema/services changed; no application tests or migrations run. Stages 5 and 6 remain Not started. Commit: `docs: revise timesheet editing and unfinished-day rules`. |
+| 2026-10-09 | Stage 5 completed | Engine `601ed20` and safe write-only error follow-up `2c12aa6`. Final source passed two sequential complete lifecycle runs (`stage5-verified2`, `stage5-verified3`): 82 PostgreSQL tests, TypeScript/Vite build and 16 Chromium checks each, exit 0. Six new races, lifecycle migration, rollback, Friday-to-Monday accounting and configurable UTC/Berlin allocation passed. Healthy-stack reset and scoped cleanup verified; all five unrelated container IDs and both original volumes preserved. Stage 5 Done; Stage 6 UI remains Not started. Commit: `docs: record Stage 5 completion and verification`. |

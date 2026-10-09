@@ -197,6 +197,24 @@ reads do not change timestamps, revisions or stored rows. Accepted commands pers
 normalization atomically. Do not rewrite old migration history or infer unknown
 end times when configuring the zone.
 
+Stage 5 completion: final source `2c12aa6` passed two sequential complete
+`sh scripts/test.sh` lifecycles through the repository runner, labels
+`stage5-verified2` and `stage5-verified3`, each exit 0. Each passed 82 PostgreSQL
+tests, system/drift checks, fresh migrations, TypeScript/Vite build, and 16 Chromium
+checks. An earlier baseline run (`stage5-verified1`, source `601ed20`) also exited 0;
+the final-source repetitions additionally include safe write-only validation errors.
+Logs and status files remain under ignored `.artifacts/verification/`.
+
+Before `stage5-verified2`, db/web/frontend were explicitly started and all three
+reported healthy; the full run then successfully reset them. The repeat started
+from the inspected clean state. After each final-source run, project-label filters
+showed no test containers, networks or volumes. Original container IDs
+`5362f5db3c1c`, `4be32c2c4bf7`, `fd646cd028b8`, `bcd4c9629eee`, and `6cf3f68761fc`
+remained, along with `task-tracker-dev_development-db` and
+`youtube-downloader_downloads`. No development migration/reset/seed or host
+permission changes ran. The known non-failing npm esbuild script warning remains.
+Stage 5 is complete; timesheet UI/browser acceptance belongs to Stage 6.
+
 ## Docker Access Is Session-Specific
 
 Before approved lifecycle verification, an earlier agent session produced these

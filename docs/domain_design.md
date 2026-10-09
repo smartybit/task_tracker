@@ -329,4 +329,5 @@ are chosen when their stages need them. The initial test runners are Django and
 Playwright/Chromium, introduced in Stage 2 and extended through Stage 4. Worked
 examples are design contracts; actual PostgreSQL, browser, and concurrency
 evidence is recorded in the implementation tracker. Task/status acceptance
-passed in Stage 4; timeline acceptance is tracked in Stage 5; report and content acceptance remain planned.
+passed in Stage 4; timeline acceptance passed in Stage 5. Report and content
+acceptance remain planned.

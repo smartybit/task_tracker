@@ -11,8 +11,8 @@ password administration, organization/project catalogs, and organization/project
 grant management. Shared backend policies cover independent task/remark grants,
 organization inheritance, own-timesheet access, and global others-timesheet flags.
 Administrators have no automatic application-data grants. See the tracker for
-current verification results. Stage 4 acceptance passed two complete test runs,
-each with 54 PostgreSQL backend tests, the production build, and 16 Chromium checks.
+current verification results. Stage 5 acceptance passed two complete test runs,
+each with 82 PostgreSQL backend tests, the production build, and 16 Chromium checks.
 
 Stage 4 adds task creation/editing, ownership transfer, flat/tree lists, project
 and multiple-status filters, hierarchy/project moves, status history, and protected
