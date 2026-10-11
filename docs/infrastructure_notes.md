@@ -421,3 +421,20 @@ used foreground supervision, closed input, and a 360-second limit against the
 prepared test stack. All five scenarios passed (`stage7-reports1`, exit 0), with
 desktop/narrow screenshots inspected. Final full-run evidence remains in the
 implementation tracker; component success alone does not complete Stage 7.
+
+`stage7-verified1` on interface source `f4dfd00` exited 1: all 97 PostgreSQL tests,
+the production build, and 29 of 30 Chromium scenarios passed. The existing account
+password-reset scenario exceeded its five-second completion-message assertion
+while the focused backend CSV follow-up ran concurrently. The trace confirms the
+reset returned HTTP 200 after 4.6 seconds; catalog refresh then completed outside
+that assertion window. This does not establish why the request was slower. The
+failed trace is preserved under `.artifacts/verification/stage7-verified1-browser/`.
+Cleanup was inspected: no test resources remained; all five original unrelated
+container IDs and both original volumes were unchanged.
+
+Keep remaining runtime suites sequential. The account regression now awaits and
+asserts the password-reset HTTP response before its unchanged completion-message
+deadline. That workflow passed in 26.6 seconds during serial `stage7-verified2`.
+CSV review source `9ba2742` also passed all 12 focused PostgreSQL checks with
+explicit `Accept: text/csv` and JSON errors. Final full-run acceptance remains
+pending in the tracker.

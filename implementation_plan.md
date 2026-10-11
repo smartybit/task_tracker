@@ -718,6 +718,15 @@ its five-second wait while the operation was still pending. Cause is not establi
 remaining runtime suites will run sequentially. Full final-source acceptance is
 still pending, and the failed run is not counted toward completion.
 
+Browser timing follow-up (2026-10-11): the failed `stage7-verified1` trace shows
+password reset returned HTTP 200 after 4.6 seconds, followed by the normal catalog
+refresh. The account browser regression now explicitly awaits and checks that
+response before the existing five-second completion-message assertion, rather
+than including the password operation in that assertion window. No application
+behavior or assertion deadline changed. The corrected account lifecycle passed
+in 26.6 seconds during serial `stage7-verified2`; that run's 97 PostgreSQL tests
+and production build also passed. Full browser completion and repeat remain pending.
+
 ## Stage 8: Remarks, References, Images, and Search
 
 - [ ] Implement chronological remarks with authors/timestamps, shared stars at

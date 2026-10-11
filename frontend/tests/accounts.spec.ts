@@ -92,7 +92,9 @@ test("administrator creates, edits, deactivates, and resets an account through t
     await login(colleague, email, password);
     const reset = page.getByRole("form", { name: "Reset password", exact: true });
     await reset.getByLabel("New password").fill("new-browser-stage-three-password");
+    const resetResponse = page.waitForResponse(response => response.request().method() === "POST" && response.url().endsWith("/password-reset/"));
     await reset.getByRole("button", { name: "Reset password", exact: true }).click();
+    expect((await resetResponse).status()).toBe(200);
     await expect(page.getByRole("alert")).toHaveText("Changes saved.");
     // A task request may already have returned this revoked session to sign-in.
     await colleague.reload();
