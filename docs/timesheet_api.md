@@ -1,7 +1,7 @@
 # Timesheet API and Configuration
 
-Stage 5 supplies the backend engine. Stage 6 supplies browser recording and the
-Edit day dialog. Product rules remain in [requirements](../requirements.md#timesheets);
+Stage 5 supplies the backend engine. Stage 6 adds browser recording, the
+Edit day dialog and the read endpoints below (acceptance verification in progress). Product rules remain in [requirements](../requirements.md#timesheets);
 actual verification is recorded in the [tracker](../implementation_plan.md#stage-5-timesheet-engine).
 
 All endpoints use the existing session authentication and CSRF protection.
@@ -24,6 +24,22 @@ changes; known spans are split for day reads and accepted writes at the new zone
 midnights. Read-only normalization uses deterministic fragment IDs, so repeated
 reads and drafts remain stable. No GET writes to the database. Unknown ends stay
 unknown and contribute zero. DST-transition acceptance is outside scope.
+
+## Directory and Recording Context
+
+`GET /api/v1/timesheets/` returns a paginated `results`/`next` directory containing
+only `id` and `display_name`. Without either global others-timesheet flag it lists
+only the caller; with read or write it lists all accounts, including inactive
+accounts whose historical timesheets remain accessible. Administrator status alone
+never widens the directory. It does not return email or account/permission fields.
+
+`GET /api/v1/timesheets/{user}/context/` requires whole-sheet read access. It returns
+`today` in the configured shared zone, `time_zone`, `revision`, and `open_sessions`.
+Each open session includes `id`, `state`, the tail's shared-zone `date`, and `tail`
+with the same permitted label/timestamp fields as a day row. This supports finding
+unfinished days and choosing explicit overnight continuation without a session-ID
+text field. It exposes no task descriptions, creates no rows and changes no revisions.
+Write-only access does not authorize reading this context.
 
 ## Read a Day
 

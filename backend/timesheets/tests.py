@@ -618,3 +618,65 @@ class Stage5UpgradeTests(TransactionTestCase):
             self.assertIn('known_entries_do_not_overlap', names)
         finally:
             MigrationExecutor(connection).migrate(latest)
+
+
+class Stage6DiscoveryTests(TimesheetFixtures, TestCase):
+    def setUp(self):
+        self.setup_time()
+
+    def test_directory_exposes_only_labels_and_respects_global_flags_without_admin_bypass(self):
+        client = APIClient()
+        self.assertEqual(client.get('/api/v1/timesheets/').status_code, 403)
+        for person in [self.alice, self.admin]:
+            for read in [False, True]:
+                for write in [False, True]:
+                    User.objects.filter(pk=person.pk).update(read_others_timesheets=read, write_others_timesheets=write)
+                    client.force_authenticate(person)
+                    result = client.get('/api/v1/timesheets/')
+                    self.assertEqual(result.status_code, 200)
+                    records = result.data['results']
+                    self.assertTrue(all(set(r) == {'id', 'display_name'} for r in records))
+                    if not (read or write):
+                        self.assertEqual([r['id'] for r in records], [str(person.pk)])
+                    else:
+                        self.assertIn(str(self.bob.pk), [r['id'] for r in records])
+        # Revocation takes effect on the next read, including administrators.
+        User.objects.filter(pk=self.admin.pk).update(read_others_timesheets=False, write_others_timesheets=False)
+        self.assertEqual([r['id'] for r in client.get('/api/v1/timesheets/').data['results']], [str(self.admin.pk)])
+
+    def test_context_uses_whole_sheet_read_flags_and_does_not_disclose_task_details_or_write(self):
+        self.start()
+        self.now('2026-10-12T09:00')
+        monday = self.start('2026-10-12T09:00', task=self.task2)
+        stored = self.snapshot()
+        client = APIClient()
+        path = f'/api/v1/timesheets/{self.alice.pk}/context/'
+        for read in [False, True]:
+            for write in [False, True]:
+                User.objects.filter(pk=self.admin.pk).update(read_others_timesheets=read, write_others_timesheets=write)
+                client.force_authenticate(self.admin)
+                response = client.get(path)
+                self.assertEqual(response.status_code, 200 if read else 403)
+                if read:
+                    self.assertEqual(response.data['today'], '2026-10-12')
+                    self.assertEqual([s['state'] for s in response.data['open_sessions']], ['unfinished', 'active'])
+                    self.assertEqual(response.data['open_sessions'][1]['id'], str(monday.pk))
+                    self.assertFalse(response.data['open_sessions'][0]['tail']['task_readable'])
+                    self.assertNotIn('description', str(response.data))
+        # Only account flags changed; GET did not change timelines or revisions.
+        self.assertEqual(self.snapshot(), stored)
+        client.force_authenticate(self.alice)
+        self.assertEqual(client.get(path).status_code, 200)
+
+    @override_settings(TIME_ZONE='Europe/Berlin')
+    def test_context_today_and_unfinished_date_use_shared_zone(self):
+        self.now('2026-10-09T22:30')
+        self.send('start', '2026-10-09T22:30', day='2026-10-10', task=str(self.task.pk))
+        client = APIClient()
+        client.force_authenticate(self.alice)
+        response = client.get(f'/api/v1/timesheets/{self.alice.pk}/context/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['time_zone'], 'Europe/Berlin')
+        self.assertEqual(response.data['today'], '2026-10-10')
+        self.assertEqual(response.data['open_sessions'][0]['date'], '2026-10-10')
+        self.assertIsNone(response.data['open_sessions'][0]['tail']['ended_at'])

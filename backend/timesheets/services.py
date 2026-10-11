@@ -434,6 +434,25 @@ def preview(actor, owner, data):
 
 
 @transaction.atomic
+def sheet_context(actor, owner):
+    """Read only the metadata needed for shared-zone dates and explicit continuation."""
+    MutationLock.objects.select_for_update().get(pk='domain')
+    actor = gate(actor, owner)
+    sheet = find(Timesheet, owner)
+    sessions, rows = load(sheet)
+    tails = []
+    for session in sorted(sessions.values(), key=lambda s: (s.started_at, str(s.pk))):
+        tail = next((r for r in rows if r.session_id == session.pk and r.ended_at is None), None)
+        if tail is not None:
+            tails.append({'id': str(session.pk), 'state': session.state,
+                          'date': date_of(tail.started_at).isoformat(),
+                          'tail': entry_data(tail, actor)})
+    return {'today': date_of(timezone.now()).isoformat(),
+            'time_zone': str(timezone.get_default_timezone()),
+            'revision': sheet.revision, 'open_sessions': tails}
+
+
+@transaction.atomic
 def read_day(actor, owner, day):
     # Coordinate the multi-query response with all domain writers.
     MutationLock.objects.select_for_update().get(pk='domain')

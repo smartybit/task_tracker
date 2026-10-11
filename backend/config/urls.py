@@ -9,6 +9,8 @@ from tasks.views import StatusesView, StatusView, OwnersView, TasksView, TaskVie
 from timesheets import views as timesheet_views
 
 urlpatterns = [
+    path('api/v1/timesheets/', timesheet_views.DirectoryView.as_view()),
+    path('api/v1/timesheets/<uuid:user_id>/context/', timesheet_views.ContextView.as_view()),
     path('api/v1/timesheets/<uuid:user_id>/days/<str:day>/', timesheet_views.DayView.as_view()),
     path('api/v1/timesheets/<uuid:user_id>/commands/', timesheet_views.CommandView.as_view()),
     path('api/v1/timesheets/<uuid:user_id>/commands/preview/', timesheet_views.PreviewView.as_view()),
