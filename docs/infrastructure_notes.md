@@ -239,7 +239,16 @@ foreground terminal runner with closed stdin for full acceptance. Do not reset t
 test stack while its browser is still running. Session-specific restricted Docker
 log/process inspection required approved escalation; no host configuration changed.
 
-Full Stage 6 lifecycle results will be recorded here and in the tracker once run.
+`stage6-verified1`, interface source `820028b`, exited 0 through the repository
+foreground terminal runner: 85 PostgreSQL tests, fresh migrations/system/drift,
+TypeScript/Vite build and 25 Chromium checks passed. The first run reset healthy
+services. Label-filtered inspection found no remaining test containers, networks or
+volumes; both original volumes and all five unrelated container IDs were preserved.
+
+Final review adds safe handling when read revocation removes timelines from a
+write-only preview, and accurate acknowledgement when storage succeeds but its
+subsequent reload fails. Focused regressions and repeat lifecycle verification
+are recorded in the tracker as they finish.
 
 ## Docker Access Is Session-Specific
 

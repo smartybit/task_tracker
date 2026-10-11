@@ -5,7 +5,7 @@ import { DayTable, Modal, TaskPicker } from './TimeComponents';
 import { type Day, type SheetContext, type PickerTask, type PickerStatus, instant, localStamp, hours } from './timesheet';
 
 type Command = Record<string, unknown>;
-interface Preview { domain_revision: number; before: Day; after: Day; advice: string }
+interface Preview { domain_revision: number; before?: Day; after?: Day; advice: string }
 export function Timesheet({ user, version, request, openTask, onError }: {
   user: User; version: number; request: { id: string; nonce: number } | null;
   openTask: (id: string) => void; onError: (error: unknown) => void;
@@ -22,7 +22,7 @@ export function Timesheet({ user, version, request, openTask, onError }: {
   const [useNow, setUseNow] = useState(true);
   const [continuation, setContinuation] = useState('');
   const [edit, setEdit] = useState(false);
-  const [pending, setPending] = useState<{ body: Command; preview: Preview } | null>(null);
+  const [pending, setPending] = useState<{ body: Command; preview: Preview & { before: Day; after: Day } } | null>(null);
   const [boundary, setBoundary] = useState<{ entry: string; edge: 'start' | 'end'; at: string } | null>(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -99,11 +99,18 @@ export function Timesheet({ user, version, request, openTask, onError }: {
   }
   async function send(body: Command) {
     await api(`timesheets/${owner}/commands/`, 'POST', body);
-    setPending(null); setBoundary(null); await load(); setMessage('Timesheet saved.');
+    setPending(null); setBoundary(null);
+    try { await load(); setMessage('Timesheet saved.'); }
+    catch (error) {
+      setStale(true);
+      const message = `Timesheet was saved, but reload failed. ${error instanceof Error ? error.message : 'Reload and review current work.'}`;
+      throw error instanceof ApiError ? new ApiError(error.code, message, error.fields) : new Error(message);
+    }
   }
   async function preview(body: Command) {
     const result = await api<Preview>(`timesheets/${owner}/commands/preview/`, 'POST', body);
-    setBoundary(null); setPending({ body, preview: result });
+    if (!result.before || !result.after) throw new ApiError('permission_denied', 'Timesheet read access changed. Refresh access before reviewing this change.');
+    setBoundary(null); setPending({ body, preview: { ...result, before: result.before, after: result.after } });
   }
   function timestamp() {
     if (!context) throw new Error('Load the timesheet first.');
@@ -159,7 +166,7 @@ export function Timesheet({ user, version, request, openTask, onError }: {
             </fieldset>}
           </fieldset></form>
         </>}
-        {edit && <DayEditor owner={owner} day={day} {...catalog} onClose={() => setEdit(false)} onError={onError} onSaved={async () => { await load(); setMessage('Day changes saved.'); }} onReload={async () => { const result = await load(); setCatalog(await catalogs()); return result; }} />}
+        {edit && <DayEditor owner={owner} day={day} {...catalog} onClose={() => setEdit(false)} onError={onError} onSaved={async () => { try { await load(); setMessage('Day changes saved.'); } catch (error) { setStale(true); throw error; } }} onReload={async () => { const result = await load(); setCatalog(await catalogs()); return result; }} />}
       </>}
     </>}
     {boundary && <Modal name="Edit time boundary" onDismiss={() => { if (!busy) setBoundary(null); }}><h3>Edit shared {boundary.edge} boundary</h3><p>The adjoining row will change together. Midnight connections stay fixed.</p><form onSubmit={event => { event.preventDefault(); void run(async () => { const at = instant(boundary.at, day!.time_zone); if (!at) throw new Error('Enter a boundary time.'); await preview(payload('boundary', { entry: boundary.entry, edge: boundary.edge, at })); }); }}><label>Boundary time<input type="datetime-local" step="any" value={boundary.at} onChange={event => setBoundary({ ...boundary, at: event.target.value })} required /></label><button disabled={busy}>Preview boundary change</button><button type="button" className="secondary" disabled={busy} onClick={() => setBoundary(null)}>Cancel boundary</button>{message && <p role="alert">{message}</p>}</form></Modal>}

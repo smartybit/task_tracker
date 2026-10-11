@@ -566,6 +566,19 @@ Invalid drafts are editable but cannot be saved, Cancel leaves stored work intac
 and completing Friday preserves Monday recording. This is the first useful
 work-tracking milestone; the remaining first-version features are still outstanding.
 
+Lifecycle milestone (2026-10-11): `stage6-verified1` exited 0 against interface
+source `820028b`, passing 85 PostgreSQL tests, fresh migrations, system/drift checks,
+TypeScript/Vite build, and 25 Chromium scenarios. It reset healthy running services;
+label-filtered cleanup found no test containers, networks or volumes. All five
+original unrelated container IDs and both original volumes were preserved.
+
+Final review follow-up: handle previews without timelines after colleague read
+revocation while write remains; distinguish acknowledged saves from subsequent
+reload failures, requiring reload/review without duplicate writes. Row validation
+messages now show plain text and empty draft rows sort stably. Both focused
+Chromium regressions passed (40.4 seconds), and TypeScript/Vite build passed.
+A repeat full lifecycle remains pending; Stage 6 is In progress.
+
 ## Stage 7: Reporting and CSV Export
 
 - [ ] Implement a shared query restricted to readable projects and permitted
@@ -693,3 +706,4 @@ defined in Current Position and the stage sections above.
 
 | 2026-10-11 | Stage 6 started; discovery endpoints verified | Reviewed clean source at `2ebd739` and Stage 5 contracts/history. Added label-only sheet directory and read-gated recording context; three focused PostgreSQL checks passed. UI and browser workflows in progress; full lifecycle acceptance pending. |
 | 2026-10-11 | Stage 6 interface implemented | Added right-hand timesheet, task actions/drop/picker, ordinary previews, historical and overnight controls, native Edit day drafts with stable focus, atomic saves and explicit stale reload. Three API discovery checks and build pass. Component artifact records eight of nine new browser workflows passed; a competing-tab initialization race was fixed for final acceptance. Desktop/narrow/modal screenshots inspected; two full lifecycle runs pending. |
+| 2026-10-11 | Stage 6 first lifecycle passed; review follow-up verified | `stage6-verified1` exited 0 on `820028b`: 85 PostgreSQL tests, build and 25 Chromium scenarios; healthy-stack reset and scoped cleanup passed. Follow-up safely handles missing write-only preview timelines and acknowledged saves with failed reloads; both focused Chromium regressions and production build passed. Repeat full lifecycle pending. |

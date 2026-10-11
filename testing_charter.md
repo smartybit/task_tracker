@@ -105,6 +105,10 @@ These cases were not part of the successful Stage 3 suite.
   tasks. Retain existing inaccessible references without opening protected details.
 - Verify a failed save preserves input, invalid drafts never change persisted
   work, successful saves refresh the day, and Cancel leaves the original intact.
+- Revoke colleague read access while retaining write between opening a boundary
+  editor and previewing: safe write-only previews must not crash or expose content.
+  Distinguish a failed save from a confirmed save followed by a failed reload;
+  the latter must acknowledge storage and require reload without duplicate writes.
 - Record Monday in another tab while editing Friday; a stale save must preserve
   the draft and require reload/review without overwriting Monday's recording.
 - Exercise ordinary historical additions with explicit selected-day timestamps,

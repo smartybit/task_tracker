@@ -86,7 +86,9 @@ Escape discard locally, with confirmation for changed drafts. Failed saves keep
 the draft. Stale or denied saves require explicit **Reload day and discard draft**
 and review before another save; no automatic replay occurs. Reloading or leaving
 the page warns about unsaved changes. Normal stale commands require **Reload
-timesheet** and another review. Read-only colleague sheets omit editing controls;
+timesheet** and another review. Use **Refresh access** when access changes.
+If changes were saved but reloading fails, the interface says they were saved
+and requires reload/review before another attempt. Read-only colleague sheets omit editing controls;
 write-without-read access remains supported through the API, because the browser
 day editor needs readable rows.
 

@@ -19,7 +19,13 @@ function copyDay(day: Day): DraftSession[] {
     rows: s.rows.map(r => ({ key: r.id, id: r.id, kind: r.kind, task: r.task, label: r.task_label, start: localStamp(r.started_at, day.time_zone), end: r.ended_at ? localStamp(r.ended_at, day.time_zone) : '', originalStart: r.started_at, originalEnd: r.ended_at })) }));
 }
 function chronological(rows: DraftRow[]): DraftRow[] {
-  return [...rows].sort((a, b) => !a.start ? 1 : !b.start ? -1 : a.start.localeCompare(b.start));
+  return [...rows].sort((a, b) => !a.start && !b.start ? 0 : !a.start ? 1 : !b.start ? -1 : a.start.localeCompare(b.start));
+}
+function messages(value: unknown): string[] {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value.flatMap(messages);
+  if (value && typeof value === 'object') return Object.values(value).flatMap(messages);
+  return [];
 }
 function issues(sessions: DraftSession[], day: string): Record<string, string[]> {
   const result: Record<string, string[]> = {};
@@ -89,10 +95,11 @@ export function DayEditor({ owner, day, tasks, projects, statuses, onSaved, onCl
     // React retains keyed inputs; restore the next keyboard target if a DOM move blurred it.
     requestAnimationFrame(() => { if (target instanceof HTMLElement && target.isConnected) target.focus(); });
   }
-  const textErrors = (key: string) => [...(warnings[key] ?? []), ...(fields[key] ? [JSON.stringify(fields[key])] : [])];
+  const textErrors = (key: string) => [...(warnings[key] ?? []), ...messages(fields[key])];
   async function save() {
     if (lock.current || stale) return;
     lock.current = true; setBusy(true); setError(''); setFields({});
+    let committed = false;
     try {
       const timestamp = (value: string, original?: string | null) => original && localStamp(original, base.time_zone) === value ? original : instant(value, base.time_zone);
       const sessions = draft.map(s => ({ ...(s.id ? { id: s.id } : { client_key: s.key }), state: s.state, ended_at: timestamp(s.marker, base.sessions.find(original => original.id === s.id)?.ended_at), rows: s.rows.map(r => {
@@ -101,9 +108,12 @@ export function DayEditor({ owner, day, tasks, projects, statuses, onSaved, onCl
         return { ...(r.id ? { id: r.id } : { client_key: r.key }), kind: r.kind, task: r.task, started_at: start, ended_at: timestamp(r.end, r.originalEnd) };
       }) }));
       await api(`timesheets/${owner}/commands/`, 'POST', { command: 'replace_day', date: base.date, expected_revision: base.revision, sessions });
+      committed = true; setInitial(JSON.stringify(draft));
       await onSaved(); onClose();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : 'Save failed. Your draft is preserved.');
+      const detail = failure instanceof Error ? failure.message : 'Request failed. Your draft is preserved.';
+      setError(committed ? `Day changes were saved, but reload failed. ${detail}` : detail);
+      if (committed) setStale(true);
       if (failure instanceof ApiError) { setFields(failure.fields); if (['stale_revision', 'permission_denied', 'not_found'].includes(failure.code)) setStale(true); if (failure.code === 'authentication_required') onError(failure); }
     } finally { lock.current = false; setBusy(false); }
   }

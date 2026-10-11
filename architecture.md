@@ -196,6 +196,11 @@ design. Stage 5 owns backend implementation; Stage 6 owns the interface.
   the existing Stage 5 engine. Sheet/domain revisions reject stale commands; draft
   saves retain input and disable retries until explicit reload/discard and review.
   Mutation buttons use an immediate in-flight ref as well as disabled controls.
+  A preview may omit timelines after read revocation while write remains; detect
+  that safe response before rendering and require refreshed access. A confirmed
+  save followed by a failed GET is reported as saved with reload failure, disables
+  resubmission, and preserves the local copy until reload/review. Do not imply that
+  an acknowledged write was rolled back because its subsequent read failed.
 - Read-only colleague sheets omit edits. The browser day editor requires read plus
   write for colleagues; unusual write-only access remains available through the
   existing safe revision-aware API. Task labels in readable sheets are permitted;
