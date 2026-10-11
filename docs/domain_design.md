@@ -323,8 +323,10 @@ proposals. The Friday/Monday scenario is also specified in
 ## Remaining Decisions and Implementation Boundary
 
 The shared working zone is configurable in settings, defaulting to UTC. Backup
-responsibility/recovery expectations remain open in the architecture. They do not block schema/API
-design. Search language configuration, supplementary UI libraries, and server/proxy
+responsibility and full-system restoration requirements are agreed in the
+[architecture](../architecture.md#agreed-backup-and-restoration-policy); tooling,
+schedule, retention, and destination remain deployment decisions. They do not
+block schema/API design. Search language configuration, supplementary UI libraries, and server/proxy
 are chosen when their stages need them. The initial test runners are Django and
 Playwright/Chromium, introduced in Stage 2 and extended through Stage 4. Worked
 examples are design contracts; actual PostgreSQL, browser, and concurrency

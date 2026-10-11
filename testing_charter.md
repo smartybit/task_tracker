@@ -57,9 +57,26 @@ service contracts; repeat those checks through actual feature endpoints when
 Stages 4–8 introduce them. The Stage 3 completion boundary does not imply that
 task, time-entry, remark, or reporting workflows already work.
 
-Follow-up, pending the administrator lifecycle decision: cover last-active-admin
-deactivation/demotion, two competing removals, and the agreed recovery procedure.
-These cases were not part of the successful Stage 3 suite.
+Future administrator lifecycle checks, following the agreed policy:
+
+- Reject self-deactivation and self-demotion through both the interface and direct
+  API requests, including when other active administrators exist. Verify rejected
+  changes preserve account status and sessions.
+- Permit deactivation/reactivation and privilege changes for another administrator.
+  Exercise competing account updates against PostgreSQL; recheck actor privileges
+  after waiting for the lock and reject unauthorized writes without partial changes.
+- Exercise server-side password reset for any existing user, including inactive
+  users and administrators. Validate/hash replacement passwords; reject invalid
+  passwords or unknown users without creating accounts or partially changing data.
+  Verify old passwords and sessions stop working, replacements have no expiry or
+  mandatory-change workflow, and reset alone preserves active/admin statuses.
+- Recover an installation with no active administrator by explicitly requesting
+  reactivation and administrator privileges for an existing user. Test each option
+  independently and together, atomic rollback on failure, and successful new sign-in
+  without reviving old sessions or granting implicit application-data access.
+
+Self-protection and server-side reset/recovery are not implemented yet. These
+future cases were not part of the successful Stage 3 suite.
 
 ### 2. Preserve Timesheet Integrity
 
@@ -195,6 +212,12 @@ viewport screenshots for inspection; Chromium remains the acceptance browser.
   screenshot pasting if implemented.
 - Restart the application and verify persisted records and attachments. Exercise
   failed multi-record operations and confirm rollback without data loss.
+- In Stage 9, follow the written restoration instructions on an isolated second
+  machine or equivalent fresh environment using synthetic backups of the
+  PostgreSQL cluster, attachment directory, and necessary configuration. Verify
+  startup, accounts/permissions, recorded work and totals, and consistency between
+  attachment metadata and files, including permission-checked downloads. Use no
+  live databases or attachment storage for this full-system restoration check.
 
 ## Verification Approach
 
@@ -234,6 +257,7 @@ clearly. Verify startup and persistence in the deployment configuration.
 
 Native Android/desktop clients, offline synchronization, general file attachments,
 email delivery, approvals, immutable auditing, and daylight-saving behavior are
-outside the first-version charter. Backup/restore acceptance checks depend on the
-still-open backup responsibility and recovery requirements; the shared working
-time zone is configurable through settings (UTC default).
+outside the first-version charter. Stage 9 must verify full-system restoration
+under the [agreed backup policy](architecture.md#agreed-backup-and-restoration-policy);
+tooling, schedule, retention, and destination remain deployment-planning decisions.
+The shared working time zone is configurable through settings (UTC default).

@@ -91,8 +91,17 @@ actual progress; it does not turn proposals into confirmed requirements.
   `docs: record Stage 4 completion and verification`.
 - Stage 5 was implemented on 2026-10-09. Stage 6 started on 2026-10-11 after
   reviewing the clean working tree, completed engine, API contracts and UI gaps.
-- The last-active-admin safeguard/recovery proposal remains an unresolved Stage 3
-  follow-up; this work does not change that policy.
+- Administrator self-protection and server recovery policy are agreed: reject
+  self-deactivation/demotion, permit changes to other administrators, and provide
+  server-side password reset for any existing user with explicit reactivation and
+  administrator-grant options. Self-protection and the reset/recovery command are
+  not implemented yet; they remain a focused account-lifecycle follow-up outside
+  Stage 3's existing completion evidence.
+- Backup ownership and scope are agreed: the server administrator backs up the
+  PostgreSQL cluster, attachment directory, and necessary configuration, with
+  written instructions to restore the entire system on another machine. Procedure
+  implementation and verification remain Stage 9 work; tooling, schedule,
+  retention, and destination await deployment planning.
 
 ## Progress Overview
 
@@ -525,7 +534,8 @@ Completion evidence (2026-10-09, application source `2c12aa6`):
   development data was not migrated/reset/seeded. No daemon permissions changed.
 - Both Compose configurations, 64 local Markdown links/anchors, and whitespace
   checks passed. Remaining limitations: Stage 6 UI and later feature stages,
-  DST-transition acceptance, and the existing last-administrator/recovery question.
+  DST-transition acceptance, and the administrator lifecycle follow-up (policy
+  subsequently agreed; self-protection and server recovery remain unimplemented).
   Stage 5 is Done; next action is implementing Stage 6 from its plan below.
 
 ## Stage 6: Timesheet Interface
@@ -638,7 +648,8 @@ Completion evidence (2026-10-11):
 - Both Compose configurations, 64 local Markdown links/anchors and whitespace
   checks passed. Stage 6 is Done. Next action is Stage 7 reporting/CSV; remarks,
   references, images, search and deployment remain later-stage work. Chromium is
-  the verified browser; the existing last-administrator/recovery question is open.
+  the verified browser; agreed administrator self-protection and server recovery
+  remain unimplemented follow-up work.
 
 ## Stage 7: Reporting and CSV Export
 
@@ -691,8 +702,11 @@ without revealing protected content. Remaining optional work is documented.
   frontend assets, and deployment settings for the VDS.
 - [ ] Persist PostgreSQL data and images across application restarts/replacements.
 - [ ] Document initial setup, account bootstrap, migrations, startup, and updates.
-- [ ] Resolve backup ownership and recovery expectations; document and exercise
-  the agreed backup/restore procedure for both database data and image files.
+- [ ] Select backup tooling, schedule, retention, and destination for backups
+  managed by the server administrator. Document and exercise full-system
+  restoration on another machine from backups of the PostgreSQL cluster,
+  attachment directory, and necessary configuration; verify database/attachment
+  consistency in isolation.
 - [ ] Run the critical API/database and browser checks from the testing charter
   and complete exploratory sessions for permissions and competing edits.
 - [ ] Verify startup, migrations, and persistence in the deployment configuration.
@@ -710,14 +724,18 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 
 ## Decisions and Dependencies to Track
 
-- Resolve the [last-active-administrator proposal](requirements.md#open-product-questions)
-  and recovery policy before production use. A focused account-lifecycle follow-up
-  should implement the agreed policy with serialized concurrent-removal tests;
-  it is planned work, not part of Stage 3's existing completion evidence.
+- Implement the [agreed administrator policy](requirements.md#users-and-authentication)
+  before production use: reject self-deactivation/demotion, allow changes to
+  other administrators, and provide server-side password reset with explicit
+  reactivation and administrator-grant options. Include serialized competing-update
+  and recovery checks from the testing charter. Self-protection and the recovery
+  command are planned work, not part of Stage 3's existing completion evidence.
 - Shared zone is configurable in `.env`/backend settings by agreement on
   2026-10-09; verify UTC and Europe/Berlin with controlled clocks in Stage 5.
-- Resolve backup responsibility and recovery expectations before production use
-  in Stage 9. This does not block earlier implementation stages.
+- Implement and verify the [agreed backup policy](architecture.md#agreed-backup-and-restoration-policy)
+  in Stage 9 before production use, including written full-system restoration
+  instructions. Deployment planning selects tooling, schedule, retention, and
+  destination. This does not block earlier implementation stages.
 - Select supplementary frontend libraries, the application server, and reverse
   proxy when their stages need them; record choices in the architecture.
 - Refine proposed defaults as their stages begin. Update the authoritative
@@ -769,3 +787,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-11 | Stage 6 interface implemented | Added right-hand timesheet, task actions/drop/picker, ordinary previews, historical and overnight controls, native Edit day drafts with stable focus, atomic saves and explicit stale reload. Three API discovery checks and build pass. Component artifact records eight of nine new browser workflows passed; a competing-tab initialization race was fixed for final acceptance. Desktop/narrow/modal screenshots inspected; two full lifecycle runs pending. |
 | 2026-10-11 | Stage 6 first lifecycle passed; review follow-up verified | `stage6-verified1` exited 0 on `820028b`: 85 PostgreSQL tests, build and 25 Chromium scenarios; healthy-stack reset and scoped cleanup passed. Follow-up safely handles missing write-only preview timelines and acknowledged saves with failed reloads; both focused Chromium regressions and production build passed. Repeat full lifecycle pending. |
 | 2026-10-11 | Stage 6 completed | Interface `820028b` and final review source `daf9299` passed sequential full lifecycles (`stage6-verified1`, `stage6-verified2`), each exit 0 with 85 PostgreSQL tests, production build and 25 Chromium scenarios. Nine new workflows cover recording, Friday/current independence, drafts, previews, permissions, overnight boundaries, precision and reload recovery. Both healthy-stack resets and inspected cleanup passed; all original unrelated container IDs and volumes preserved. Stage 6 Done; Stage 7 reporting/CSV is next. |
+| 2026-10-11 | Backup and administrator policies recorded | Agreed self-deactivation/demotion prohibition, permitted changes to other administrators, server-side password reset with explicit reactivation/admin-grant options, and replacement passwords without expiry or mandatory change. Recorded server-administrator backup responsibility for the PostgreSQL cluster, attachments, and necessary configuration, plus written full-system restoration instructions for another machine. Added future lifecycle/recovery/restoration checks; self-protection and server recovery remain unimplemented, and backup procedure work remains Stage 9. Documentation consistency, local links/anchors, and whitespace checked. No application code changed or application tests run; stage completion statuses and prior verification evidence preserved. Commit: `docs: record backup and administrator recovery policies`. |

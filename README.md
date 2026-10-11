@@ -165,10 +165,21 @@ Catalogs manages organizations/projects; an organization with projects cannot be
 deleted, and existing projects cannot change organizations through a field edit.
 Statuses manages task-status catalogs; projects referenced by tasks cannot be deleted.
 
-Current limitation: account updates do not protect the last active administrator
-from deactivation or demotion, and no supported recovery command exists. Keep an
-active administrator available. The proposed safeguard and recovery policy remain
-an [open product decision](requirements.md#open-product-questions).
+Agreed policy awaiting implementation: administrators cannot deactivate or demote
+themselves, but may change another administrator's active status or privileges.
+A planned server-side command will reset any existing user's password, with
+explicit recovery options to reactivate the user and grant administrator
+privileges. Replacement passwords have no expiry or mandatory-change workflow.
+Self-protection and this reset/recovery command are not implemented yet; current
+account updates can still remove the last active administrator. Keep an active
+administrator available. See the [agreed policy](requirements.md#users-and-authentication)
+and [implementation follow-up](architecture.md#agreed-administrator-lifecycle-follow-up).
+
+The server administrator is responsible for backups of the PostgreSQL cluster,
+attachment directory, and necessary configuration. Written instructions for
+restoring the entire system on another machine and verification of that procedure
+remain Stage 9 work; tooling, schedule, retention, and destination await deployment
+planning. See the [backup policy](architecture.md#agreed-backup-and-restoration-policy).
 
 Grants manages local task/remark read/write flags per organization or project and
 shows effective project flags. Organization and project flags combine with OR;

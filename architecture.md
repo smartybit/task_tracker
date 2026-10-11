@@ -113,6 +113,28 @@ Recheck the current actor, grants, object state, and expected revisions after
 acquiring the domain lock. Stage 3 policy-helper coverage does not demonstrate
 authorization or safe serialization through task, time, or reporting endpoints.
 
+### Agreed Administrator Lifecycle Follow-up
+
+The [administrator policy](requirements.md#users-and-authentication) is agreed but
+requires a focused implementation follow-up. Reject self-deactivation and
+self-demotion in the account service; permit changes to another administrator's
+active status or administrator privileges. Reuse MutationLock and recheck the
+actor's current privileges after acquiring it for competing account updates.
+
+Provide a server-side password-reset command for any existing user, with explicit
+options to reactivate the user and grant administrator privileges for recovery.
+Without those options, preserve both statuses. Reuse Django password validation,
+hashing, and existing session invalidation, and apply requested account changes
+atomically through the account services. Replacement passwords have no expiry or
+mandatory-change workflow. The command must work when no active administrator can
+sign in; first-administrator bootstrap remains a separate setup operation.
+
+Current account updates allow self-deactivation/demotion and can remove the last
+active administrator. Bootstrap rejects any existing administrator, including an
+inactive one. Self-protection and the server-side reset/recovery command are not
+implemented or covered by Stage 3's completion evidence; browser password reset
+and session invalidation are already implemented.
+
 ## Stage 4 Implementation Decisions
 
 - Task/status services reuse the domain coordination row, current-grant policies,
@@ -293,6 +315,18 @@ for search results and snippets.
 - Use stable identifiers for cross-references and resolve visibility on access.
   Keep file cleanup consistent with deletion of an eligible containing object.
 
+## Agreed Backup and Restoration Policy
+
+The server administrator is responsible for backing up the PostgreSQL cluster,
+the attachment directory, and the configuration necessary to restore the system.
+Backups must support a consistent restoration of database records and their
+attachments. Provide written instructions for restoring the entire system on
+another machine, including the required configuration and startup steps.
+
+Select backup tooling, schedule, retention, and destination during deployment
+planning. The backup/restore procedure and isolated full-system restoration check
+remain Stage 9 work; no completed backup or restoration is claimed here.
+
 ## Proposed Deployment and Operations
 
 - Use Docker Compose for reproducible development and VDS deployment.
@@ -305,7 +339,7 @@ for search results and snippets.
 - Provide a local setup command to create the first administrator; account
   creation and password reset then follow the agreed administrator workflows.
 - Define schema migration, startup, backup, and recovery procedures as deployment
-  work progresses. Backup scope must account for both database data and image files.
+  work progresses, following the agreed backup and restoration policy above.
 
 ## Reusable Test Setup
 
@@ -410,11 +444,7 @@ No Android implementation has been selected or included in the first version.
 
 ## Open Technical and Operational Decisions
 
-1. Who handles VDS backups, and what recovery procedure is expected?
+1. Select backup tooling, schedule, retention, and destination during deployment
+   planning, following the agreed backup and restoration policy.
 2. Select the application server, reverse proxy, and any supplementary frontend
    libraries during implementation; these were not fixed by the stack decision.
-3. Define administrator recovery alongside the last-active-administrator product
-   decision. Current account updates can remove the last active administrator;
-   bootstrap rejects any existing administrator, including an inactive one.
-   This code-review finding was not covered by Stage 3 verification. Neither a
-   last-administrator guard nor a supported recovery command is implemented.

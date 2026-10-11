@@ -16,7 +16,7 @@ Technology choices and implementation proposals are in
 - A modular application with a web frontend initially; other frontends may follow.
 - Daily totals, project totals, search, and CSV export are required in the first
   version.
-- Deployment decisions and open backup questions are documented in the architecture.
+- Deployment decisions and the agreed backup policy are documented in the architecture.
 - No immutable audit trail, archiving, deletion recovery, or preservation of
   deleted tasks and their history is required in the first version. Task status
   change history remains required while the task exists.
@@ -42,6 +42,18 @@ The following requirements reflect agreed product behavior.
 - Administrators create accounts. No email delivery in the first version.
 - Administrators manage permissions and catalogs such as task statuses.
 - Administrative privileges do not bypass access permissions for application data.
+- Administrators cannot deactivate themselves or remove their own administrator
+  privileges. They may deactivate/reactivate another administrator or change that
+  administrator's privileges. This replaces the earlier last-active-administrator
+  proposal; the restriction is on self-deactivation and self-demotion.
+- Provide administrator-driven password reset without email and a server-side
+  command to reset the password of any existing user. Server recovery must offer
+  explicit options to reactivate the selected user and grant administrator
+  privileges; resetting a password alone does not change either status.
+- Replacement passwords have no expiry and require no mandatory password change.
+  Password resets invalidate old passwords and existing sessions. Deactivation
+  invalidates existing sessions; reactivation does not restore them.
+- First-administrator setup and server recovery are described in the architecture.
 
 ### Tasks, Ownership, and Hierarchy
 
@@ -367,16 +379,3 @@ than additional user-confirmed requirements.
 - For an eligible task, preview deletion of its remarks and attachments and
   require the relevant write permissions. References to the deleted task become
   unavailable. No task deletion recovery is required.
-- Provide an administrator-driven password reset without email. First-administrator
-  setup is described in the architecture.
-
-## Open Product Questions
-
-1. Should account updates reject deactivation or demotion of the last active
-   administrator? Proposed safeguard: preserve at least one active administrator,
-   including when two administrators update accounts concurrently. Define an
-   operator recovery policy for already locked-out installations as well. This
-   is an unresolved proposal, not an implemented or agreed restriction.
-
-Backup ownership and recovery expectations remain open in
-[architecture.md](architecture.md#open-technical-and-operational-decisions).
