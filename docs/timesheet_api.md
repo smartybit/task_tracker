@@ -1,8 +1,9 @@
 # Timesheet API and Configuration
 
 Stage 5 supplies the backend engine. Stage 6 adds browser recording, the
-Edit day dialog and the read endpoints below (acceptance verification in progress). Product rules remain in [requirements](../requirements.md#timesheets);
-actual verification is recorded in the [tracker](../implementation_plan.md#stage-5-timesheet-engine).
+Edit day dialog and the read endpoints below (acceptance verification in progress).
+Product rules remain in [requirements](../requirements.md#timesheets);
+Actual verification is recorded in the [tracker](../implementation_plan.md#stage-6-timesheet-interface).
 
 All endpoints use the existing session authentication and CSRF protection.
 `{user}` is the timesheet owner's UUID, including for your own sheet. Own access

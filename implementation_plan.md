@@ -524,27 +524,33 @@ and revisions on GET, and Berlin date allocation. Initial fixture assertions wer
 corrected for the existing anonymous 403 response and shared-zone command dates.
 TypeScript/Vite build passed for the first UI pass. Browser acceptance is ongoing;
 the first run exposed insecure-context UUID generation and excessive initial loads,
-which were corrected. No stage completion is claimed yet.
+which were corrected. Follow-up workflows passed recording, Friday corrections,
+invalid/transient draft saves, ordinary preview corrections, colleague permissions,
+and overnight boundaries. A competing-tab check exposed a transient second initial
+day load; owner/date/version load tracking now avoids it. The latest component artifact records eight passes and that one failure; the
+final load fix still needs full acceptance. TypeScript/Vite build and 64 local
+links/anchors pass. Desktop, narrow and modal screenshots were inspected. Stage 6
+is In progress pending full lifecycle acceptance.
 
-- [ ] Build the right-hand Task / Start Time / End Time table and Day selector.
-- [ ] Add task drag-and-drop, task switching, break and end-of-day actions.
-- [ ] Add ordinary shared-boundary editing and last-record deletion with previews;
+- [x] Build the right-hand Task / Start Time / End Time table and Day selector.
+- [x] Add task drag-and-drop, task switching, break and end-of-day actions.
+- [x] Add ordinary shared-boundary editing and last-record deletion with previews;
   historical append/close asks for selected-day timestamps. New days start
   independently; offer explicit Continue previous session for overnight work.
-- [ ] Add Edit day as a modal copy of the selected day, available on historical
+- [x] Add Edit day as a modal copy of the selected day, available on historical
   and running days. Support arbitrary draft insertion/deletion/time edits, visible
   gap/overlap errors, stable focus, and sorting after field editing completes.
-- [ ] Add a searchable task picker with project/status filters, including final
+- [x] Add a searchable task picker with project/status filters, including final
   tasks for historical work without reopening them. Retain restricted references
   while protecting task details and checking new-selection permissions.
-- [ ] Implement Save changes/Cancel, changed-draft dismissal confirmation, atomic
+- [x] Implement Save changes/Cancel, changed-draft dismissal confirmation, atomic
   whole-day submission, and draft preservation after errors/stale revisions.
   Require reload/review rather than automatic replay or overwriting newer work.
-- [ ] Display active/unfinished/closed sessions and partial totals/unfinished
+- [x] Display active/unfinished/closed sessions and partial totals/unfinished
   warnings; preserve fixed midnight connections in the one-day editor.
-- [ ] Support viewing/editing other users' timesheets according to the global flags,
+- [x] Support viewing/editing other users' timesheets according to the global flags,
   while keeping restricted task details protected.
-- [ ] Add browser workflow checks for recording work and correcting past work.
+- [x] Add browser workflow checks for recording work and correcting past work.
   Cover Friday corrections while Monday records, draft validation/cancel, final
   task selection, sorting/focus, competing tabs, and failed-request recovery.
 
@@ -686,3 +692,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-09 | Stage 5 completed | Engine `601ed20` and safe write-only error follow-up `2c12aa6`. Final source passed two sequential complete lifecycle runs (`stage5-verified2`, `stage5-verified3`): 82 PostgreSQL tests, TypeScript/Vite build and 16 Chromium checks each, exit 0. Six new races, lifecycle migration, rollback, Friday-to-Monday accounting and configurable UTC/Berlin allocation passed. Healthy-stack reset and scoped cleanup verified; all five unrelated container IDs and both original volumes preserved. Stage 5 Done; Stage 6 UI remains Not started. Commit: `docs: record Stage 5 completion and verification`. |
 
 | 2026-10-11 | Stage 6 started; discovery endpoints verified | Reviewed clean source at `2ebd739` and Stage 5 contracts/history. Added label-only sheet directory and read-gated recording context; three focused PostgreSQL checks passed. UI and browser workflows in progress; full lifecycle acceptance pending. |
+| 2026-10-11 | Stage 6 interface implemented | Added right-hand timesheet, task actions/drop/picker, ordinary previews, historical and overnight controls, native Edit day drafts with stable focus, atomic saves and explicit stale reload. Three API discovery checks and build pass. Component artifact records eight of nine new browser workflows passed; a competing-tab initialization race was fixed for final acceptance. Desktop/narrow/modal screenshots inspected; two full lifecycle runs pending. |

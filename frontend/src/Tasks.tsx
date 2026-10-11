@@ -9,9 +9,9 @@ interface Task {
 interface History { id: number; previous_status: string | null; new_status: string; actor_name: string; changed_at: string }
 interface Preview { domain_revision: number; affected: Task[]; confirmation_required: boolean }
 interface Pending { preview: Preview; path: string; method: string; body: Record<string, unknown>; label: string }
-type Props = { user: User; version: number; onError: (error: unknown) => void };
+type Props = { user: User; version: number; onError: (error: unknown) => void; onRecord?: (id: string) => void; openRequest?: { id: string; nonce: number } | null; onChanged?: () => void };
 
-export function Tasks({ user, version, onError }: Props) {
+export function Tasks({ user, version, onError, onRecord, openRequest, onChanged }: Props) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -33,7 +33,7 @@ export function Tasks({ user, version, onError }: Props) {
   const creation = useRef<HTMLFormElement>(null);
   const errorHandler = useRef(onError);
   errorHandler.current = onError;
-  const refresh = () => { setPending(null); setEpoch(value => value + 1); };
+  const refresh = () => { setPending(null); setEpoch(value => value + 1); onChanged?.(); };
 
   useEffect(() => {
     let current = true;
@@ -64,6 +64,7 @@ export function Tasks({ user, version, onError }: Props) {
   }, [selected, loaded, projects]);
 
   useEffect(() => { if (pending) confirmation.current?.focus(); }, [pending]);
+  useEffect(() => { if (openRequest) { setSelected(openRequest.id); setEpoch(value => value + 1); } }, [openRequest]);
 
   async function action(operation: () => Promise<void>) {
     if (busy) return;
@@ -97,7 +98,8 @@ export function Tasks({ user, version, onError }: Props) {
     return rows.map(task => <li key={task.id}>
       <div className="task-row" style={{ paddingInlineStart: `${depth * 20}px` }}>
         {tree && children(task.id).length > 0 && <button className="secondary disclosure" aria-label={`${collapsed.includes(task.id) ? "Expand" : "Collapse"} ${task.title}`} aria-expanded={!collapsed.includes(task.id)} onClick={() => setCollapsed(value => value.includes(task.id) ? value.filter(id => id !== task.id) : [...value, task.id])}>{collapsed.includes(task.id) ? "+" : "−"}</button>}
-        <button className="task-link" aria-pressed={selected === task.id} onClick={() => { setSelected(task.id); setMessage(""); }}>{task.title}</button>
+        <button className="task-link" draggable onDragStart={event => { event.dataTransfer.setData("application/x-task-tracker-task", task.id); event.dataTransfer.effectAllowed = "copy"; }} aria-pressed={selected === task.id} onClick={() => { setSelected(task.id); setMessage(""); }}>{task.title}</button>
+        {onRecord && <button className="secondary compact" aria-label={`Record ${task.title}`} onClick={() => onRecord(task.id)}>Record time</button>}
         <span>{statusName(task.status)}</span><small>{projectName(task.project)}</small>
       </div>
       {tree && !collapsed.includes(task.id) && <ul>{taskRows(children(task.id), depth + 1)}</ul>}

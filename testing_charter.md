@@ -96,7 +96,7 @@ These cases were not part of the successful Stage 3 suite.
   one active session per user and one unfinished tail per session, including
   migration from the existing Stage 4 global null-end uniqueness constraints.
 
-### Stage 6 Browser Acceptance: Planned
+### Stage 6 Browser Acceptance
 
 - Open Edit day for historical and running days; test add/remove/time edits,
   sorting after field completion, incomplete rows, focus, keyboard navigation,
@@ -111,7 +111,8 @@ These cases were not part of the successful Stage 3 suite.
   last-record deletion, unfinished warnings/partial totals, explicit overnight
   continuation, and fixed midnight boundaries in the day editor.
 
-These are future acceptance scenarios, not checks executed during Stage 4 or the
+Stage 6 implements these browser scenarios; execution results and outstanding
+checks are recorded in the tracker. They were not exercised during Stage 4 or the
 documentation revision of 2026-10-09.
 
 ### 3. Enforce Task and Status Rules
@@ -197,9 +198,9 @@ shared services, isolation, fixture/reset handling, and result capture. The
 environment to each stage. Initial executable foundation checks exist; see
 [README.md](README.md) for verified setup commands and the tracker for actual
 results. Stage 2–4 checks passed, including two complete Stage 4 lifecycle runs
-with 54 PostgreSQL tests and 16 Chromium checks each. Time-record relationships
-are tested for deletion protection; recording, report, and content workflow checks
-remain planned.
+with 54 PostgreSQL tests and 16 Chromium checks each. Stage 5 also passed two full
+runs with 82 PostgreSQL tests and 16 browser checks, including recording/correction engine acceptance. Stage 6 browser checks
+are in progress; report and content workflow checks remain planned.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

@@ -20,8 +20,9 @@ status catalogs. Its acceptance verification is complete; see the tracker.
 
 Stage 5 adds the backend timesheet engine: recording, breaks, closing markers,
 independent unfinished days, overnight continuation, previews, and atomic day
-corrections. The browser timesheet interface is Stage 6. Reports, remarks, images,
-and search remain unimplemented. No personal account is
+corrections. Stage 6 now adds browser timesheets and the Edit day dialog;
+acceptance verification is in progress. Reports, remarks, images, and search
+remain unimplemented. No personal account is
 created automatically, and public registration is unavailable.
 
 ## Task Management
@@ -49,10 +50,50 @@ access permits task creation with a safe acknowledgement; browsing descriptions
 and lists requires task read access. Advanced write-only changes remain available
 through the revision-aware API described in the domain design.
 
+## Timesheet Workspace
+
+After sign-in, the timesheet sits to the right of Tasks on wide screens and below
+Tasks on narrow screens. Choose **Day** and, when permitted, **Timesheet person**.
+All displayed and entered times use the shared working zone shown in the panel.
+Daily totals cover the whole timesheet across projects; breaks and unknown ends
+count zero. Task labels remain visible after task access is lost; opening their
+descriptions still requires task read permission.
+
+Drag a task into today's sheet to record at the current time, or use a task's
+**Record time** button and the searchable picker. The picker includes final tasks
+and filters by project and selected statuses. Current recording against a final
+task requires reopening it separately in Tasks. For historical additions, enter
+**Selected-day time** explicitly; dropping a task on a past day selects it and
+asks for that time. Use **Break** and **End of Working Day** to close intervals.
+The target-session selector appears on days with work. Adding after a closing
+marker previews its conversion to a break before confirmation.
+
+Starting a new day leaves older tails unfinished. Their dates appear as links;
+correcting them preserves today's recording. **Continue previous session…** is
+an explicit overnight action that closes the earlier interval at the supplied
+time. **Close overnight recording** closes an earlier active session today.
+
+Click a start/end boundary to preview changing it and its neighbor together.
+**Delete last record** previews deletion and extension of the predecessor; middle
+corrections use **Edit day…**. The modal copies the selected day, supports arbitrary
+row/session additions and removals, and highlights gaps, overlaps and incomplete
+values. Time edits sort rows on blur, retaining input keys and keyboard focus.
+Enter closing markers explicitly; internal gaps need Break rows. Connected
+midnight edges are fixed and neighboring days are edited separately.
+
+**Save changes** validates and writes the whole draft atomically. **Cancel** and
+Escape discard locally, with confirmation for changed drafts. Failed saves keep
+the draft. Stale or denied saves require explicit **Reload day and discard draft**
+and review before another save; no automatic replay occurs. Reloading or leaving
+the page warns about unsaved changes. Normal stale commands require **Reload
+timesheet** and another review. Read-only colleague sheets omit editing controls;
+write-without-read access remains supported through the API, because the browser
+day editor needs readable rows.
+
 ## Timesheet API and Configuration
 
-The backend engine is available through the authenticated, CSRF-protected API;
-Stage 6 will add its browser controls. See [command contracts and examples](docs/timesheet_api.md).
+The engine and browser controls use the authenticated, CSRF-protected API.
+See [command contracts and examples](docs/timesheet_api.md).
 Own-sheet access is implicit. Global Read/Write Others’ Timesheets flags govern
 other sheets independently; administrators have no data bypass.
 

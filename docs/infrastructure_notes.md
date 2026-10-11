@@ -215,6 +215,32 @@ remained, along with `task-tracker-dev_development-db` and
 permission changes ran. The known non-failing npm esbuild script warning remains.
 Stage 5 is complete; timesheet UI/browser acceptance belongs to Stage 6.
 
+## Stage 6 Verification Findings: 2026-10-11
+
+The initial component run exposed `crypto.randomUUID()` being unavailable at the
+plain HTTP Compose hostname. Draft keys now use local counters with timestamps;
+they are stable client error keys, not persisted UUIDs. Focus checks must leave all
+segments of a native datetime-local input before expecting blur/sorting. Chromium
+normalizes zero seconds out of its field value; assert the actual value format.
+These test corrections preserve real keyboard/focus coverage.
+
+Sign-in initially mounted the workspace before account catalogs finished, and
+resolving the first server-zone date triggered a second day load after briefly
+showing recording controls. Publish the authenticated workspace once catalogs are
+ready, and recognize the already-loaded owner/date/version to avoid that second
+load. Readiness assertions allow 15 seconds for the multi-request initial screen;
+normal assertions remain 5 seconds. A competing-tab check now explicitly waits for
+the current-time checkbox before editing its timestamp.
+
+One component command client exited 143 while its one-off browser remained running.
+Container logs and retained browser artifacts supplied component evidence only;
+this is not a successful lifecycle invocation. Continue to use the documented
+foreground terminal runner with closed stdin for full acceptance. Do not reset the
+test stack while its browser is still running. Session-specific restricted Docker
+log/process inspection required approved escalation; no host configuration changed.
+
+Full Stage 6 lifecycle results will be recorded here and in the tracker once run.
+
 ## Docker Access Is Session-Specific
 
 Before approved lifecycle verification, an earlier agent session produced these

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, allPages, ApiError, getHealth, type User, type Organization, type Project } from "./api";
-import { Tasks, StatusManagement } from "./Tasks";
+import { StatusManagement } from "./Tasks";
+import { WorkArea } from "./WorkArea";
 import { Accounts, Catalogs, GrantManagement } from "./Management";
 
 export function App() {
@@ -21,9 +22,8 @@ export function App() {
   }
   async function refresh() {
     const me = await api<User>("auth/me/");
-    setUser(me);
     const [orgs, available, accounts] = await Promise.all([allPages<Organization>("organizations/"), allPages<Project>("projects/"), me.is_admin ? allPages<User>("users/") : Promise.resolve([])]);
-    setOrganizations(orgs); setProjects(available); setUsers(accounts); setVersion(value => value + 1);
+    setUser(me); setOrganizations(orgs); setProjects(available); setUsers(accounts); setVersion(value => value + 1);
   }
   useEffect(() => { void refresh().catch(error => {
     if (!(error instanceof ApiError && error.code === "authentication_required")) onError(error);
@@ -46,12 +46,12 @@ export function App() {
 
   return (
     <main>
-      <header><span className="brand">Task Tracker</span><span>Tasks and project access</span></header>
+      <header><span className="brand">Task Tracker</span><span>Tasks, time, and project access</span></header>
       <section className="welcome" aria-labelledby="welcome">
         <p className="eyebrow">Your work, in perspective</p>
         <h1 id="welcome">A place for tasks<br />and the time behind them.</h1>
-        <p className="intro">Manage tasks, project access, and status history.
-          Time recording and reports will arrive in later implementation stages.</p>
+        <p className="intro">Manage tasks, record work, and correct past days.
+          Keep your time and project access in one place.</p>
         <div className="connection" role="status" aria-live="polite">
           <span className={`dot ${state}`} aria-hidden="true" />
           {state === "loading" && "Checking backend connection…"}
@@ -74,15 +74,15 @@ export function App() {
         <div className="session"><strong>Signed in as {user.display_name || user.email}</strong><button className="secondary" onClick={() => { void api("auth/logout/", "POST", {}).then(() => { setUser(null); setUsers([]); setProjects([]); setMessage(""); }).catch(onError); }}>Sign out</button><button className="secondary" onClick={() => { void refresh().catch(onError); }}>Refresh access</button></div>
         {user.is_admin ? <>
           <nav aria-label="Management">{["Tasks", "Accounts", "Catalogs", "Grants", "Statuses"].map(name => <button key={name} aria-pressed={tab === name} onClick={() => { setTab(name); setMessage(""); }}>{name}</button>)}</nav>
-          {tab === "Tasks" && <Tasks user={user} version={version} onError={onError} />}
+          {tab === "Tasks" && <WorkArea key={user.id} user={user} version={version} onError={onError} />}
           {tab === "Statuses" && <StatusManagement version={version} onError={onError} />}
           {tab === "Accounts" && <Accounts users={users} run={run} />}
           {tab === "Catalogs" && <Catalogs organizations={organizations} projects={projects} run={run} />}
           {tab === "Grants" && <GrantManagement users={users} organizations={organizations} projects={projects} run={run} version={version} onError={onError} />}
-        </> : <section className="workspace" aria-label="Available projects"><h2>Your projects</h2><p>You can always read and edit your own timesheet once time recording is available.</p>
+        </> : <section className="workspace" aria-label="Available projects"><h2>Your projects</h2><p>You can always read and edit your own timesheet.</p>
           {projects.length ? <ul>{projects.map(project => <li key={project.id}>{project.name} — {project.permissions.task_read ? "Task read" : "No task read"}, {project.permissions.task_write ? "Task write" : "No task write"}</li>)}</ul> : <p>No project access is configured.</p>}
         </section>}
-        {!user.is_admin && <Tasks user={user} version={version} onError={onError} />}
+        {!user.is_admin && <WorkArea key={user.id} user={user} version={version} onError={onError} />}
       </>}
       <footer>Personal work and small-team coordination.</footer>
     </main>

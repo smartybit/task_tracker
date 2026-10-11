@@ -12,7 +12,7 @@ gates, operation contracts, transaction boundaries, and worked acceptance exampl
 It selects initial approaches for delegated behavior without changing the agreed
 product rules. The timesheet design was revised on 2026-10-09 to reflect the agreed
 Edit day and unfinished-day workflows. Stage 5 implements their backend engine;
-Stage 6 interface work remains planned.
+Stage 6 interface work is implemented with acceptance verification in progress.
 Later sections retain the broader architecture context.
 
 Initially, business mutations use a persistent database coordination lock, with
@@ -153,7 +153,7 @@ authorization or safe serialization through task, time, or reporting endpoints.
   transient requests preserve input for retry. Administrators use the Tasks and
   Statuses tabs alongside the existing management screens.
 
-## Stage 5 Implementation and Stage 6 Interface Design
+## Stage 5 Engine and Stage 6 Interface
 
 The [agreed editing rules](requirements.md#timesheet-editing) and
 [unfinished-day behavior](requirements.md#unfinished-days-and-overnight-work)
@@ -176,10 +176,30 @@ design. Stage 5 owns backend implementation; Stage 6 owns the interface.
 - Ordinary corrections retain shared-boundary edits and last-row deletion with
   preview/confirmation. Middle corrections use one `replace_day` command carrying
   the date, complete draft rows/session markers, and expected timesheet revision.
-- Stage 6 will keep drafts in frontend memory. Edit day reuses the timesheet
-  table presentation in a modal and a task picker with search and project/status filters. Draft gaps
-  and overlaps are visible but do not reach PostgreSQL or affect totals. Sort after
-  field editing, with stable row keys to preserve focus and associate errors.
+- Stage 6 keeps drafts in React memory. Native modal dialogs provide keyboard
+  containment and Escape handling; changed drafts require dismissal confirmation
+  and register a before-unload warning. A shared table and searchable task picker
+  serve the panel, previews and editor. Draft gaps/overlaps are highlighted locally;
+  backend validation remains authoritative. Sort on blur with stable local keys and
+  restore the next keyboard target after DOM movement. Local draft keys work over
+  plain HTTP without relying on secure-context browser APIs.
+- datetime-local fields represent the backend's shared zone, using Intl zone parts
+  to convert wall time to absolute timestamps independently of the browser zone.
+  Unchanged draft timestamps retain their original precision. The backend supplies
+  today's shared-zone date and unfinished tails through a read-gated context
+  endpoint. A paginated label-only timesheet directory includes colleagues only
+  with either global others-timesheet flag; it does not expose account email,
+  administration or permission fields.
+- The task workspace and timesheet share record/open-task actions. Drag/drop starts
+  current work immediately and asks for a selected-day time on historical days.
+  Recording commands, boundary/deletion/resumption previews and complete drafts use
+  the existing Stage 5 engine. Sheet/domain revisions reject stale commands; draft
+  saves retain input and disable retries until explicit reload/discard and review.
+  Mutation buttons use an immediate in-flight ref as well as disabled controls.
+- Read-only colleague sheets omit edits. The browser day editor requires read plus
+  write for colleagues; unusual write-only access remains available through the
+  existing safe revision-aware API. Task labels in readable sheets are permitted;
+  task descriptions open through the separately authorized task endpoint.
 - Saving locks the domain coordination row followed by the target Timesheet row,
   rechecks current grants and revisions, validates the resulting timeline and
   adjacent-day boundaries, then applies all changes and increments the revision.
@@ -290,8 +310,9 @@ extended in Stage 3 with authenticated API/browser workflows, migration upgrades
 and independent-connection concurrency checks. Development Compose startup,
 frontend-to-API connectivity, repeatable tests, and scoped cleanup were verified
 on 2026-10-08. See [README.md](README.md) for commands and the tracker for exact
-results. Extend the same harness and fixtures as features arrive; the later
-feature scenarios below remain planned. The [testing charter](testing_charter.md)
+results. Stages 4–5 extend it with task and timesheet-engine acceptance; Stage 6
+adds timesheet browser workflows. Extend the same harness as reporting/content
+features arrive. The [testing charter](testing_charter.md)
 defines the scenarios and acceptance priorities.
 
 ### Services and Isolation
