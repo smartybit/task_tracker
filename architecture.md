@@ -277,23 +277,40 @@ design. Stage 5 owns backend implementation; Stage 6 owns the interface.
 - Treat source timestamps and current task relationships as authoritative. Derive
   totals from them rather than maintaining independent totals that can become stale.
 
-## Proposed Reporting Implementation
+## Stage 7 Reporting Implementation
 
 - Build a shared authorized-record query that restricts projects and timesheet
   users according to the reporting rules in the requirements. Apply access
   restrictions before aggregation and consistently reuse them for CSV export.
 - Calculate durations from closed entries, treating open entries as zero and
   excluding taskless entries from work reports and CSV.
-- Use database aggregation for project and person/day summaries and direct hours
-  per task. Compute descendant rollups from the task tree and direct totals in a
-  batch, avoiding a separate database request for every node.
+- Filter task records in PostgreSQL, then split closed spans at configured-zone
+  midnight boundaries and sum integer microseconds in the backend. This replaces
+  the initial database-aggregation proposal so legacy unsplit spans and zone
+  changes use the same allocation rules as timesheets. Round decimal hours to
+  two places with half-up rounding only at output. Compute descendant rollups
+  from the task tree and direct totals in a batch without queries per node.
 - Resolve project attribution through each task's current project and rollups
   through its current ancestors. Historical edits and moves affect later queries.
 - Calculate reports on request initially. Add caching or precomputed summaries
   only if measured performance requires them and invalidation rules are defined.
 - Sum original durations before converting to decimal hours and rounding output.
-- Return structured report data to the frontend. Stream individual authorized
-  records to CSV for the selected period, independently of interactive filters.
+- Use a read-only PostgreSQL repeatable-read transaction for each report, options
+  response, or CSV generation, including fresh account/grant checks, current task
+  relationships, and records. Materialize JSON inside the snapshot. Generate CSV
+  with a batched iterator into a temporary spool (disk after 1 MiB), close the
+  transaction, then stream the file; a slow download never holds a snapshot open.
+- Return structured report data to the frontend and individual authorized records
+  to CSV for the selected period, independently of interactive filters. Report
+  queries initially materialize selected records and the readable task tree in
+  memory, appropriate to the personal/small-team scope; optimize if measured load
+  warrants it. Report options expose labels only, including other people only if
+  their task records are within the viewer's readable projects and the viewer has
+  Read Others' Timesheets. Do not expose account-administration fields or emails.
+- The concrete routes, filters, rounding, zone allocation, and CSV contract are
+  documented in [the reporting API](docs/reporting_api.md). No schema changes or
+  additional runtime libraries are required. Backend component checks passed;
+  interface and full lifecycle verification remain in progress in the tracker.
 - Verify report results against independently calculated examples and exercise
   permission boundaries and concurrent mutations using PostgreSQL.
 

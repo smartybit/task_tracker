@@ -7,8 +7,11 @@ from projects.views import OrganizationsView, OrganizationView, ProjectsView, Pr
 
 from tasks.views import StatusesView, StatusView, OwnersView, TasksView, TaskView, HistoryView, CommandView, PreviewView
 from timesheets import views as timesheet_views
+from reports import views as report_views
 
 urlpatterns = [
+    path('api/v1/reports/options/', report_views.OptionsView.as_view()),
+    path('api/v1/reports/records.csv', report_views.CSVView.as_view()),
     path('api/v1/timesheets/', timesheet_views.DirectoryView.as_view()),
     path('api/v1/timesheets/<uuid:user_id>/context/', timesheet_views.ContextView.as_view()),
     path('api/v1/timesheets/<uuid:user_id>/days/<str:day>/', timesheet_views.DayView.as_view()),
@@ -37,6 +40,9 @@ urlpatterns = [
     path('api/v1/projects/', ProjectsView.as_view()),
     path('api/v1/projects/<uuid:pk>/', ProjectView.as_view()),
 ]
+
+for report in ('projects', 'people-days', 'tasks'):
+    urlpatterns.append(path(f'api/v1/reports/{report}/', report_views.ReportView.as_view(), {'kind': report}))
 
 for command in ('owner', 'status', 'move'):
     urlpatterns.append(path(f'api/v1/tasks/<uuid:pk>/{command}/', CommandView.as_view(), {'kind': command}))

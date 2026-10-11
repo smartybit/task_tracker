@@ -29,7 +29,8 @@ actual progress; it does not turn proposals into confirmed requirements.
   follow-up `daf9299`. Both runs preserved the five original unrelated container
   IDs and both original volumes; no test containers, networks or volumes remain.
   Development data was not migrated/reset/seeded. Next action is Stage 7:
-  project-restricted reporting and CSV export. Stages 7–9 remain Not started.
+  project-restricted reporting and CSV export. Stage 7 is now In progress;
+  Stages 8–9 remain Not started.
 - Stage 5 source `2c12aa6` passed two sequential complete test-script runs,
   `stage5-verified2` and `stage5-verified3`: each exited 0 with 82 PostgreSQL
   tests, the TypeScript/production build, and 16 Chromium checks. The first
@@ -113,7 +114,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 4 | Task management and task interface | Done | Two full lifecycle runs: 54 PostgreSQL tests, build, 16 Chromium checks each; running-stack reset and cleanup verified |
 | 5 | Timesheet engine | Done | Two full lifecycle runs: 82 PostgreSQL tests, build, 16 Chromium checks each; lifecycle upgrade, six new races, running-stack reset and cleanup verified |
 | 6 | Timesheet interface | Done | Two full lifecycle runs: 85 PostgreSQL tests, build, 25 Chromium scenarios each; discovery permissions, drafts, revocation/reload recovery, running-stack reset and cleanup verified |
-| 7 | Reporting and CSV export | Not started | — |
+| 7 | Reporting and CSV export | In progress | Contracts and existing services reviewed; backend, interface, and acceptance verification in progress |
 | 8 | Remarks, references, images, and search | Not started | — |
 | 9 | Deployment preparation and release verification | Not started | — |
 
@@ -653,11 +654,17 @@ Completion evidence (2026-10-11):
 
 ## Stage 7: Reporting and CSV Export
 
-- [ ] Implement a shared query restricted to readable projects and permitted
+Started 2026-10-11 from clean source `0fd2774`. Reviewed reporting/access rules,
+snapshot and shared-zone contracts, existing account/task/timesheet services, and
+infrastructure notes. Use the existing Django/REST Framework and React/TypeScript
+stack plus Python's standard CSV module; no new runtime dependencies are planned.
+Backend implementation, report screens, and verification remain in progress.
+
+- [x] Implement a shared query restricted to readable projects and permitted
   timesheet users before aggregating or exporting records.
-- [ ] Implement project summaries, person/day summaries, and task hierarchy reports,
+- [x] Implement project summaries, person/day summaries, and task hierarchy reports,
   with person/date filters and separate direct/descendant hours.
-- [ ] Calculate decimal hours from original durations, count open entries as zero,
+- [x] Calculate decimal hours from original durations, count open entries as zero,
   and reflect current task projects and parent relationships.
 - [ ] Build report screens and export individual authorized task records for a
   selected period with the agreed CSV columns. Exclude special entries and do not
@@ -672,6 +679,16 @@ rounding before and after edits or moves.
 
 Completion check: browser reports and CSV satisfy their respective access rules
 and agree with source records. The task-to-timesheet-to-report workflow is usable.
+
+Backend milestone (2026-10-11): shared authorized selector, read-only repeatable-read
+snapshots, project/person-day/hierarchy APIs, label-only report options, exact
+microsecond accounting, and spooled CSV downloads implemented without schema or
+dependency changes. All 12 focused PostgreSQL checks passed, including 64 grant/role/
+timesheet-flag combinations across reports/options/CSV, real-session deactivation,
+historical day correction, hierarchy/project moves, subsecond rounding, Berlin
+midnight reallocation, materialized downloads, and an independent-connection
+move/revocation during a report snapshot. Interface and full acceptance remain
+pending. Contract: [reporting API](docs/reporting_api.md).
 
 ## Stage 8: Remarks, References, Images, and Search
 

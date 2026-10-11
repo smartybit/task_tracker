@@ -199,6 +199,31 @@ viewport screenshots for inspection; Chromium remains the acceptance browser.
   End Time, and decimal Duration. Exclude breaks and closing markers; retain open
   task records with a blank end and zero duration. Check CSV quoting and Unicode.
 
+### Stage 7 Reporting and CSV Acceptance
+
+- Exercise a matrix of direct/inherited task read, independent task write,
+  read/write-others-timesheet flags, and administrator status through every report,
+  options, and actual CSV downloads. Restricted records must not affect totals,
+  selectable people, hierarchy rows, or CSV content.
+- Verify one PostgreSQL read-only repeatable-read snapshot spans permissions,
+  hierarchy, attribution, and records during a concurrent project move and access
+  revocation. Subsequent requests must reflect committed access changes. CSV
+  serving must perform no lazy database queries after generation completes.
+- Reconcile project, person/day, direct/descendant, and overall totals using exact
+  subsecond durations before rounding. Include date clipping, midnight allocation,
+  zone changes over legacy unsplit spans, unfinished starts, and read-only GETs.
+- In Chromium, navigate from tasks/timesheets to all report views, combine filters,
+  select a subtree, and correct historical work through Edit day. Move a hierarchy
+  and verify current project attribution. Parse actual CSV download bytes for
+  authorization, quoting, Unicode, open records, special-row exclusion, and
+  independence from interactive report filters.
+- Exercise revoked selections, empty results, failed report/download requests,
+  reversed dates, retry, and an older response arriving after newer filters.
+  Inspect desktop and narrow screenshots and verify usable keyboard controls.
+
+The backend component milestone passed 12 PostgreSQL tests. Browser and complete
+lifecycle acceptance remain pending until recorded in the implementation tracker.
+
 ### 5. Complete Everyday Workflows and Preserve Data
 
 - Exercise email/password sign-in, administrator-created accounts, catalog and
