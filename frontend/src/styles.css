@@ -91,3 +91,10 @@ dialog button { margin: 4px; }
 .row-errors { color: #8b3e2c; font-size: 13px; padding-left: 18px; }
 @media (max-width: 1050px) { .work-area { grid-template-columns: 1fr; } .timesheet-panel { border-inline-start: 0; padding-inline-start: 0; border-block-start: 1px solid #cbd7c8; } }
 @media (max-width: 550px) { dialog { padding: 16px; } .work-area { gap: 12px; } }
+
+.report-filters { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: end; }
+.report-filters label { min-width: 180px; flex: 1 1 220px; }
+.report-table { display: table; width: 100%; }
+.report-table th, .report-table td { vertical-align: top; }
+.report-table td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.report-total { font-size: 20px; }

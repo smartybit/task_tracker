@@ -397,3 +397,27 @@ At that foundation milestone, full development Compose startup and the combined
 Compose reset/test/cleanup script had not been exercised successfully. Those
 checks were subsequently run with authorized access; see the verification update
 above for repeatability, cleanup, and development results.
+
+## Stage 7 Verification Findings: 2026-10-11
+
+The backend component suite passed all 12 reporting checks twice using the
+source-mounted backend in the isolated PostgreSQL test project. Initial Docker
+socket denial required approved escalation; no daemon or host permissions changed.
+
+`stage7-attempt1` passed all 97 PostgreSQL tests and the production build. Three new
+browser scenarios timed out on exact `getByLabel` selects (`Report view`,
+`Report project`, and `Timesheet person`); traces showed correct report totals and
+the same wrapped-select behavior already documented for Stage 4. Corrected tests
+use accessible combobox role/name selectors. The failure/retry/stale-response
+scenario passed during that attempt, but the run was interrupted and is not a
+successful full lifecycle. Ctrl-C ended the runner without a status file; its
+cleanup removed services but left the one-off browser/network. Label-filtered
+inspection identified that exact test-owned remainder, and project-scoped
+`down --volumes --remove-orphans` removed it before restarting test services.
+
+Original failed traces/screenshots were preserved under ignored
+`.artifacts/verification/stage7-attempt1-browser/`. The corrected focused command
+used foreground supervision, closed input, and a 360-second limit against the
+prepared test stack. All five scenarios passed (`stage7-reports1`, exit 0), with
+desktop/narrow screenshots inspected. Final full-run evidence remains in the
+implementation tracker; component success alone does not complete Stage 7.

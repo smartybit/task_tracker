@@ -124,6 +124,7 @@ references, and applicable business invariants before committing.
 | Description/remark `images`, `images/{id}/download` | Multipart upload; protected download/delete | Containing-object read/write gates; verified PNG/JPEG/WebP, maximum 2 MiB. Reject invalid, oversized, or foreign-source image identifiers. |
 | `references/resolve` | Stable target identifiers; visible target or generic unavailable result | Resolve each target independently with task/remark read rules; never leak restricted titles, authors, snippets, or image previews. Source edits check source write access. |
 | `search` | Query, pagination; task/description/remark matches and safe snippets | PostgreSQL full-text queries over separately authorized task and remark sources; permission-filter counts/ranking inputs, not just returned rows. No separate search service. |
+| `reports/options` | Working zone/today and readable project/task/permitted-person labels | No administration fields or emails; other people require authorized task records in readable projects plus Read Others' Timesheets. |
 | `reports/projects`, `reports/people-days`, `reports/tasks` | Date range, optional permitted person/project/task selection; direct/descendant/total hours as applicable | Shared authorized base query before grouping; task selection includes descendants. No other-person totals without Read Others' Timesheets. |
 | `reports/records.csv` | Date range only; individual authorized task records with agreed columns | Same base access restrictions; excludes breaks/end markers. Interactive report filters are not accepted as export filters. Open task records have blank end and zero duration. |
 
@@ -264,7 +265,8 @@ deletion. Keep file bytes out of transaction error responses and logs.
 ## Worked Acceptance Examples
 
 These examples define expected outcomes. Task/status scenarios now have Stage 4
-coverage; timeline/report examples remain future fixtures. Executed verification
+coverage; timeline examples have Stage 5 coverage and report examples now have
+Stage 7 backend coverage. Browser report acceptance is in progress. Executed verification
 is recorded in the implementation tracker. Times use a controlled fixed zone;
 all durations are independently calculated.
 
@@ -331,5 +333,7 @@ are chosen when their stages need them. The initial test runners are Django and
 Playwright/Chromium, introduced in Stage 2 and extended through Stage 4. Worked
 examples are design contracts; actual PostgreSQL, browser, and concurrency
 evidence is recorded in the implementation tracker. Task/status acceptance
-passed in Stage 4; timeline acceptance passed in Stage 5. Report and content
-acceptance remain planned.
+passed in Stage 4; timeline acceptance passed in Stage 5. Report
+backend acceptance passed 12 focused PostgreSQL checks in Stage 7; browser report
+acceptance is in progress. Content acceptance remains planned. Concrete reporting
+contracts are in [the reporting API](reporting_api.md).

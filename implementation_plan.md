@@ -10,6 +10,10 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 - Last updated: 2026-10-11.
 - Stages 1–6 are complete: 6 of 9 implementation stages complete.
+- Stage 7 started from `0fd2774`. Backend milestone `020cd88` passed 12 focused
+  PostgreSQL tests, including a 64-combination access matrix and a concurrent
+  report snapshot check. Report screens and five browser scenarios are implemented;
+  full lifecycle acceptance is in progress. Stage 7 remains In progress.
 - Stage 6 passed two sequential full lifecycle runs: `stage6-verified1` on interface
   source `820028b` and `stage6-verified2` on final application source `daf9299`.
   Each exited 0 with 85 PostgreSQL tests, fresh migrations/system/drift checks,
@@ -52,7 +56,8 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Stage 5 local milestones: engine `601ed20`, write-only error fix `2c12aa6`.
   Detailed contracts are in [the timesheet API](docs/timesheet_api.md).
   Stage 6 completed its timesheet workspace, Edit day, and browser acceptance on
-  2026-10-11. Reports, remarks, images and search remain unimplemented.
+  2026-10-11. Stage 7 reporting is in progress; remarks, images and search remain
+  unimplemented.
 - Timesheet design revised by agreement on 2026-10-09: ordinary shared-boundary
   edits and last-row deletion, an atomic Edit day draft for middle corrections,
   and independent new-day recording with historical unfinished sessions. Friday
@@ -658,7 +663,8 @@ Started 2026-10-11 from clean source `0fd2774`. Reviewed reporting/access rules,
 snapshot and shared-zone contracts, existing account/task/timesheet services, and
 infrastructure notes. Use the existing Django/REST Framework and React/TypeScript
 stack plus Python's standard CSV module; no new runtime dependencies are planned.
-Backend implementation, report screens, and verification remain in progress.
+Backend milestone `020cd88` passed component verification. Report screens and
+browser scenarios are implemented; full lifecycle verification remains in progress.
 
 - [x] Implement a shared query restricted to readable projects and permitted
   timesheet users before aggregating or exporting records.
@@ -666,10 +672,10 @@ Backend implementation, report screens, and verification remain in progress.
   with person/date filters and separate direct/descendant hours.
 - [x] Calculate decimal hours from original durations, count open entries as zero,
   and reflect current task projects and parent relationships.
-- [ ] Build report screens and export individual authorized task records for a
+- [x] Build report screens and export individual authorized task records for a
   selected period with the agreed CSV columns. Exclude special entries and do not
   apply interactive report filters to the dump.
-- [ ] Reconcile results against independently calculated examples, including
+- [x] Reconcile results against independently calculated examples, including
   historical edits, project moves, rounding, midnight work, and access changes.
 
 Test environment: seed small datasets with independently known project/person/day
@@ -689,6 +695,19 @@ historical day correction, hierarchy/project moves, subsecond rounding, Berlin
 midnight reallocation, materialized downloads, and an independent-connection
 move/revocation during a report snapshot. Interface and full acceptance remain
 pending. Contract: [reporting API](docs/reporting_api.md).
+
+Interface milestone (2026-10-11): all three report views, inclusive date/person/
+project/subtree filters, and CSV downloads are implemented. Failed or stale loads
+do not display older results; revoked selections require a new choice. All five
+focused Chromium scenarios passed (`stage7-reports1`, exit 0), covering independent
+totals, actual quoted Unicode CSV bytes, open/special records, report-filter
+independence, whole-sheet/report separation, live access changes, administrator
+restrictions, keyboard navigation, failure/retry/stale responses, Edit day
+corrections, and current project moves. Desktop and narrow screenshots inspected.
+The first full attempt passed all 97 PostgreSQL tests and the production build;
+three browser selectors timed out before correction, and that attempt was
+interrupted, with scoped cleanup inspected. This is component evidence only;
+two sequential full lifecycles on the final source remain required for completion.
 
 ## Stage 8: Remarks, References, Images, and Search
 
@@ -805,3 +824,5 @@ defined in Current Position and the stage sections above.
 | 2026-10-11 | Stage 6 first lifecycle passed; review follow-up verified | `stage6-verified1` exited 0 on `820028b`: 85 PostgreSQL tests, build and 25 Chromium scenarios; healthy-stack reset and scoped cleanup passed. Follow-up safely handles missing write-only preview timelines and acknowledged saves with failed reloads; both focused Chromium regressions and production build passed. Repeat full lifecycle pending. |
 | 2026-10-11 | Stage 6 completed | Interface `820028b` and final review source `daf9299` passed sequential full lifecycles (`stage6-verified1`, `stage6-verified2`), each exit 0 with 85 PostgreSQL tests, production build and 25 Chromium scenarios. Nine new workflows cover recording, Friday/current independence, drafts, previews, permissions, overnight boundaries, precision and reload recovery. Both healthy-stack resets and inspected cleanup passed; all original unrelated container IDs and volumes preserved. Stage 6 Done; Stage 7 reporting/CSV is next. |
 | 2026-10-11 | Backup and administrator policies recorded | Agreed self-deactivation/demotion prohibition, permitted changes to other administrators, server-side password reset with explicit reactivation/admin-grant options, and replacement passwords without expiry or mandatory change. Recorded server-administrator backup responsibility for the PostgreSQL cluster, attachments, and necessary configuration, plus written full-system restoration instructions for another machine. Added future lifecycle/recovery/restoration checks; self-protection and server recovery remain unimplemented, and backup procedure work remains Stage 9. Documentation consistency, local links/anchors, and whitespace checked. No application code changed or application tests run; stage completion statuses and prior verification evidence preserved. Commit: `docs: record backup and administrator recovery policies`. |
+| 2026-10-11 | Stage 7 backend implemented | `020cd88` adds shared report authorization, project/person-day/hierarchy APIs, label-only options, exact duration accounting, read-only repeatable-read snapshots, and spooled CSV downloads. Twelve focused PostgreSQL tests passed twice, including 64 access combinations and a concurrent move/revocation snapshot. No schema or dependency changes; full lifecycle acceptance pending. |
+| 2026-10-11 | Stage 7 interface component-verified | Added report navigation/screens, filters, hierarchy totals, CSV downloads, and failure/stale/access-change handling. All five focused Chromium scenarios passed (`stage7-reports1`, exit 0); desktop/narrow screenshots inspected. First full attempt passed 97 PostgreSQL tests and build but had three wrapped-select test locator timeouts and was interrupted; corrected selectors use accessible combobox roles. Full final-source repetition remains pending; Stage 7 In progress. |

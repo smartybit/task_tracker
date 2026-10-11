@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api, allPages, ApiError, getHealth, type User, type Organization, type Project } from "./api";
 import { StatusManagement } from "./Tasks";
 import { WorkArea } from "./WorkArea";
+import { Reports } from "./Reports";
 import { Accounts, Catalogs, GrantManagement } from "./Management";
 
 export function App() {
@@ -73,7 +74,7 @@ export function App() {
       </section> : <>
         <div className="session"><strong>Signed in as {user.display_name || user.email}</strong><button className="secondary" onClick={() => { void api("auth/logout/", "POST", {}).then(() => { setUser(null); setUsers([]); setProjects([]); setMessage(""); }).catch(onError); }}>Sign out</button><button className="secondary" onClick={() => { void refresh().catch(onError); }}>Refresh access</button></div>
         {user.is_admin ? <>
-          <nav aria-label="Management">{["Tasks", "Accounts", "Catalogs", "Grants", "Statuses"].map(name => <button key={name} aria-pressed={tab === name} onClick={() => { setTab(name); setMessage(""); }}>{name}</button>)}</nav>
+          <nav aria-label="Management">{["Tasks", "Reports", "Accounts", "Catalogs", "Grants", "Statuses"].map(name => <button key={name} aria-pressed={tab === name} onClick={() => { setTab(name); setMessage(""); }}>{name}</button>)}</nav>
           {tab === "Tasks" && <WorkArea key={user.id} user={user} version={version} onError={onError} />}
           {tab === "Statuses" && <StatusManagement version={version} onError={onError} />}
           {tab === "Accounts" && <Accounts users={users} run={run} />}
@@ -82,7 +83,9 @@ export function App() {
         </> : <section className="workspace" aria-label="Available projects"><h2>Your projects</h2><p>You can always read and edit your own timesheet.</p>
           {projects.length ? <ul>{projects.map(project => <li key={project.id}>{project.name} — {project.permissions.task_read ? "Task read" : "No task read"}, {project.permissions.task_write ? "Task write" : "No task write"}</li>)}</ul> : <p>No project access is configured.</p>}
         </section>}
-        {!user.is_admin && <WorkArea key={user.id} user={user} version={version} onError={onError} />}
+        {!user.is_admin && <nav aria-label="Workspace">{["Tasks", "Reports"].map(name => <button key={name} aria-pressed={name === "Reports" ? tab === name : tab !== "Reports"} onClick={() => { setTab(name); setMessage(""); }}>{name}</button>)}</nav>}
+        {!user.is_admin && tab !== "Reports" && <WorkArea key={user.id} user={user} version={version} onError={onError} />}
+        {tab === "Reports" && <Reports key={user.id} user={user} version={version} onError={onError} />}
       </>}
       <footer>Personal work and small-team coordination.</footer>
     </main>

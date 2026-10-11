@@ -21,7 +21,9 @@ status catalogs. Its acceptance verification is complete; see the tracker.
 Stage 5 adds the backend timesheet engine: recording, breaks, closing markers,
 independent unfinished days, overnight continuation, previews, and atomic day
 corrections. Stage 6 adds browser timesheets and the Edit day dialog; acceptance
-verification is complete. Reports, remarks, images, and search remain unimplemented.
+verification is complete. Stage 7 adds reporting APIs, report screens, and CSV
+downloads; full acceptance verification is in progress. Remarks, images, and
+search remain unimplemented.
 No personal account is created automatically, and public registration is unavailable.
 
 ## Task Management
@@ -143,6 +145,30 @@ Stop development containers with `docker compose down`, which retains that
 database volume. Do not use `down --volumes` on the development project if you
 want to retain its data. This Compose setup is not a production deployment.
 
+## Reports and CSV Export
+
+Select **Reports** to view project summaries, people by day, or task hierarchies.
+Dates default to the current month through today in the server's configured
+working time zone. Filter by inclusive dates, person, project, or a task and its
+descendants. Hierarchy rows show direct, descendant, and combined hours; the
+overall total counts source work once. Hours are rounded to two decimal places
+after summing exact durations, and unfinished entries contribute zero.
+
+Reports require task read access to each project. Without Read Others' Timesheets,
+they include only your own work. Whole-timesheet daily totals can include work
+outside readable projects, so they can differ from report totals. Administrators
+have no report access bypass. Historical corrections and current task projects
+and parent relationships determine later report results; use **Refresh reports**
+after edits in another session.
+
+**Download CSV** exports all authorized individual task records for the selected
+dates. Person, project, and task report filters do not narrow the download. Columns
+are Person, Project, Task, Date, Start Time, End Time, and Duration in decimal hours.
+Breaks and closing markers are omitted; unfinished records have a blank end and
+zero duration. Closed work crossing local midnight produces daily fragments.
+Empty exports contain only column headings. See the
+[reporting API](docs/reporting_api.md) for routes, filter validation, and consistency.
+
 ## First Administrator and Account Management
 
 After development startup has applied migrations, create the first administrator
@@ -194,8 +220,10 @@ Browser requests use session cookies and CSRF headers through Vite's `/api` prox
 The CSRF endpoint is `/api/v1/auth/csrf/`; login returns a refreshed token. Unsafe
 requests, including login/logout, require a valid token and allowed origin. Test
 configuration explicitly trusts `http://frontend:5173`; development trusts the
-documented loopback origins. Lists use 50-item pages (`page`, `count`, `next`, and
-`results`). Grant writes replace local flags and default omitted flags to false.
+documented loopback origins. Catalog and task lists use 50-item pages (`page`,
+`count`, `next`, and `results`); reports return the complete selected dataset as
+described in the reporting API. Grant writes replace local flags and default
+omitted flags to false.
 
 ## Isolated Test Setup
 
@@ -226,7 +254,10 @@ Stage 4 adds deep task trees, permanent status protection, task endpoint permiss
 owner/project moves, real time-reference deletion checks, hierarchy races, and
 Stage 3 schema upgrades. Stage 5 adds controlled multi-day timelines, atomic
 correction and permission checks, UTC/Berlin midnight allocation, lifecycle upgrades,
-and independent-connection recording/day-save races. Later stages add image and report fixtures.
+and independent-connection recording/day-save races. Stage 6 adds timesheet browser
+acceptance. Stage 7 adds report fixtures with independently known totals, a report
+access matrix, snapshot consistency, and actual CSV downloads. Image fixtures
+remain later-stage work. See the tracker for component versus full-run results.
 Browser mutation scenarios create separate synthetic accounts so password/grant changes
 do not alter another scenario’s credentials. The guarded `seed_test_data` command
 restores the three baseline fixture accounts and grants when repeated.

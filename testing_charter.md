@@ -221,8 +221,9 @@ viewport screenshots for inspection; Chromium remains the acceptance browser.
   reversed dates, retry, and an older response arriving after newer filters.
   Inspect desktop and narrow screenshots and verify usable keyboard controls.
 
-The backend component milestone passed 12 PostgreSQL tests. Browser and complete
-lifecycle acceptance remain pending until recorded in the implementation tracker.
+The backend component milestone passed 12 PostgreSQL tests, and all five focused
+Chromium scenarios passed. Complete lifecycle acceptance remains pending until
+recorded in the implementation tracker.
 
 ### 5. Complete Everyday Workflows and Preserve Data
 

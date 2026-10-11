@@ -309,8 +309,8 @@ design. Stage 5 owns backend implementation; Stage 6 owns the interface.
   Read Others' Timesheets. Do not expose account-administration fields or emails.
 - The concrete routes, filters, rounding, zone allocation, and CSV contract are
   documented in [the reporting API](docs/reporting_api.md). No schema changes or
-  additional runtime libraries are required. Backend component checks passed;
-  interface and full lifecycle verification remain in progress in the tracker.
+  additional runtime libraries are required. Backend and browser component checks
+  passed; full lifecycle verification remains in progress in the tracker.
 - Verify report results against independently calculated examples and exercise
   permission boundaries and concurrent mutations using PostgreSQL.
 
