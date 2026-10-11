@@ -115,9 +115,11 @@ These cases were not part of the successful Stage 3 suite.
   last-record deletion, unfinished warnings/partial totals, explicit overnight
   continuation, and fixed midnight boundaries in the day editor.
 
-Stage 6 implements these browser scenarios; execution results and outstanding
-checks are recorded in the tracker. They were not exercised during Stage 4 or the
-documentation revision of 2026-10-09.
+Stage 6 passed these browser workflows in two full lifecycle runs, each with
+85 PostgreSQL tests, the production build and 25 Chromium scenarios. The repeat
+includes read-revocation and acknowledged-save/reload-failure follow-ups. Exact
+sources and results are recorded in the tracker. They were not exercised during
+Stage 4 or the documentation revision of 2026-10-09.
 
 ### 3. Enforce Task and Status Rules
 
@@ -203,8 +205,10 @@ environment to each stage. Initial executable foundation checks exist; see
 [README.md](README.md) for verified setup commands and the tracker for actual
 results. Stage 2–4 checks passed, including two complete Stage 4 lifecycle runs
 with 54 PostgreSQL tests and 16 Chromium checks each. Stage 5 also passed two full
-runs with 82 PostgreSQL tests and 16 browser checks, including recording/correction engine acceptance. Stage 6 browser checks
-are in progress; report and content workflow checks remain planned.
+runs with 82 PostgreSQL tests and 16 browser checks, including recording/correction
+engine acceptance. Stage 6 passed two full lifecycle runs with 85 PostgreSQL tests
+and 25 Chromium scenarios each, including timesheet browser acceptance. Report
+and content workflow checks remain planned.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

@@ -9,7 +9,27 @@ actual progress; it does not turn proposals into confirmed requirements.
 ## Current Position
 
 - Last updated: 2026-10-11.
-- Stages 1–5 are complete: 5 of 9 implementation stages complete.
+- Stages 1–6 are complete: 6 of 9 implementation stages complete.
+- Stage 6 passed two sequential full lifecycle runs: `stage6-verified1` on interface
+  source `820028b` and `stage6-verified2` on final application source `daf9299`.
+  Each exited 0 with 85 PostgreSQL tests, fresh migrations/system/drift checks,
+  TypeScript/Vite production build, and 25 Chromium scenarios. Both reset healthy
+  running test services and completed inspected scoped cleanup.
+- The browser now provides the right-hand timesheet, day/person selection,
+  task actions/drop/picker, task/break recording, correction previews, historical
+  additions, overnight continuation and atomic Edit day drafts. Invalid, stale,
+  denied and failed requests preserve drafts; acknowledged saves with failed
+  reloads require reload/review and are not reported as rolled back.
+- Stage 6 adds three discovery endpoint checks and nine browser workflows.
+  Permissions, final tasks, retained restricted references, keyboard focus,
+  precision, fixed midnight connections and competing tabs passed. Desktop,
+  narrow and modal screenshots were inspected. Final source also covers read
+  revocation with write retained and confirmed-save/reload-failure recovery.
+- Stage 6 local milestones: discovery `363bb93`, interface `820028b`, review
+  follow-up `daf9299`. Both runs preserved the five original unrelated container
+  IDs and both original volumes; no test containers, networks or volumes remain.
+  Development data was not migrated/reset/seeded. Next action is Stage 7:
+  project-restricted reporting and CSV export. Stages 7–9 remain Not started.
 - Stage 5 source `2c12aa6` passed two sequential complete test-script runs,
   `stage5-verified2` and `stage5-verified3`: each exited 0 with 82 PostgreSQL
   tests, the TypeScript/production build, and 16 Chromium checks. The first
@@ -25,21 +45,20 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Stage 5 adds 28 checks, including six independent-connection races, rollback
   after a storage failure, safe write-only errors, precise durations, and a Stage 4
   upgrade preserving records/IDs/revisions without fabricating missing ends.
-- Cleanup was inspected after both final-source runs: no test-owned containers,
+- Stage 5 cleanup was inspected after both final-source runs: no test-owned containers,
   networks or volumes remain. All five original unrelated container IDs and both
   original volumes were preserved. Development data was not migrated/reset/seeded.
 - Stage 5 local milestones: engine `601ed20`, write-only error fix `2c12aa6`.
   Detailed contracts are in [the timesheet API](docs/timesheet_api.md).
-  Stage 6 is now In progress (2026-10-11): implementing the timesheet workspace,
-  Edit day, and browser acceptance. Reports, remarks, images and search remain
-  unimplemented.
+  Stage 6 completed its timesheet workspace, Edit day, and browser acceptance on
+  2026-10-11. Reports, remarks, images and search remain unimplemented.
 - Timesheet design revised by agreement on 2026-10-09: ordinary shared-boundary
   edits and last-row deletion, an atomic Edit day draft for middle corrections,
   and independent new-day recording with historical unfinished sessions. Friday
   can be completed on Monday without changing Monday's recording. Documentation
   consistency, 57 local Markdown links/anchors, and whitespace checks passed;
   no application tests or migrations ran at that documentation milestone.
-  Those rules are implemented in Stage 5 and guide the current Stage 6 work.
+  Those rules are implemented in the Stage 5 engine and Stage 6 interface.
 - Stage 4 follow-up: preserved the temporary verification runner, local Markdown
   link checker, and read-only Docker diagnostics under `scripts/`, with portable
   paths and documented usage. Shell syntax, 50 local links/anchors, and isolated
@@ -60,7 +79,7 @@ actual progress; it does not turn proposals into confirmed requirements.
   revocation, and independent-connection hierarchy/deletion/finalization races.
   Fresh migrations and isolated Stage 2 and Stage 3 upgrades passed. Real time
   references protect task deletion; PostgreSQL triggers protect statuses permanently.
-- Browser acceptance covers the seven task workflows plus nine existing checks.
+- Stage 4 browser acceptance covered the seven task workflows plus nine existing checks.
   Desktop/narrow screenshots were inspected; Chromium is the accepted browser.
 - Stage 4 cleanup was inspected after both successful runs. No test containers,
   networks or volumes remained. All five original unrelated container IDs and both original
@@ -84,7 +103,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 3 | Accounts, organization/project setup, and permissions | Done | Two full lifecycle runs: 35 PostgreSQL tests, build, 9 Chromium checks each; running-stack reset and cleanup verified |
 | 4 | Task management and task interface | Done | Two full lifecycle runs: 54 PostgreSQL tests, build, 16 Chromium checks each; running-stack reset and cleanup verified |
 | 5 | Timesheet engine | Done | Two full lifecycle runs: 82 PostgreSQL tests, build, 16 Chromium checks each; lifecycle upgrade, six new races, running-stack reset and cleanup verified |
-| 6 | Timesheet interface | In progress | Implementing browser controls and acceptance checks against the Stage 5 API |
+| 6 | Timesheet interface | Done | Two full lifecycle runs: 85 PostgreSQL tests, build, 25 Chromium scenarios each; discovery permissions, drafts, revocation/reload recovery, running-stack reset and cleanup verified |
 | 7 | Reporting and CSV export | Not started | — |
 | 8 | Remarks, references, images, and search | Not started | — |
 | 9 | Deployment preparation and release verification | Not started | — |
@@ -511,10 +530,10 @@ Completion evidence (2026-10-09, application source `2c12aa6`):
 
 ## Stage 6: Timesheet Interface
 
-Started 2026-10-11. Review confirmed the Stage 5 engine and its documented
-acceptance history; browser recording and day editing were absent. Current work
-adds the right-hand panel, recording/correction controls, in-memory day drafts,
-and browser checks.
+Started and completed 2026-10-11. Review confirmed the Stage 5 engine and its
+documented acceptance history; browser recording and day editing were absent at
+the start. Added the right-hand panel, recording/correction controls, in-memory
+day drafts, discovery endpoints and browser checks.
 
 Discovery milestone (2026-10-11): added a paginated label-only colleague directory
 and read-gated shared-zone context with unfinished session tails. Three focused
@@ -522,15 +541,16 @@ PostgreSQL checks passed: global flag combinations including administrators,
 revocation, no task-description/account-field disclosure, unchanged stored rows
 and revisions on GET, and Berlin date allocation. Initial fixture assertions were
 corrected for the existing anonymous 403 response and shared-zone command dates.
-TypeScript/Vite build passed for the first UI pass. Browser acceptance is ongoing;
-the first run exposed insecure-context UUID generation and excessive initial loads,
+TypeScript/Vite build passed for the first UI pass. Initial browser acceptance
+exposed insecure-context UUID generation and excessive initial loads,
 which were corrected. Follow-up workflows passed recording, Friday corrections,
 invalid/transient draft saves, ordinary preview corrections, colleague permissions,
 and overnight boundaries. A competing-tab check exposed a transient second initial
-day load; owner/date/version load tracking now avoids it. The latest component artifact records eight passes and that one failure; the
-final load fix still needs full acceptance. TypeScript/Vite build and 64 local
-links/anchors pass. Desktop, narrow and modal screenshots were inspected. Stage 6
-is In progress pending full lifecycle acceptance.
+day load; owner/date/version load tracking avoids it. That component artifact
+recorded eight passes and one failure before the final load fix. Build and 64
+local links/anchors passed; desktop, narrow and modal screenshots were inspected.
+Stage 6 was In progress at that milestone; both full runs below pass the fixed
+competing-tab workflow.
 
 - [x] Build the right-hand Task / Start Time / End Time table and Day selector.
 - [x] Add task drag-and-drop, task switching, break and end-of-day actions.
@@ -577,7 +597,48 @@ revocation while write remains; distinguish acknowledged saves from subsequent
 reload failures, requiring reload/review without duplicate writes. Row validation
 messages now show plain text and empty draft rows sort stably. Both focused
 Chromium regressions passed (40.4 seconds), and TypeScript/Vite build passed.
-A repeat full lifecycle remains pending; Stage 6 is In progress.
+The follow-up was committed as `daf9299`; repeat lifecycle acceptance follows.
+
+Completion evidence (2026-10-11):
+
+- `sh scripts/test-runner.sh stage6-verified1 full` and
+  `sh scripts/test-runner.sh stage6-verified2 full` both exited 0, sequentially.
+  The first tested interface `820028b`; the repeat tested final source `daf9299`
+  with the review follow-up and expanded permission/reload assertions.
+  Logs/status files are retained under ignored `.artifacts/verification/`.
+- Each passed fresh PostgreSQL migrations, system and migration-drift checks,
+  all 85 backend tests (82 existing plus three discovery checks), the TypeScript/
+  production build, and all 25 Chromium scenarios (16 existing plus nine new).
+  Earlier migration upgrades and independent-connection races remained green.
+- Browser recording passed task actions/drop, switching, breaks, closing and reload
+  persistence. Historical additions use explicit selected-day times and final
+  tasks without reopening them. Friday totals are 7h 17m while today's independent
+  active session stays unchanged; the backend retains the controlled Friday-to-
+  Monday example. Unknown tails remain zero and no weekend interval is fabricated.
+- Day drafts passed insertion/removal, local gap/overlap highlighting, sorting
+  after native field completion, stable keyboard focus, Cancel/Escape confirmation,
+  atomic saves, invalid/transient failure recovery and explicit stale reload/review.
+  Running-day drafts retain unknown ends and subsecond timestamps. Independent
+  historical days can be cleared without changing active work.
+- Ordinary boundary, last-record deletion and resumption previews passed stale
+  domain rejection and conversion advice. Overnight continuation splits known
+  work; one-day editors retain fixed midnight connections and neighboring totals.
+  Client zone conversion and backend context dates passed Berlin checks alongside
+  the UTC test stack; DST-transition acceptance remains outside scope.
+- Whole colleague sheets show every project while restricting task descriptions.
+  Read-only controls, retained inaccessible references, revoked write on save,
+  and safe previews after read revocation with write retained passed. A confirmed
+  save followed by a failed reload is acknowledged, preserves the local copy,
+  increments revision only once and disables another save until reload/review.
+- Both full runs reset healthy services. After each, project-label inspection
+  found no test containers, networks or volumes. The five original unrelated
+  container IDs and `task-tracker-dev_development-db` / `youtube-downloader_downloads`
+  were unchanged. No development migrations/resets/seeds or host permission changes
+  ran. The known non-failing npm warning remains.
+- Both Compose configurations, 64 local Markdown links/anchors and whitespace
+  checks passed. Stage 6 is Done. Next action is Stage 7 reporting/CSV; remarks,
+  references, images, search and deployment remain later-stage work. Chromium is
+  the verified browser; the existing last-administrator/recovery question is open.
 
 ## Stage 7: Reporting and CSV Export
 
@@ -707,3 +768,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-11 | Stage 6 started; discovery endpoints verified | Reviewed clean source at `2ebd739` and Stage 5 contracts/history. Added label-only sheet directory and read-gated recording context; three focused PostgreSQL checks passed. UI and browser workflows in progress; full lifecycle acceptance pending. |
 | 2026-10-11 | Stage 6 interface implemented | Added right-hand timesheet, task actions/drop/picker, ordinary previews, historical and overnight controls, native Edit day drafts with stable focus, atomic saves and explicit stale reload. Three API discovery checks and build pass. Component artifact records eight of nine new browser workflows passed; a competing-tab initialization race was fixed for final acceptance. Desktop/narrow/modal screenshots inspected; two full lifecycle runs pending. |
 | 2026-10-11 | Stage 6 first lifecycle passed; review follow-up verified | `stage6-verified1` exited 0 on `820028b`: 85 PostgreSQL tests, build and 25 Chromium scenarios; healthy-stack reset and scoped cleanup passed. Follow-up safely handles missing write-only preview timelines and acknowledged saves with failed reloads; both focused Chromium regressions and production build passed. Repeat full lifecycle pending. |
+| 2026-10-11 | Stage 6 completed | Interface `820028b` and final review source `daf9299` passed sequential full lifecycles (`stage6-verified1`, `stage6-verified2`), each exit 0 with 85 PostgreSQL tests, production build and 25 Chromium scenarios. Nine new workflows cover recording, Friday/current independence, drafts, previews, permissions, overnight boundaries, precision and reload recovery. Both healthy-stack resets and inspected cleanup passed; all original unrelated container IDs and volumes preserved. Stage 6 Done; Stage 7 reporting/CSV is next. |

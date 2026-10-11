@@ -247,8 +247,18 @@ volumes; both original volumes and all five unrelated container IDs were preserv
 
 Final review adds safe handling when read revocation removes timelines from a
 write-only preview, and accurate acknowledgement when storage succeeds but its
-subsequent reload fails. Focused regressions and repeat lifecycle verification
-are recorded in the tracker as they finish.
+subsequent reload fails. Both focused Chromium regressions passed. The follow-up
+was committed as `daf9299` and passed `stage6-verified2` in full, exit 0: 85
+PostgreSQL tests, migrations/system/drift, build and 25 Chromium scenarios. The
+repeat also reset a healthy running stack. Both logs/status files are retained in
+ignored `.artifacts/verification/`.
+
+After the repeat, project-label inspection again found no test containers,
+networks or volumes. Original container IDs `5362f5db3c1c`, `4be32c2c4bf7`,
+`fd646cd028b8`, `bcd4c9629eee`, and `6cf3f68761fc` and both original volumes were
+preserved. No development migration/reset/seed or host permission changes ran.
+Desktop, narrow and modal screenshots were inspected; the existing non-failing
+npm warning remains. Stage 6 is complete; reporting/CSV belongs to Stage 7.
 
 ## Docker Access Is Session-Specific
 

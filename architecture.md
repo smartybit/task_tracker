@@ -12,7 +12,7 @@ gates, operation contracts, transaction boundaries, and worked acceptance exampl
 It selects initial approaches for delegated behavior without changing the agreed
 product rules. The timesheet design was revised on 2026-10-09 to reflect the agreed
 Edit day and unfinished-day workflows. Stage 5 implements their backend engine;
-Stage 6 interface work is implemented with acceptance verification in progress.
+Stage 6 implements the interface and has passed full lifecycle acceptance.
 Later sections retain the broader architecture context.
 
 Initially, business mutations use a persistent database coordination lock, with
