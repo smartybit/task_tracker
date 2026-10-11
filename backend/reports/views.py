@@ -19,6 +19,11 @@ class ReportView(APIView):
 
 
 class CSVView(APIView):
+    def perform_content_negotiation(self, request, force=False):
+        # The successful response is a FileResponse with its own CSV media type.
+        # Keep JSON rendering for errors even when a client asks for text/csv.
+        return super().perform_content_negotiation(request, force=True)
+
     def get(self, request):
         output, filename = export_csv(request.user, request.query_params)
         response = FileResponse(output, as_attachment=True, filename=filename, content_type='text/csv; charset=utf-8')

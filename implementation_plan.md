@@ -709,6 +709,15 @@ three browser selectors timed out before correction, and that attempt was
 interrupted, with scoped cleanup inspected. This is component evidence only;
 two sequential full lifecycles on the final source remain required for completion.
 
+Review follow-up (2026-10-11): CSV downloads now accept explicit `Accept: text/csv`
+requests while validation/authentication errors retain JSON responses. All 12
+focused PostgreSQL checks passed with the explicit CSV header, including the
+64-combination matrix and JSON validation-error regression. This suite overlapped
+the `stage7-verified1` browser phase; an existing password-reset assertion exceeded
+its five-second wait while the operation was still pending. Cause is not established;
+remaining runtime suites will run sequentially. Full final-source acceptance is
+still pending, and the failed run is not counted toward completion.
+
 ## Stage 8: Remarks, References, Images, and Search
 
 - [ ] Implement chronological remarks with authors/timestamps, shared stars at

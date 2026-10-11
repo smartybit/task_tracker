@@ -63,4 +63,5 @@ and nonexistent identifiers. Individually permitted but incompatible filters
   are exported. Rows are ordered by stored start time, timesheet ID, and entry ID,
   with fragments of each record in chronological order.
 - Downloads are named `task-records-FROM-to-TO.csv`; an empty authorized dataset
-  produces a header-only file.
+  produces a header-only file. Clients may request `Accept: text/csv`; validation
+  and authentication errors still use the standard JSON error contract.

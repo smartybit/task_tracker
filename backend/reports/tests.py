@@ -52,7 +52,8 @@ class Stage7Tests(TaskFixtures, TransactionTestCase):
         return self.client.get(f'/api/v1/reports/{kind}/', {'from': '2026-10-09', 'to': '2026-10-10', **params})
 
     def records(self, **params):
-        response = self.client.get('/api/v1/reports/records.csv', {'from': '2026-10-09', 'to': '2026-10-10', **params})
+        response = self.client.get('/api/v1/reports/records.csv', {'from': '2026-10-09', 'to': '2026-10-10', **params},
+                                   HTTP_ACCEPT='text/csv')
         self.assertEqual(response.status_code, 200)
         rows = list(csv.DictReader(StringIO(b''.join(response.streaming_content).decode())))
         response.close()
@@ -135,6 +136,9 @@ class Stage7Tests(TaskFixtures, TransactionTestCase):
         self.assertEqual(len(rows), 4)  # No break or closing marker.
         self.get(task=str(self.child.pk), person=str(self.alice.pk))
         self.assertEqual(len(self.records()), 4)  # Report filters do not persist into CSV.
+        invalid = self.client.get('/api/v1/reports/records.csv', HTTP_ACCEPT='text/csv')
+        self.assertEqual(invalid.status_code, 400)
+        self.assertTrue(invalid['Content-Type'].startswith('application/json'))
 
     def test_invalid_ranges_filters_and_unavailable_selections(self):
         for params in [{'from': ''}, {'from': 'bad'}, {'from': '2026-10-11'}, {'to': '9999-12-31'},
