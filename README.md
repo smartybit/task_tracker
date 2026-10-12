@@ -23,8 +23,10 @@ independent unfinished days, overnight continuation, previews, and atomic day
 corrections. Stage 6 adds browser timesheets and the Edit day dialog; acceptance
 verification is complete. Stage 7 adds reporting APIs, report screens, and CSV
 downloads; full acceptance verification is complete. Stage 8 remarks, shared stars,
-stable references, private images and multilingual search are implemented;
-verification progress is recorded in the implementation tracker.
+stable references, private images and multilingual search are complete. Final
+acceptance passed 126 PostgreSQL tests, the production build, 41 Chromium scenarios
+and synthetic image-container replacement. Stage 9 deployment and restoration
+remain next; detailed evidence is recorded in the implementation tracker.
 No personal account is created automatically, and public registration is unavailable.
 
 ## Task Management
@@ -300,7 +302,8 @@ correction and permission checks, UTC/Berlin midnight allocation, lifecycle upgr
 and independent-connection recording/day-save races. Stage 6 adds timesheet browser
 acceptance. Stage 7 adds report fixtures with independently known totals, a report
 access matrix, snapshot consistency, and actual CSV downloads. Stage 8 adds
-reference lifecycle, private-image validation/rollback and screenshot fixtures.
+reference lifecycle, private-image validation/rollback, screenshot fixtures,
+English/Russian search, index upgrades and a search/revocation race.
 See the tracker for component versus full-run results.
 Browser mutation scenarios create separate synthetic accounts so password/grant changes
 do not alter another scenario’s credentials. The guarded `seed_test_data` command

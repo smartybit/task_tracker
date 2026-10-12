@@ -9,34 +9,26 @@ actual progress; it does not turn proposals into confirmed requirements.
 ## Current Position
 
 - Last updated: 2026-10-12.
-- Stages 1–7 are complete: 7 of 9 implementation stages complete.
-- Stage 8 remarks/shared stars are implemented through the API and task window.
-  The corrected focused PostgreSQL run passed 29 checks (10 new remarks checks
-  plus 19 task regressions), including all 256 grant combinations, three new
-  independent-connection races, rollback, and the Stage 7 upgrade. The four new
-  Chromium workflows passed. Application `7d331c6` and fixture follow-up `f4329c8`
-  passed all 107 PostgreSQL checks, the production build, and all 34 Chromium
-  scenarios in `stage8-remarks-verified2`. The wrapper reached its 20-minute limit
-  during final cleanup (exit 124), so successful full-lifecycle acceptance remains
-  pending. Cleanup and preservation of original resources were independently
-  verified. The wrapper now allows 30 minutes for the growing suite.
-  Stable references are delivered in `3de23bf`; five focused PostgreSQL and two
-  reference browser scenarios passed, alongside four remark regressions. Private
-  images now have validated atomic saves, screenshot paste and persistent storage;
-  eleven content checks, seven browser workflows and test-container replacement
-  passed. The expanded twelve-check content suite passed, including cleanup
-  failures and nested rollback. English/Russian search is implemented; eighteen
-  focused content checks plus a separate search/revocation race passed. Search
-  browser workflows passed. The image-draft review follow-up passed all seven
-  image/remark browser workflows and the production build. Full-stage lifecycle
-  acceptance remains pending.
+- Stages 1–8 are complete: 8 of 9 implementation stages complete.
+- Stage 8 delivers remarks/shared stars, stable references, private inline images
+  with screenshot paste, and English/Russian search. Final source `142611f`
+  passed `stage8-final-verified2`: 126 PostgreSQL checks (571.625 seconds), fresh
+  migrations/system/drift, production build and all 41 Chromium scenarios
+  (14.2 minutes), exit 0. Total lifecycle time was 25 minutes 31 seconds.
+  Healthy-stack reset and scoped cleanup passed; no test resources remain, and
+  all five unrelated container IDs and both original volumes were preserved.
+  Synthetic image bytes, metadata and download permissions also survived forced
+  application-container replacement. Development services/data were untouched.
+  Earlier failed/timed-out attempts and focused milestone evidence are retained
+  in Stage 8 below. Stage 9 deployment, restoration and administrator recovery
+  remain Not started.
 - Stage 7 started from `0fd2774`. Backend milestone `020cd88` passed 12 focused
   PostgreSQL tests, including a 64-combination access matrix and a concurrent
   report snapshot check. Report screens and five browser scenarios are implemented;
   `stage7-verified2` and `stage7-verified3` passed sequential full lifecycles, each
   with 97 PostgreSQL tests, production build, and 30 Chromium scenarios, exit 0.
   Healthy-stack resets, cleanup, and original-resource preservation were inspected.
-  Stage 7 is Done; Stage 8 is In progress.
+  Stages 7 and 8 are Done.
 - Stage 6 passed two sequential full lifecycle runs: `stage6-verified1` on interface
   source `820028b` and `stage6-verified2` on final application source `daf9299`.
   Each exited 0 with 85 PostgreSQL tests, fresh migrations/system/drift checks,
@@ -56,7 +48,7 @@ actual progress; it does not turn proposals into confirmed requirements.
   follow-up `daf9299`. Both runs preserved the five original unrelated container
   IDs and both original volumes; no test containers, networks or volumes remain.
   Development data was not migrated/reset/seeded. Stage 7 reporting and CSV export
-  are also complete; Stage 8 is In progress and Stage 9 remains Not started.
+  are also complete; Stage 8 is Done and Stage 9 remains Not started.
 - Stage 5 source `2c12aa6` passed two sequential complete test-script runs,
   `stage5-verified2` and `stage5-verified3`: each exited 0 with 82 PostgreSQL
   tests, the TypeScript/production build, and 16 Chromium checks. The first
@@ -79,8 +71,7 @@ actual progress; it does not turn proposals into confirmed requirements.
   Detailed contracts are in [the timesheet API](docs/timesheet_api.md).
   Stage 6 completed its timesheet workspace, Edit day, and browser acceptance on
   2026-10-11. Stage 7 reporting is complete; Stage 8 remarks, references, images,
-  and search are implemented with focused checks passed. Full-stage lifecycle
-  acceptance is running.
+  and search are complete with full-stage lifecycle acceptance passed.
 - Timesheet design revised by agreement on 2026-10-09: ordinary shared-boundary
   edits and last-row deletion, an atomic Edit day draft for middle corrections,
   and independent new-day recording with historical unfinished sessions. Friday
@@ -143,7 +134,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 5 | Timesheet engine | Done | Two full lifecycle runs: 82 PostgreSQL tests, build, 16 Chromium checks each; lifecycle upgrade, six new races, running-stack reset and cleanup verified |
 | 6 | Timesheet interface | Done | Two full lifecycle runs: 85 PostgreSQL tests, build, 25 Chromium scenarios each; discovery permissions, drafts, revocation/reload recovery, running-stack reset and cleanup verified |
 | 7 | Reporting and CSV export | Done | Two sequential full lifecycles: 97 PostgreSQL tests, build, 30 Chromium scenarios each; reporting access, CSV, running-stack reset and cleanup verified |
-| 8 | Remarks, references, images, and search | In progress | All features implemented; focused content/API/browser and image-replacement checks passed; final full lifecycle running on `551d18a` |
+| 8 | Remarks, references, images, and search | Done | `142611f`: full lifecycle exit 0; 126 PostgreSQL tests, build, 41 Chromium scenarios; image replacement and scoped cleanup verified |
 | 9 | Deployment preparation and release verification | Not started | — |
 
 Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
@@ -772,7 +763,7 @@ persistent volumes were preserved. No development data was migrated/reset/seeded
 Final log/status are `.artifacts/verification/stage7-verified3.log` and `.status`;
 browser screenshots are preserved under ignored
 `.artifacts/verification/stage7-verified3-browser/`.
-Stage 7 is Done. Stage 8 is underway; administrator self-protection/recovery
+Stage 7 is Done. Stage 8 completion is recorded below; administrator self-protection/recovery
 and deployment backup procedures remain the separately recorded follow-ups.
 
 ## Stage 8: Remarks, References, Images, and Search
@@ -781,10 +772,8 @@ Initial search languages agreed on 2026-10-12: English and Russian, including
 mixed-language content. All four milestones are implemented, with centralized
 language handling, private persistent images, transactional references and shared
 remarks/stars. Focused API/browser checks and synthetic image-container replacement
-passed. Stage 8 is In progress while final full lifecycle acceptance runs on
-application `551d18a`, including image-draft follow-up `286f491`. The first full
-run exposed an older stale-task browser expectation; its correction is under
-focused verification before the final repeat.
+passed. Stage 8 completed on 2026-10-12 with successful full lifecycle acceptance
+on final source `142611f`. Milestones and earlier attempts are preserved below.
 
 - [x] Implement chronological remarks with authors/timestamps, shared stars at
   the top of the task window, and navigation to original remarks.
@@ -796,7 +785,7 @@ focused verification before the final repeat.
 - [x] Implement search over tasks, descriptions, and remarks with authorized
   results and snippets, using PostgreSQL full-text search and indexes through
   Django as described in the [search approach](architecture.md#search-approach).
-- [ ] Verify content workflows, reference lifecycle, image validation, and direct
+- [x] Verify content workflows, reference lifecycle, image validation, and direct
   access attempts using the API and browser.
 
 Test environment: use temporary image storage, valid/invalid/size-boundary files,
@@ -940,7 +929,39 @@ The run completed scoped cleanup and exited 1; it is not successful full-lifecyc
 acceptance. Logs/status and browser artifacts are retained under ignored
 `.artifacts/verification/stage8-final-verified1*`. No application source change was
 needed. The corrected focused Chromium check passed (36.8 seconds); the final
-full repeat is next.
+full repeat passed as recorded below. Test follow-up: `142611f`.
+
+### Completion Evidence: 2026-10-12
+
+- `sh scripts/test-runner.sh stage8-final-verified2 full` exited 0 on final source
+  `142611f`. The lifecycle took 25 minutes 31 seconds, within the 30-minute budget.
+  It reset healthy services, rebuilt images, applied fresh migrations, checked
+  Django and migration drift, and passed all 126 PostgreSQL tests (571.625 seconds),
+  synthetic seeding, TypeScript/Vite production build and 41 Chromium scenarios
+  (14.2 minutes). No scenarios were skipped or retried.
+- Content acceptance covers shared collaboration/stars, stable target lifecycles,
+  actual image format/size limits, atomic storage/cleanup, private downloads,
+  screenshot paste, permission changes, failed/stale draft saves, English/Russian
+  mixed inflections, filtered counts/excerpts, migration upgrades and concurrency.
+  All existing account/task/timesheet/report regressions also passed.
+- The separate synthetic named-volume check verified original image bytes,
+  metadata and permissions across forced web-container replacement, exit 0.
+  Desktop/narrow content screenshots were inspected. Final logs/status and browser
+  artifacts are retained in ignored `.artifacts/verification/stage8-final-verified2*`.
+- Independent inspection after cleanup found no test containers, networks or
+  volumes. All five original unrelated container IDs and both original persistent
+  volumes were preserved. Development data/services were not migrated/reset/seeded.
+- Local milestones: references `3de23bf`, images `cad8b4d`, retained remark-image
+  drafts `286f491`, search `551d18a`, stale-task test follow-up `142611f`; remarks
+  milestones and the prior timeout remain recorded above. Requirements, API/design,
+  architecture, README and testing charter match the delivered behavior.
+  Documentation consistency, all 89 local links/anchors, whitespace and verification
+  script syntax checks passed after the final documentation update.
+- Browser acceptance targets Chromium. Static PNG/JPEG/WebP, five new images per
+  save, 2 MiB per image, keyword search and English/Russian are the documented
+  initial defaults. Other languages, advanced search, OCR and general attachments
+  remain optional. Production setup, backup/restoration and agreed administrator
+  safeguards/recovery remain Stage 9 work. Stage 8 is Done; Stage 9 is next.
 
 ## Stage 9: Deployment and Release Verification
 
@@ -1041,3 +1062,5 @@ defined in Current Position and the stage sections above.
 | 2026-10-12 | Stage 8 remarks milestone implemented | Chronological remarks, shared stars/navigation, edit/delete commands, independent permissions, safe write-only acknowledgements, and content-aware task-deletion previews. Corrected focused suite passed 29 PostgreSQL checks; all four new Chromium workflows passed and desktop/narrow screenshots were inspected. Full run passed 107 PostgreSQL checks and the final production build; full browser/lifecycle result and cleanup are pending. Fixed non-object JSON validation exposed by the new regression. Requirements, architecture, API/design, README, and testing charter aligned; 79 local links/anchors and whitespace checked. References, images, and English/Russian search remain next; Stage 8 In progress. Commit: `feat: add task remarks and shared stars`. |
 | 2026-10-12 | Remarks browser fixtures isolated | Removed shared-administrator application grants from remarks fixtures; content operations use a separate scenario user's authenticated context. The first full attempt passed 107 PostgreSQL checks, build, and all four remarks workflows, but later task access failed due to fixture contamination; the attempt was interrupted and is not lifecycle acceptance. Artifacts retained and scoped cleanup inspected. Corrected repeat again passed 107 PostgreSQL checks, build, and all four remarks workflows; remaining browser/lifecycle verification pending. Final desktop/narrow screenshots inspected; local links/whitespace checked. Commit: `test: isolate remarks browser fixtures from administrator access`. |
 | 2026-10-12 | Remarks regression verification recorded | Application `7d331c6` and fixtures `f4329c8` passed all 107 PostgreSQL checks, production build, and all 34 Chromium scenarios in serial `stage8-remarks-verified2`. The wrapper's 20-minute limit expired during final cleanup (124); this is not successful lifecycle acceptance. Independent inspection confirmed no test resources and preservation of all five original container IDs and both persistent volumes. Final desktop/narrow screenshots and log/status retained. Extended the full runner to 30 minutes and updated README; shell syntax, local links, consistency, and whitespace checked. No application rerun under the new deadline. Remarks milestone checks complete; references, images, English/Russian search, and full-stage lifecycle acceptance remain pending. Stage 8 In progress. |
+| 2026-10-12 | Stage 8 references, images and search delivered | References `3de23bf`, images `cad8b4d`, image-draft fix `286f491` and search `551d18a` implement stable navigation, private validated inline images/paste, atomic file lifecycle and English/Russian indexed search. Focused PostgreSQL/browser checks and synthetic image-container replacement passed. Detailed milestone evidence is retained in Stage 8 above. |
+| 2026-10-12 | Stage 8 completed | Final source `142611f` passed `stage8-final-verified2`, exit 0: 126 PostgreSQL tests, production build and all 41 Chromium scenarios, with healthy-stack reset and inspected cleanup. Total lifecycle 25m31s; image persistence also passed across forced container replacement. Original unrelated containers/volumes preserved; development untouched. Corrected stale-task expectation passed focused and full checks. Documentation, local links/anchors and whitespace checked. Stage 8 Done; Stage 9 deployment/restoration and administrator safeguards/recovery are next. |

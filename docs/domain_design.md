@@ -333,13 +333,16 @@ The shared working zone is configurable in settings, defaulting to UTC. Backup
 responsibility and full-system restoration requirements are agreed in the
 [architecture](../architecture.md#agreed-backup-and-restoration-policy); tooling,
 schedule, retention, and destination remain deployment decisions. They do not
-block schema/API design. Initial search languages are English and Russian;
-the concrete multilingual configuration, supplementary UI libraries, and
-server/proxy are chosen when their stages need them. The initial test runners are Django and
+block schema/API design. Initial English/Russian search uses the implemented
+[shared language policy](../architecture.md#search-approach). Additional UI
+libraries and the production server/proxy remain choices for later needs.
+The test runners are Django and
 Playwright/Chromium, introduced in Stage 2 and extended through Stage 4. Worked
 examples are design contracts; actual PostgreSQL, browser, and concurrency
 evidence is recorded in the implementation tracker. Task/status acceptance
 passed in Stage 4; timeline acceptance passed in Stage 5. Stage 7 reporting and
 CSV acceptance passed two full lifecycle runs, each with 97 PostgreSQL tests and
-30 Chromium scenarios. Content acceptance remains planned. Concrete reporting
+30 Chromium scenarios. Stage 8 content acceptance passed a complete lifecycle with
+126 PostgreSQL tests, build and 41 Chromium scenarios, plus synthetic image-container
+replacement; detailed evidence is in the implementation plan. Concrete reporting
 contracts are in [the reporting API](reporting_api.md).

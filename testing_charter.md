@@ -323,11 +323,11 @@ runs with 82 PostgreSQL tests and 16 browser checks, including recording/correct
 engine acceptance. Stage 6 passed two full lifecycle runs with 85 PostgreSQL tests
 and 25 Chromium scenarios each, including timesheet browser acceptance. Stage 7
 passed two full runs with 97 PostgreSQL tests and 30 Chromium scenarios each,
-including reporting and CSV acceptance. Stage 8's remarks milestone adds focused
-API/browser checks; its executed evidence is recorded in the implementation
-tracker. Stage 8 adds reference/image/search workflows and a separate synthetic
-attachment-container replacement check; full-stage lifecycle acceptance is tracked
-in the implementation plan.
+including reporting and CSV acceptance. Stage 8 passed a full lifecycle with
+126 PostgreSQL tests, the production build and 41 Chromium scenarios, exit 0,
+plus synthetic image-container replacement. Reference/image/search workflows,
+permission changes, storage rollback and multilingual indexes are covered.
+Earlier attempts and detailed evidence are preserved in the implementation plan.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

@@ -528,3 +528,34 @@ containers and both original volumes were preserved. The development image volum
 is configured but no development services or data were changed. The expanded
 twelve-check content suite passed (42.084 seconds), adding stale/nested rollback
 and cleanup-failure recovery. Full-stage acceptance follows search implementation.
+
+## Stage 8 Final Acceptance: 2026-10-12
+
+English/Russian search passed eighteen focused content checks (59.425 seconds),
+a separate waiting-search/revocation race (8.162 seconds) and both browser workflows
+(37.9 seconds). Search narrow screenshots were inspected. Final image-draft review
+moved pending remark bytes into the parent draft so a denied composer can unmount
+without losing the upload; all seven image/remark browser scenarios passed.
+
+`stage8-final-verified1` passed 126 PostgreSQL tests and the build, but one older
+task browser expectation assumed automatic stale-edit refresh. The delivered image
+editor intentionally retains the draft until explicit refresh. Forty other Chromium
+scenarios passed; cleanup completed and the wrapper exited 1. Its artifacts are
+retained. The corrected scenario now checks pending text/image retention, disabled
+saving, and latest content after explicit refresh; its focused run passed in
+36.8 seconds. No application change was needed for this failure.
+
+Final source `142611f` passed `stage8-final-verified2`, exit 0: fresh migrations,
+system/drift checks, 126 PostgreSQL tests (571.625 seconds), production build and
+all 41 Chromium scenarios (14.2 minutes). Healthy-stack reset and final cleanup
+completed. Log creation to status write measured 25 minutes 31 seconds; the
+30-minute wrapper budget was sufficient. This is the successful full-stage
+lifecycle evidence, superseding the earlier pending status without erasing failed
+or timed-out attempts.
+
+Independent Docker inspection found no test containers/networks/volumes. All five
+original unrelated container IDs and both original volumes were preserved. Logs,
+status and screenshots are retained under ignored
+`.artifacts/verification/stage8-final-verified2*`; final narrow image layout was
+inspected on the same application source. Development data/services were untouched.
+Production deployment and full backup/restoration remain Stage 9 work.
