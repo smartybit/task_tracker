@@ -22,8 +22,9 @@ Stage 5 adds the backend timesheet engine: recording, breaks, closing markers,
 independent unfinished days, overnight continuation, previews, and atomic day
 corrections. Stage 6 adds browser timesheets and the Edit day dialog; acceptance
 verification is complete. Stage 7 adds reporting APIs, report screens, and CSV
-downloads; full acceptance verification is complete. Remarks, images, and
-search remain unimplemented.
+downloads; full acceptance verification is complete. References, images, and
+search remain unimplemented. Stage 8 remarks and shared stars are implemented;
+verification progress is recorded in the implementation tracker.
 No personal account is created automatically, and public registration is unavailable.
 
 ## Task Management
@@ -50,6 +51,24 @@ protected even after its tasks change status or are deleted. Write-only project
 access permits task creation with a safe acknowledgement; browsing descriptions
 and lists requires task read access. Advanced write-only changes remain available
 through the revision-aware API described in the domain design.
+
+## Task Remarks
+
+Open a task to read its chronological remarks and shared stars. Post text below
+the conversation; authorized users can edit, delete, or star any remark. Stars
+link to the original remark and are visible to other readers. Edits retain the
+original author and creation time and show an edit timestamp.
+
+Remark reading requires task read plus remark read. Posting and other changes
+require task read plus remark write; task write is unnecessary. Write-only remark
+access offers a composer without displaying the conversation. Task deletion also
+requires remark write when remarks exist and previews the number removed.
+
+Failed writes retain text. Stale or denied writes require **Reload remarks** and
+review; changed edits require confirmation before disposal. A confirmed save with
+a failed reload is reported as saved. Drafts belong to the open task window;
+closing or switching tasks discards them. References, images, and search remain
+planned Stage 8 work. See [the remarks API](docs/remarks_api.md).
 
 ## Timesheet Workspace
 

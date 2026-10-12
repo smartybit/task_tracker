@@ -249,6 +249,25 @@ Execution evidence is recorded in the implementation tracker.
   attachment metadata and files, including permission-checked downloads. Use no
   live databases or attachment storage for this full-system restoration check.
 
+### Stage 8 Remarks Milestone Checks
+
+- Exercise all 256 local/inherited task/remark grant combinations through real
+  endpoints, including remark write without read, absent task read, task write
+  independence, and no administrator bypass.
+- Verify chronology/pagination, shared stars, original author/time preservation,
+  literal HTML rendering, strict mutation inputs, CSRF, and safe acknowledgements.
+- Reject stale edits, star changes, and deletions without changing data/revisions;
+  inject a save failure to verify transaction rollback.
+- Race independent PostgreSQL connections for edit versus star and post versus
+  confirmed task deletion; verify a waiting writer rechecks committed revocation.
+- Verify task moves change existing remark access and task-deletion previews
+  count remarks without exposing their content; new remarks invalidate previews.
+- Browser workflows cover two-user collaboration, star navigation/focus, keyboard
+  input, repeated submissions, narrow screens, write-only posting, read-only
+  controls, revocation, stale edits, failed writes, and saved/reload-failed recovery.
+- References, images, search, and application/attachment restart checks remain
+  planned until their Stage 8 milestones are implemented.
+
 ## Verification Approach
 
 The [reusable test setup](architecture.md#reusable-test-setup) describes
@@ -262,7 +281,9 @@ runs with 82 PostgreSQL tests and 16 browser checks, including recording/correct
 engine acceptance. Stage 6 passed two full lifecycle runs with 85 PostgreSQL tests
 and 25 Chromium scenarios each, including timesheet browser acceptance. Stage 7
 passed two full runs with 97 PostgreSQL tests and 30 Chromium scenarios each,
-including reporting and CSV acceptance. Content workflow checks remain planned.
+including reporting and CSV acceptance. Stage 8's remarks milestone adds focused
+API/browser checks; its executed evidence is recorded in the implementation
+tracker. Reference, image, and search workflow checks remain planned.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

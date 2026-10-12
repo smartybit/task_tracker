@@ -58,6 +58,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px
 .task-preview button { margin: 8px 12px 0 0; }
 .check { flex-direction: row; align-items: center; }
 .danger { background: #8b3e2c; }
+.remarks { border-block: 1px solid #dce2d8; padding: 12px 0; margin: 16px 0; }
+.remark-stream { list-style: none; padding: 0; }
+.remark-stream article { border-bottom: 1px solid #dce2d8; padding: 12px 0; scroll-margin-block: 24px; }
+.remark-stream article:focus { outline: 3px solid #89b49e; outline-offset: 4px; }
+.remark-meta { color: #566b61; font-size: 13px; }
+.starred-remarks { padding-inline-start: 22px; }
+.starred-remarks li { padding-block: 8px; }
+.starred-remarks a { color: #183c35; overflow-wrap: anywhere; }
 @media (max-width: 800px) { .task-workspace { grid-template-columns: 1fr; } }
 
 main { max-width: 1600px; }

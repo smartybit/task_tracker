@@ -314,6 +314,29 @@ design. Stage 5 owns backend implementation; Stage 6 owns the interface.
 - Verify report results against independently calculated examples and exercise
   permission boundaries and concurrent mutations using PostgreSQL.
 
+## Stage 8 Remarks Milestone
+
+Remarks use the `remarks` app and a UUID model with a containing task, protected
+author, plain-text body, shared star, original creation time, optional edit time,
+and independent revision. A `(task, created_at, id)` index supports stable
+chronological pagination. The React task window loads the conversation and shows
+its shared stars separately, with links that focus the original remarks.
+
+All remark writes use the existing domain mutation lock, recheck current project
+permissions after acquiring it, and require expected revisions for existing
+remarks. Read endpoints hold the lock through permission checks and serialization
+of one page. Task deletion now checks remark-write permission when remarks exist,
+previews their count, and uses the domain revision to reject intervening content
+changes. Task moves automatically change remark access through current containment.
+Write-only remark responses contain identifiers/revisions only.
+
+The browser preserves text on failed writes and requires explicit reload/review
+after stale or denied writes. Acknowledged writes with failed reloads are reported
+as saved. Drafts belong to the open task window; closing/switching tasks does not
+persist them. No supplementary frontend or backend dependency is introduced.
+See [the remarks API](docs/remarks_api.md) for the delivered contract.
+References, images, and multilingual search remain Stage 8 work.
+
 ## Planned Search Approach
 
 PostgreSQL is expected to do the heavy lifting for search, using its built-in

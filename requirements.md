@@ -304,7 +304,9 @@ interval is invented. More involved Friday corrections use Edit day.
 ## Proposed First-Version Defaults
 
 These defaults make the delegated behavior concrete. They are proposals rather
-than additional user-confirmed requirements.
+than additional user-confirmed requirements. Remark editing defaults below have
+been adopted in the Stage 8 implementation under that delegation; this does not
+turn them into additional user-confirmed requirements.
 
 ### Time Representation and Closed-Day Resumption
 
@@ -372,9 +374,11 @@ than additional user-confirmed requirements.
   same permissions as views. For descriptions, the containing object is the task.
   Accept verified PNG, JPEG, and WebP images initially; use a 2 MiB
   (2,097,152-byte) upload limit as the interpretation of 2 MB.
-- Users with task read and remark write permission may edit, delete, or star
-  remarks. Preserve the original author and creation timestamp when editing;
-  show an edit timestamp. No version history is required.
+- Adopted in Stage 8: users with task read and remark write permission may edit,
+  delete, or star any remark. Task write and authorship are not required. Preserve
+  the original author and creation timestamp when editing; show an edit timestamp.
+  No version history is required. Shared-star changes leave the text-edit timestamp
+  unchanged.
 - Reject task deletion if any child task or timesheet record references the task.
   Prevent bypassing this rule through concurrent changes or indirect deletion;
   do not cascade into children or time records through project/organization deletion.

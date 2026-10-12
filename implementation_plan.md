@@ -10,13 +10,20 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 - Last updated: 2026-10-12.
 - Stages 1–7 are complete: 7 of 9 implementation stages complete.
+- Stage 8 remarks/shared stars are implemented through the API and task window.
+  The corrected focused PostgreSQL run passed 29 checks (10 new remarks checks
+  plus 19 task regressions), including all 256 grant combinations, three new
+  independent-connection races, rollback, and the Stage 7 upgrade. The four new
+  Chromium workflows passed. The full run has passed all 107 PostgreSQL checks
+  and the final production build; its complete browser suite is underway.
+  References, images, and English/Russian search remain unimplemented.
 - Stage 7 started from `0fd2774`. Backend milestone `020cd88` passed 12 focused
   PostgreSQL tests, including a 64-combination access matrix and a concurrent
   report snapshot check. Report screens and five browser scenarios are implemented;
   `stage7-verified2` and `stage7-verified3` passed sequential full lifecycles, each
   with 97 PostgreSQL tests, production build, and 30 Chromium scenarios, exit 0.
   Healthy-stack resets, cleanup, and original-resource preservation were inspected.
-  Stage 7 is Done; Stage 8 remarks, references, images, and search is next.
+  Stage 7 is Done; Stage 8 is In progress, beginning with remarks and shared stars.
 - Stage 6 passed two sequential full lifecycle runs: `stage6-verified1` on interface
   source `820028b` and `stage6-verified2` on final application source `daf9299`.
   Each exited 0 with 85 PostgreSQL tests, fresh migrations/system/drift checks,
@@ -36,7 +43,7 @@ actual progress; it does not turn proposals into confirmed requirements.
   follow-up `daf9299`. Both runs preserved the five original unrelated container
   IDs and both original volumes; no test containers, networks or volumes remain.
   Development data was not migrated/reset/seeded. Stage 7 reporting and CSV export
-  are also complete; Stages 8–9 remain Not started.
+  are also complete; Stage 8 is In progress and Stage 9 remains Not started.
 - Stage 5 source `2c12aa6` passed two sequential complete test-script runs,
   `stage5-verified2` and `stage5-verified3`: each exited 0 with 82 PostgreSQL
   tests, the TypeScript/production build, and 16 Chromium checks. The first
@@ -58,8 +65,8 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Stage 5 local milestones: engine `601ed20`, write-only error fix `2c12aa6`.
   Detailed contracts are in [the timesheet API](docs/timesheet_api.md).
   Stage 6 completed its timesheet workspace, Edit day, and browser acceptance on
-  2026-10-11. Stage 7 reporting is complete; remarks, images and search remain
-  unimplemented.
+  2026-10-11. Stage 7 reporting is complete; Stage 8 remarks are implemented with
+  verification underway. References, images and search remain unimplemented.
 - Timesheet design revised by agreement on 2026-10-09: ordinary shared-boundary
   edits and last-row deletion, an atomic Edit day draft for middle corrections,
   and independent new-day recording with historical unfinished sessions. Friday
@@ -122,7 +129,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 5 | Timesheet engine | Done | Two full lifecycle runs: 82 PostgreSQL tests, build, 16 Chromium checks each; lifecycle upgrade, six new races, running-stack reset and cleanup verified |
 | 6 | Timesheet interface | Done | Two full lifecycle runs: 85 PostgreSQL tests, build, 25 Chromium scenarios each; discovery permissions, drafts, revocation/reload recovery, running-stack reset and cleanup verified |
 | 7 | Reporting and CSV export | Done | Two sequential full lifecycles: 97 PostgreSQL tests, build, 30 Chromium scenarios each; reporting access, CSV, running-stack reset and cleanup verified |
-| 8 | Remarks, references, images, and search | Not started | — |
+| 8 | Remarks, references, images, and search | In progress | Remarks milestone: 29 focused PostgreSQL checks, build and 4 Chromium workflows passed; full regression pending |
 | 9 | Deployment preparation and release verification | Not started | — |
 
 Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
@@ -751,7 +758,7 @@ persistent volumes were preserved. No development data was migrated/reset/seeded
 Final log/status are `.artifacts/verification/stage7-verified3.log` and `.status`;
 browser screenshots are preserved under ignored
 `.artifacts/verification/stage7-verified3-browser/`.
-Stage 7 is Done. Next action is Stage 8; administrator self-protection/recovery
+Stage 7 is Done. Stage 8 is underway; administrator self-protection/recovery
 and deployment backup procedures remain the separately recorded follow-ups.
 
 ## Stage 8: Remarks, References, Images, and Search
@@ -759,9 +766,11 @@ and deployment backup procedures remain the separately recorded follow-ups.
 Initial search languages agreed on 2026-10-12: English and Russian, including
 mixed-language content. Concrete multilingual indexing/query configuration is
 Stage 8 work; centralize language handling to allow later additions. Stage 8
-remains Not started.
+is In progress as of 2026-10-12. The first milestone implements remarks and
+shared stars through the API and task window, including permission-aware task
+deletion. References, images, and multilingual search follow this milestone.
 
-- [ ] Implement chronological remarks with authors/timestamps, shared stars at
+- [x] Implement chronological remarks with authors/timestamps, shared stars at
   the top of the task window, and navigation to original remarks.
 - [ ] Implement task/remark cross-references with stable targets and appropriate
   handling of restricted or deleted objects.
@@ -781,6 +790,32 @@ lifecycle changes; exercise screenshot pasting if delivered.
 
 Completion check: collaboration, attachments, and search work through the interface
 without revealing protected content. Remaining optional work is documented.
+
+### Remarks Milestone: 2026-10-12
+
+The first milestone adds the UUID Remark model/migration, chronological and
+shared-star endpoints, revision-aware edit/delete/star commands, and the task
+window conversation/composer. Author/creation time survive edits by other writers;
+stars leave the edit timestamp unchanged. Write without remark read returns safe
+acknowledgements. Task moves change remark access through current containment.
+Eligible task deletion requires content write, previews remark counts, and rejects
+intervening content changes. Backend reads/writes use the domain lock for coherent
+permission checks; no new runtime dependency was added.
+
+The first component run passed 28 of 29 checks and exposed a shared serializer
+failure for non-object JSON; corrected validation returns 400. The repeat passed
+all 29 PostgreSQL checks, fresh migrations, system and drift checks. Four focused
+Chromium scenarios passed collaboration, literal text, star navigation/focus,
+access loss, write-only posting, stale/failed saves, saved/reload-failed recovery,
+keyboard/repeated submissions, and deletion previews. Desktop/narrow screenshots
+were inspected. Final review moves the shared stars above the description;
+the full lifecycle is checking this final layout and all existing regressions.
+
+The full run passed all 107 PostgreSQL tests and the final TypeScript/Vite build;
+its complete browser suite, lifecycle result, and cleanup are pending.
+Stage 8 remains In progress.
+Next milestone: stable task/remark references with restricted/deleted placeholders,
+then validated private images and English/Russian PostgreSQL search.
 
 ## Stage 9: Deployment and Release Verification
 
@@ -878,3 +913,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-11 | Stage 7 interface component-verified | Added report navigation/screens, filters, hierarchy totals, CSV downloads, and failure/stale/access-change handling. All five focused Chromium scenarios passed (`stage7-reports1`, exit 0); desktop/narrow screenshots inspected. First full attempt passed 97 PostgreSQL tests and build but had three wrapped-select test locator timeouts and was interrupted; corrected selectors use accessible combobox roles. Full final-source repetition remains pending; Stage 7 In progress. |
 | 2026-10-12 | Stage 7 completed | Backend `020cd88`, interface `f4dfd00`, CSV negotiation `9ba2742`, and browser timing follow-up `7f7e583`. Two serial full lifecycles (`stage7-verified2`, `stage7-verified3`) each exited 0 with 97 PostgreSQL tests, production build, and 30 Chromium scenarios. Report authorization, exact totals, historical corrections, hierarchy/project moves, snapshot consistency, actual CSV downloads, and error/access recovery passed. Healthy-stack resets and scoped cleanup inspected; original unrelated containers and persistent volumes preserved. Documentation consistency, local links/anchors, and whitespace checked. Stage 7 Done; Stage 8 is next. |
 | 2026-10-12 | Initial search languages agreed | Recorded English and Russian, including mixed-language content, in requirements, architecture, design, and testing charter. Concrete multilingual indexing/query configuration remains Stage 8 work, with centralized language handling for later additions. Documentation consistency, local links/anchors, and whitespace checked; no application code changed or application tests run. Stage 8 remains Not started. |
+| 2026-10-12 | Stage 8 remarks milestone implemented | Chronological remarks, shared stars/navigation, edit/delete commands, independent permissions, safe write-only acknowledgements, and content-aware task-deletion previews. Corrected focused suite passed 29 PostgreSQL checks; all four new Chromium workflows passed and desktop/narrow screenshots were inspected. Full run passed 107 PostgreSQL checks and the final production build; full browser/lifecycle result and cleanup are pending. Fixed non-object JSON validation exposed by the new regression. Requirements, architecture, API/design, README, and testing charter aligned; 79 local links/anchors and whitespace checked. References, images, and English/Russian search remain next; Stage 8 In progress. Commit: `feat: add task remarks and shared stars`. |

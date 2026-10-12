@@ -9,15 +9,17 @@ organization/project, and grant APIs, shared access policies, and the minimal
 Timesheet record; verification status is tracked in the implementation plan.
 Stage 4 implements tasks/statuses, preview/confirmation operations, and the minimal
 time-record relationships used for deletion protection. Stage 5 implements the
-recording/correction engine and revised lifecycle. Remaining feature operations
-are a design contract; verification status belongs in the implementation tracker.
+recording/correction engine and revised lifecycle. Stage 6 delivers the timesheet
+interface, Stage 7 delivers reports/CSV, and Stage 8 begins with
+[remarks and shared stars](remarks_api.md). Remaining feature operations are a
+design contract; verification status belongs in the implementation tracker.
 
 The timesheet sections were revised on 2026-10-09 for the agreed
 [Edit day](../requirements.md#timesheet-editing) and
 [unfinished-day](../requirements.md#unfinished-days-and-overnight-work) behavior.
 They supersede Stage 1's automatic middle-edit and globally single-open-entry
 proposals. Stage 5 adds lifecycle migrations and backend commands; the Stage 6
-interface remains Not started.
+interface is complete.
 
 ## Modules and Records
 

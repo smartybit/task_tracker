@@ -8,8 +8,12 @@ from projects.views import OrganizationsView, OrganizationView, ProjectsView, Pr
 from tasks.views import StatusesView, StatusView, OwnersView, TasksView, TaskView, HistoryView, CommandView, PreviewView
 from timesheets import views as timesheet_views
 from reports import views as report_views
+from remarks import views as remark_views
 
 urlpatterns = [
+    path('api/v1/tasks/<uuid:task_id>/remarks/', remark_views.RemarksView.as_view()),
+    path('api/v1/remarks/<uuid:pk>/', remark_views.RemarkView.as_view()),
+    path('api/v1/remarks/<uuid:pk>/star/', remark_views.StarView.as_view()),
     path('api/v1/reports/options/', report_views.OptionsView.as_view()),
     path('api/v1/reports/records.csv', report_views.CSVView.as_view()),
     path('api/v1/timesheets/', timesheet_views.DirectoryView.as_view()),

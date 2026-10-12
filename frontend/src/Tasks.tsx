@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, allPages, ApiError, type Project, type User } from "./api";
+import { Remarks } from "./Remarks";
 
 interface Status { id: string; name: string; final: boolean; used: boolean }
 interface Task {
@@ -7,7 +8,7 @@ interface Task {
   owner: string; owner_name: string; creator: string; status: string; revision: number;
 }
 interface History { id: number; previous_status: string | null; new_status: string; actor_name: string; changed_at: string }
-interface Preview { domain_revision: number; affected: Task[]; confirmation_required: boolean }
+interface Preview { domain_revision: number; affected: Task[]; confirmation_required: boolean; delete?: { remarks: number } | null }
 interface Pending { preview: Preview; path: string; method: string; body: Record<string, unknown>; label: string }
 type Props = { user: User; version: number; onError: (error: unknown) => void; onRecord?: (id: string) => void; openRequest?: { id: string; nonce: number } | null; onChanged?: () => void };
 
@@ -124,8 +125,11 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
       <div><p>{filtered.length} matching tasks</p><ul className="task-list" aria-label={tree ? "Task tree" : "Task list"}>{taskRows(tree ? children(null) : filtered)}</ul>{!filtered.length && <p>No tasks match these filters.</p>}</div>
       {detail && <section className="task-detail" role="dialog" aria-label="Task description" key={`${detail.id}:${detail.revision}`}>
         <button className="secondary" onClick={() => setSelected("")}>Close task</button>
-        <h3>{detail.title}</h3><p className="description">{detail.description || "No description."}</p>
-        <p>{projectName(detail.project)} · {statusName(detail.status)} · Owner: {detail.owner_name}</p>
+        <h3>{detail.title}</h3>
+        <Remarks task={detail.id} project={detail.project} version={version} onError={onError}>
+          <p className="description">{detail.description || "No description."}</p>
+          <p>{projectName(detail.project)} · {statusName(detail.status)} · Owner: {detail.owner_name}</p>
+        </Remarks>
         <h4>Status history</h4><ol>{history.map(row => <li key={row.id}>{row.previous_status ? `${statusName(row.previous_status)} → ` : "Created as "}{statusName(row.new_status)} — {row.actor_name} <time dateTime={row.changed_at}>{new Date(row.changed_at).toLocaleString()}</time></li>)}</ol>
         {editable && <fieldset disabled={busy || pending !== null}>
           <form aria-label="Edit task" onSubmit={event => { const data = fieldValues(event); void save(`tasks/${detail.id}/`, { title: data.get("title"), description: data.get("description"), expected_revision: detail.revision }); }}>
@@ -160,6 +164,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
       <h3>{pending.label}</h3><p>Review the affected tasks before applying this change.</p>
       {pending.preview.affected.length > 0 ? <ul>{pending.preview.affected.map(task => <li key={task.id}>{task.title} — {statusName(task.status)}, {projectName(task.project)}{task.parent ? `, parent: ${tasks.find(item => item.id === task.parent)?.title ?? "selected parent"}` : ", top level"}</li>)}</ul> : <p>The action can be confirmed. Task details require read access.</p>}
       {pending.method === "DELETE" && <p>This permanently deletes the task and its status history.</p>}
+      {pending.method === "DELETE" && !!pending.preview.delete?.remarks && <p>This also permanently deletes {pending.preview.delete.remarks} remark(s).</p>}
       <button disabled={busy} onClick={() => { void action(async () => { const result = await api<{ id: string }>(pending.path, pending.method, { ...pending.body, confirm: true, expected_domain_revision: pending.preview.domain_revision }); if (pending.path === "tasks/") creation.current?.reset(); refresh(); if (pending.method === "DELETE") setSelected(""); else setSelected(result.id); setMessage("Changes saved."); }); }}>{busy ? "Applying…" : "Confirm change"}</button>
       <button className="secondary" disabled={busy} onClick={() => setPending(null)}>Cancel change</button>
     </section>}

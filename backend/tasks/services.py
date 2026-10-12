@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
 
-from access.policies import can_task
+from access.policies import can_remark, can_task
 from core.api import StrictSerializer
 from core.domain import DomainError, current_user, find, mutation, require_admin
 from core.models import MutationLock
@@ -182,6 +182,8 @@ def prepare(actor, kind, data, pk=None):
     elif kind == 'delete':
         if task.children.exists() or task.time_entries.exists():
             raise DomainError('task_in_use', 'This task has child tasks or recorded time and cannot be deleted.', 409)
+        if task.remarks.exists() and not can_remark(actor, task.project, write=True):
+            raise DomainError('permission_denied', 'Task read and remark write access are required to delete a task with remarks.', 403)
     if kind in {'create', 'status', 'move'}:
         has_non_final = not task.status.final
         if kind == 'move':
@@ -210,7 +212,7 @@ def preview_task(actor, kind, data, pk=None):
     return {'domain_revision': lock.revision, 'confirmation_required': True,
             'affected': [task_data(row) for row in visible],
             'target': acknowledgement(task) if pk else None,
-            'delete': acknowledgement(task) if kind == 'delete' else None}
+            'delete': {**acknowledgement(task), 'remarks': task.remarks.count()} if kind == 'delete' else None}
 
 
 @mutation
