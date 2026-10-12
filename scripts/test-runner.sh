@@ -34,7 +34,7 @@ printf 'Log: %s\nStatus: %s\n' "$run_log" "$run_status"
 if [ "$run_mode" = account ]; then
     timeout --foreground 180 docker compose -f compose.test.yaml -p task-tracker-tests run --rm browser npm run test:e2e -- tests/accounts.spec.ts --grep 'administrator creates' --max-failures=1 < /dev/null > "$run_log" 2>&1
 else
-    timeout --foreground 1200 sh scripts/test.sh < /dev/null > "$run_log" 2>&1
+    timeout --foreground 1800 sh scripts/test.sh < /dev/null > "$run_log" 2>&1
 fi
 run_result=$?
 printf '%s\n' "$run_result" > "$run_status" || exit 1

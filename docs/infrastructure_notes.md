@@ -476,7 +476,24 @@ lifecycle status. Subsequent connection failures followed teardown. The retained
 one-off browser was inspected by project label; scoped cleanup removed the test
 network, and separate label-filtered listings confirmed no test containers,
 networks, or volumes remained. Artifacts are retained in ignored
-`.artifacts/verification/stage8-remarks-attempt1-browser/`. The corrected full run
-is pending; completion evidence belongs in the implementation tracker. Docker
-and Git writes required session-specific approved access; no host permissions
-or development data were changed.
+`.artifacts/verification/stage8-remarks-attempt1-browser/`. Docker and Git writes
+required session-specific approved access; no host permissions or development
+data were changed.
+
+Corrected serial run `stage8-remarks-verified2` passed 107 PostgreSQL tests,
+fresh migrations/system/drift, the production build, and all 34 Chromium scenarios
+(10.7-minute browser suite). Application `7d331c6` and fixture correction `f4329c8`
+were exercised. The 20-minute foreground wrapper budget expired during final
+cleanup, returning 124 despite all application checks passing. Keep this distinct
+from a successful lifecycle invocation. Separate inspection found no test
+containers/networks/volumes, and all five original unrelated container IDs and
+both persistent volumes were preserved. Final screenshots were inspected and
+retained under ignored `.artifacts/verification/stage8-remarks-verified2-browser/`.
+
+The growing suite now has a 30-minute full-run budget in `scripts/test-runner.sh`;
+the focused account budget remains three minutes. Shell syntax/documentation
+checks passed; another full lifecycle under the expanded budget has not run.
+The older 1200-second command above records the Stage 4 arrangement. Use the
+repository wrapper and README for current commands. Final-stage acceptance still
+requires successful full lifecycle evidence; remarks component checks alone do
+not complete Stage 8.

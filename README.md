@@ -298,7 +298,7 @@ For a bounded full test run with a captured log and exit status:
 sh scripts/test-runner.sh verification-1 full
 ```
 
-This runs the same `scripts/test.sh` workflow with a 20-minute limit, foreground
+This runs the same `scripts/test.sh` workflow with a 30-minute limit, foreground
 supervision, and closed standard input. Results default to ignored
 `.artifacts/verification/verification-1.log` and `.status`; the wrapper returns
 the test command's exit status. Use a new label for each run. An optional third
