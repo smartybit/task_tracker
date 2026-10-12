@@ -176,9 +176,18 @@ test("stale tabs and stale previews reject changes and require another review", 
     await expect(description(page)).toContainText("First tab saved");
     const stale = other.getByRole("form", { name: "Edit task", exact: true });
     await stale.getByRole("textbox", { name: "Description", exact: true }).fill("Must not overwrite");
+    await stale.getByLabel("Add images", { exact: true }).setInputFiles("tests/fixtures/screenshot.png");
+    await expect(stale.getByRole("status")).toContainText("1 new image");
     await stale.getByRole("button", { name: "Save task", exact: true }).click();
     await expect(other.getByRole("alert")).toContainText("The task changed");
+    await expect(stale.getByRole("textbox", { name: "Description", exact: true })).toHaveValue(/Must not overwrite.*\[image:/);
+    await expect(stale.getByRole("status")).toContainText("1 new image");
+    await expect(stale.getByRole("button", { name: "Save task", exact: true })).toBeDisabled();
+    await expect(other.getByText(/refreshing tasks discards unsaved task drafts and images/)).toBeVisible();
+    await other.getByRole("button", { name: "Refresh tasks", exact: true }).click();
     await expect(description(other)).toContainText("First tab saved");
+    await expect(stale.getByRole("textbox", { name: "Description", exact: true })).toHaveValue("First tab saved");
+    await expect(stale.getByRole("button", { name: "Save task", exact: true })).toBeEnabled();
     await status(page, "Completed");
     await f.write("organizations/", { name: "Invalidate task preview" });
     const dialog = page.getByRole("dialog", { name: "Confirm task change", exact: true });

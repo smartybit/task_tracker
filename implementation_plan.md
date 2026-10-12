@@ -78,9 +78,9 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Stage 5 local milestones: engine `601ed20`, write-only error fix `2c12aa6`.
   Detailed contracts are in [the timesheet API](docs/timesheet_api.md).
   Stage 6 completed its timesheet workspace, Edit day, and browser acceptance on
-  2026-10-11. Stage 7 reporting is complete; Stage 8 remarks are implemented with
-  regression checks passed. References and images are delivered; search and
-  full-stage acceptance remain pending.
+  2026-10-11. Stage 7 reporting is complete; Stage 8 remarks, references, images,
+  and search are implemented with focused checks passed. Full-stage lifecycle
+  acceptance is running.
 - Timesheet design revised by agreement on 2026-10-09: ordinary shared-boundary
   edits and last-row deletion, an atomic Edit day draft for middle corrections,
   and independent new-day recording with historical unfinished sessions. Friday
@@ -143,7 +143,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 5 | Timesheet engine | Done | Two full lifecycle runs: 82 PostgreSQL tests, build, 16 Chromium checks each; lifecycle upgrade, six new races, running-stack reset and cleanup verified |
 | 6 | Timesheet interface | Done | Two full lifecycle runs: 85 PostgreSQL tests, build, 25 Chromium scenarios each; discovery permissions, drafts, revocation/reload recovery, running-stack reset and cleanup verified |
 | 7 | Reporting and CSV export | Done | Two sequential full lifecycles: 97 PostgreSQL tests, build, 30 Chromium scenarios each; reporting access, CSV, running-stack reset and cleanup verified |
-| 8 | Remarks, references, images, and search | In progress | Remarks milestone: 107 PostgreSQL checks, build and 34 Chromium scenarios passed; wrapper timed out during cleanup (124), cleanup inspected; full-stage acceptance pending |
+| 8 | Remarks, references, images, and search | In progress | All features implemented; focused content/API/browser and image-replacement checks passed; final full lifecycle running on `551d18a` |
 | 9 | Deployment preparation and release verification | Not started | — |
 
 Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
@@ -778,15 +778,13 @@ and deployment backup procedures remain the separately recorded follow-ups.
 ## Stage 8: Remarks, References, Images, and Search
 
 Initial search languages agreed on 2026-10-12: English and Russian, including
-mixed-language content. Concrete multilingual indexing/query configuration is
-Stage 8 work; centralize language handling to allow later additions. Stage 8
-is In progress as of 2026-10-12. The first milestone implements remarks and
-shared stars through the API and task window, including permission-aware task
-deletion. References, images, and multilingual search follow this milestone.
-
-Stable inline references now synchronize transactionally and resolve current
-permissions through a batched API; the browser provides insertion/navigation.
-Images, search, and final lifecycle acceptance follow.
+mixed-language content. All four milestones are implemented, with centralized
+language handling, private persistent images, transactional references and shared
+remarks/stars. Focused API/browser checks and synthetic image-container replacement
+passed. Stage 8 is In progress while final full lifecycle acceptance runs on
+application `551d18a`, including image-draft follow-up `286f491`. The first full
+run exposed an older stale-task browser expectation; its correction is under
+focused verification before the final repeat.
 
 - [x] Implement chronological remarks with authors/timestamps, shared stars at
   the top of the task window, and navigation to original remarks.
@@ -925,10 +923,24 @@ Screenshots are retained in ignored `.artifacts/verification/stage8-search-focus
 Final review lifted pending remark-image bytes into the parent draft so denied
 composer unmounts cannot discard them; the browser regression now restores access,
 reloads and posts the same pending image. Task creation denials preserve the draft
-until explicit refresh. Production build passed; the expanded image/remark browser
-regressions passed: all seven image/remark browser workflows and the production
-build. Search narrow-screen rendering was inspected; 88 local links/anchors and
+until explicit refresh. The expanded image/remark regression run passed all seven
+browser workflows and the production build. Search narrow-screen rendering was
+inspected; 88 local links/anchors and
 whitespace checks passed. Full-stage lifecycle acceptance is next.
+
+### Full Regression Follow-up: 2026-10-12
+
+`stage8-final-verified1` passed all 126 PostgreSQL checks (570.701 seconds),
+fresh migrations/system/drift and the production build. Forty of 41 Chromium
+scenarios passed (13.5 minutes). The stale-task scenario expected an automatic
+reload, which the image milestone deliberately replaced with retaining the draft
+and requiring explicit refresh. Its updated assertions cover pending image/text
+retention, disabled saving and loading the latest record after explicit refresh.
+The run completed scoped cleanup and exited 1; it is not successful full-lifecycle
+acceptance. Logs/status and browser artifacts are retained under ignored
+`.artifacts/verification/stage8-final-verified1*`. No application source change was
+needed. The corrected focused Chromium check passed (36.8 seconds); the final
+full repeat is next.
 
 ## Stage 9: Deployment and Release Verification
 
