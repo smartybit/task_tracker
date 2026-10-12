@@ -46,7 +46,12 @@ the documents when those instructions change recorded decisions.
 - Commit when a coherent intermediate result has been reached and can be clearly
   described, such as a completed feature, fix, or documentation update. Make these
   milestone commits without waiting for a separate commit request.
-- Keep each commit focused and use a descriptive message explaining the result.
+- Prefer smaller, meaningful commits throughout each implementation stage rather
+  than accumulating the entire stage into one large commit. Keep each commit
+  focused on a coherent result; do not split tightly coupled changes merely to
+  reduce commit size.
+- Use clear, descriptive commit messages that explain the concrete change and
+  its purpose.
 - Review the diff, check whitespace, and run verification appropriate to the
   change before committing. Stage only changes belonging to that result and
   preserve unrelated local edits.
