@@ -335,7 +335,7 @@ after stale or denied writes. Acknowledged writes with failed reloads are report
 as saved. Drafts belong to the open task window; closing/switching tasks does not
 persist them. No supplementary frontend or backend dependency is introduced.
 See [the remarks API](docs/remarks_api.md) for the delivered contract.
-Multilingual search remains Stage 8 work.
+Multilingual search is described below; full-stage verification is tracked separately.
 
 ### Stable References
 
@@ -353,20 +353,38 @@ picker, selection insertion and focus restoration; rendered links resolve curren
 labels and navigate through the permission-checked task view. Star previews avoid
 embedding a second navigation link. See [the content API](docs/content_api.md).
 
-## Planned Search Approach
+## Search Approach
 
-PostgreSQL is expected to do the heavy lifting for search, using its built-in
-full-text search and database indexes through Django. No separate search service
-is planned for the first version. The backend enforces task and remark permissions
-for search results and snippets.
+Search uses PostgreSQL full-text vectors, queries and functional GIN indexes
+through Django, following the [Django search API](https://docs.djangoproject.com/en/5.2/ref/contrib/postgres/search/)
+and [PostgreSQL text-search functions](https://www.postgresql.org/docs/17/textsearch-controls.html).
+The backend filters task and remark sources separately by current read permissions
+before counts, ranking and excerpts. Search holds the domain lock through page
+serialization, uses deterministic rank/kind/UUID ordering, and provides no admin
+or whole-timesheet-access bypass. No separate search service is used.
 
 English and Russian, including mixed-language content, are the agreed initial
-scope (2026-10-12). Select the concrete multilingual indexing/query strategy in
-Stage 8, keeping language handling centralized so additional languages can be
-added without redesigning the content UI or permission model. Indexing and query
-normalization must use compatible configurations. Adding a language requires
-appropriate dictionaries, any affected search-data/index rebuild, and regression
-checks; languages without suitable built-in processing may require extra tooling.
+scope (2026-10-12). `content/search_config.py` centralizes vector expressions,
+token removal and query language selection. Each document concatenates English
+and Russian vectors. Cyrillic query words are normalized with Russian, other
+words with English; PostgreSQL's `plainto_tsquery` removes each group's stop words.
+Nonempty normalized groups combine with AND, preserving their lexemes through
+the simple configuration rather than stemming twice. This supports mixed
+inflections within one document without requiring a single document language.
+
+Task title/description form one document; each remark body forms another. Inline
+reference/image tokens are stripped before indexing and excerpts, so inaccessible
+target labels and attachment data never become source search text. Per-language
+headlines supply escaped plain text excerpts with bracketed matches. The UI retains
+the query after failures, clears stale excerpts, and navigates through authorized
+task views. See [the content API](docs/content_api.md).
+
+Functional GIN indexes freeze the shared expression in task/remark migrations and
+cover historical content automatically. Query-plan checks verify both indexes
+are usable. Adding a language requires updating the central language list and
+classifier, ensuring suitable PostgreSQL dictionaries, rebuilding affected indexes
+with a migration, and mixed-language regressions. UI and permissions remain shared;
+languages without suitable built-in processing may need additional tooling.
 
 ## Images and Content Handling
 

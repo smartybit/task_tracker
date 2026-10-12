@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, allPages, ApiError, type Project, type User } from "./api";
 import { Remarks } from "./Remarks";
 import { ContentEditor, ContentText, editorImages } from "./Content";
+import { ContentSearch } from "./ContentSearch";
 
 interface Status { id: string; name: string; final: boolean; used: boolean }
 interface Task {
@@ -80,7 +81,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
     catch (error) {
       setMessage(error instanceof Error ? error.message : "The request failed.");
       if (error instanceof ApiError && ["stale_revision", "stale_preview", "permission_denied", "not_found"].includes(error.code)) {
-        if (preserveDraft) setEditBlocked(true); else refresh();
+        if (preserveDraft) { setEditBlocked(true); setPending(null); } else refresh();
       }
       if (error instanceof ApiError && error.code === "authentication_required") errorHandler.current(error);
     } finally { setBusy(false); }
@@ -90,7 +91,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
       const previewPath = method === "DELETE" ? `${path}delete/preview/` : `${path}preview/`;
       const result = await api<Preview>(previewPath, "POST", body);
       setPending({ preview: result, path, method, body, label });
-    });
+    }, path === "tasks/");
   }
   async function save(path: string, body: Record<string, unknown>) {
     await action(async () => { await api(path, "PATCH", body); refresh(); setMessage("Changes saved."); }, true);
@@ -123,6 +124,8 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
   return <section className="workspace" aria-label="Tasks"><h2>Tasks</h2>
     <p>Organize work, choose statuses, and keep related tasks together.</p>
     {message && <p role="alert">{message}</p>}
+    {editBlocked && <p>Refresh tasks and review the latest record before saving again. Copy any unsaved text first; refreshing tasks discards unsaved task drafts and images.</p>}
+    <ContentSearch version={version} onOpen={openReference} onError={onError} />
     <div className="task-toolbar">
       <label>Filter project<select value={projectFilter} onChange={event => setProjectFilter(event.target.value)}><option value="">All readable projects</option>{projects.filter(item => item.permissions.task_read).map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>
       <button className="secondary" aria-pressed={tree} onClick={() => setTree(value => !value)}>{tree ? "Tree view" : "Flat view"}</button>
@@ -139,7 +142,6 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
           <p>{projectName(detail.project)} · {statusName(detail.status)} · Owner: {detail.owner_name}</p>
         </Remarks>
         <h4>Status history</h4><ol>{history.map(row => <li key={row.id}>{row.previous_status ? `${statusName(row.previous_status)} → ` : "Created as "}{statusName(row.new_status)} — {row.actor_name} <time dateTime={row.changed_at}>{new Date(row.changed_at).toLocaleString()}</time></li>)}</ol>
-        {editBlocked && <p>Refresh tasks and review the latest record before saving again. Copy any unsaved text first.</p>}
         {editable && <fieldset disabled={busy || pending !== null || editBlocked}>
           <form aria-label="Edit task" onSubmit={event => { const data = fieldValues(event); void save(`tasks/${detail.id}/`, { title: data.get("title"), description: data.get("description"), images: editorImages(data), expected_revision: detail.revision }); }}>
             <label>Task title<input name="title" defaultValue={detail.title} maxLength={200} required /></label>
@@ -162,7 +164,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
     {writable.length > 0 && loaded && <form ref={creation} aria-label="Create task" onSubmit={event => {
       const data = fieldValues(event);
       void preview("tasks/", { title: data.get("title"), description: data.get("description"), images: editorImages(data), project: data.get("project"), parent: data.get("parent") || null, status: data.get("status"), ...reopenValue(data) }, "Create task");
-    }}><h3>Create task</h3><fieldset disabled={busy || pending !== null}>
+    }}><h3>Create task</h3><fieldset disabled={busy || pending !== null || editBlocked}>
       <label>Task title<input name="title" maxLength={200} required /></label><ContentEditor label="Description" name="description" />
       <label>Task project<select name="project" required value={createProject} onChange={event => setCreateProject(event.target.value)}><option value="" disabled>Choose a project</option>{writable.map(project => <option key={project.id} value={project.id}>{project.name}{!project.permissions.task_read ? " (write only)" : ""}</option>)}</select></label>
       <label>Parent task<select name="parent" key={createProject} defaultValue=""><option value="">Top level</option>{tasks.filter(task => task.project === createProject).map(task => <option key={task.id} value={task.id}>{task.title}</option>)}</select></label>
@@ -175,7 +177,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
       {pending.method === "DELETE" && <p>This permanently deletes the task and its status history.</p>}
       {pending.method === "DELETE" && !!pending.preview.delete?.remarks && <p>This also permanently deletes {pending.preview.delete.remarks} remark(s).</p>}
       {pending.method === "DELETE" && !!pending.preview.delete?.images && <p>This also permanently deletes {pending.preview.delete.images} image(s).</p>}
-      <button disabled={busy} onClick={() => { void action(async () => { const result = await api<{ id: string }>(pending.path, pending.method, { ...pending.body, confirm: true, expected_domain_revision: pending.preview.domain_revision }); if (pending.path === "tasks/") creation.current?.reset(); refresh(); if (pending.method === "DELETE") setSelected(""); else setSelected(result.id); setMessage("Changes saved."); }); }}>{busy ? "Applying…" : "Confirm change"}</button>
+      <button disabled={busy} onClick={() => { void action(async () => { const result = await api<{ id: string }>(pending.path, pending.method, { ...pending.body, confirm: true, expected_domain_revision: pending.preview.domain_revision }); if (pending.path === "tasks/") creation.current?.reset(); refresh(); if (pending.method === "DELETE") setSelected(""); else setSelected(result.id); setMessage("Changes saved."); }, pending.path === "tasks/"); }}>{busy ? "Applying…" : "Confirm change"}</button>
       <button className="secondary" disabled={busy} onClick={() => setPending(null)}>Cancel change</button>
     </section>}
     {loaded && !projects.length && <p>No task access is configured.</p>}

@@ -22,8 +22,8 @@ Stage 5 adds the backend timesheet engine: recording, breaks, closing markers,
 independent unfinished days, overnight continuation, previews, and atomic day
 corrections. Stage 6 adds browser timesheets and the Edit day dialog; acceptance
 verification is complete. Stage 7 adds reporting APIs, report screens, and CSV
-downloads; full acceptance verification is complete. Search remains unimplemented.
-Stage 8 remarks, shared stars, stable references, and private images are implemented;
+downloads; full acceptance verification is complete. Stage 8 remarks, shared stars,
+stable references, private images and multilingual search are implemented;
 verification progress is recorded in the implementation tracker.
 No personal account is created automatically, and public registration is unavailable.
 
@@ -80,7 +80,13 @@ upload with the text when saved; failed writes retain pending images. Accepted
 formats are static PNG/JPEG/WebP, at most 2 MiB each and five new images per save.
 Remove image tokens to delete them on save. Downloads require current access to
 their description or remark. Development uploads persist in a separate named
-volume; include it with the database in backups. Search remains Stage 8 work.
+volume; include it with the database in backups.
+
+In Tasks, **Search tasks and remarks** searches readable titles, descriptions and
+remarks using English/Russian word forms, including mixed text. All query words
+must match one task or remark. Results show excerpts and open the task or original
+remark. Search again to refresh access/content; **Next search page** loads further
+matches. Search failures retain the query and clear previous excerpts.
 
 `sh scripts/check-image-persistence.sh` verifies synthetic image bytes, metadata
 and private access across test-web container replacement using a temporary test

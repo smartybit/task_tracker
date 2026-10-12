@@ -25,8 +25,11 @@ actual progress; it does not turn proposals into confirmed requirements.
   images now have validated atomic saves, screenshot paste and persistent storage;
   eleven content checks, seven browser workflows and test-container replacement
   passed. The expanded twelve-check content suite passed, including cleanup
-  failures and nested rollback. English/Russian search is
-  underway; full-stage lifecycle acceptance remains pending.
+  failures and nested rollback. English/Russian search is implemented; eighteen
+  focused content checks plus a separate search/revocation race passed. Search
+  browser workflows passed. The image-draft review follow-up passed all seven
+  image/remark browser workflows and the production build. Full-stage lifecycle
+  acceptance remains pending.
 - Stage 7 started from `0fd2774`. Backend milestone `020cd88` passed 12 focused
   PostgreSQL tests, including a 64-combination access matrix and a concurrent
   report snapshot check. Report screens and five browser scenarios are implemented;
@@ -792,9 +795,9 @@ Images, search, and final lifecycle acceptance follow.
 - [x] Implement images in descriptions and remarks, validated formats/size limits,
   persistent storage, and permission-checked downloads. Include screenshot pasting
   if practical, recording its delivered or deferred status explicitly.
-- [ ] Implement search over tasks, descriptions, and remarks with authorized
+- [x] Implement search over tasks, descriptions, and remarks with authorized
   results and snippets, using PostgreSQL full-text search and indexes through
-  Django as described in the [search approach](architecture.md#planned-search-approach).
+  Django as described in the [search approach](architecture.md#search-approach).
 - [ ] Verify content workflows, reference lifecycle, image validation, and direct
   access attempts using the API and browser.
 
@@ -901,6 +904,31 @@ services/data were untouched. The expanded suite passed all twelve content check
 Fresh migrations, system/drift, both Compose configurations, production build,
 82 local documentation links/anchors and whitespace passed. Search and final
 lifecycle acceptance remain outstanding.
+
+### Search Milestone: 2026-10-12
+
+Implemented English/Russian union vectors with script-selected query normalization
+and keyword AND semantics across each task title/description or individual remark.
+Functional GIN indexes cover historical rows and update with content changes;
+query-plan checks prove both are usable. Permission-filtered results/counts and
+plain-text language excerpts are serialized under the domain lock. Inline tokens
+are excluded. The task window offers search, pagination and original navigation,
+clearing old excerpts during failures and access refresh.
+
+Eighteen focused content checks passed (59.425 seconds), including six new search
+checks, both migration upgrades and all reference/image regressions. A separate
+independent-connection waiting-search/revocation check passed (8.162 seconds).
+Fresh migrations, system/drift checks and TypeScript/Vite build passed. Search
+browser workflows passed (37.9 seconds), including mixed queries, authorized
+original navigation, narrow layout, failed-query recovery and live access changes.
+Screenshots are retained in ignored `.artifacts/verification/stage8-search-focused-browser/`.
+Final review lifted pending remark-image bytes into the parent draft so denied
+composer unmounts cannot discard them; the browser regression now restores access,
+reloads and posts the same pending image. Task creation denials preserve the draft
+until explicit refresh. Production build passed; the expanded image/remark browser
+regressions passed: all seven image/remark browser workflows and the production
+build. Search narrow-screen rendering was inspected; 88 local links/anchors and
+whitespace checks passed. Full-stage lifecycle acceptance is next.
 
 ## Stage 9: Deployment and Release Verification
 

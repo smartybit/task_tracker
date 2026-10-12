@@ -70,6 +70,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px
 .unavailable-reference { color: #65766e; font-style: italic; }
 .content-image { display: inline-block; max-width: 100%; max-height: 420px; object-fit: contain; vertical-align: middle; }
 .content-help { font-size: 13px; color: #526056; }
+.content-search { border-block: 1px solid #dce2d8; margin-block: 18px; padding-block: 10px; }
+.content-search ol { padding-inline-start: 22px; overflow-wrap: anywhere; }
 .reference-picker { margin-bottom: 12px; }
 .reference-picker fieldset { border: 1px solid #cbd7c8; padding: 12px; border-radius: 6px; }
 @media (max-width: 800px) { .task-workspace { grid-template-columns: minmax(0, 1fr); } }

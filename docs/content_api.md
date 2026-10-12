@@ -44,6 +44,12 @@ reassigned. The editor selects files or accepts screenshot clipboard files and
 adds these tokens at the cursor. It sends the images with the ordinary source
 save, retaining text and pending uploads on failure. Remove a token to discard a
 pending upload or delete an existing image. There is no separate attachment area.
+Pending remark images belong to the parent draft, so permission-denied responses
+can hide protected controls without losing the pending composer bytes. Restore
+access and reload remarks to resume posting. Explicitly discarding an edit,
+closing/switching tasks, or refreshing the task workspace discards those drafts.
+Task create-preview/confirmation denials preserve inputs for review and copying;
+they require an explicit refresh before another attempt.
 
 The 2 MiB limit is inclusive, measured on decoded upload bytes. Pillow verifies
 and decodes actual static PNG/JPEG/WebP content; filename and client MIME are not
@@ -75,4 +81,36 @@ files older than one hour and reports missing referenced files. It preserves rec
 and referenced files. Back up PostgreSQL and uploads consistently; the full backup
 and restoration procedure remains Stage 9 work.
 
-Multilingual search is still under implementation in Stage 8.
+## Search
+
+`GET search/?q=words&page=1` returns `count`, `next`, and `results` (50 per page).
+Each result contains `kind` (`task` or `remark`), `id`, destination `task`, `label`
+(current task title), and `snippets` (plain text excerpts, up to 500 characters
+per language). The browser opens the task or focuses the original remark.
+Matches sort by descending PostgreSQL rank, then kind and UUID. Counts include
+only currently readable matches. A task's title and description are one document;
+each remark is a separate document. A task and its matching remarks can therefore
+produce separate results.
+
+Queries contain up to 200 characters. Words are combined with AND within one
+document. Cyrillic words use Russian stemming/stop words; other words use English.
+Both language configurations contribute to each indexed vector. Mixed-language
+queries combine the normalized language groups, so different English and Russian
+word forms can match together. Empty queries, invalid pages, duplicate parameters
+and unknown fields return 400. Punctuation-only or stop-word-only queries have no
+matches. Advanced Boolean/phrase syntax and substring/autocomplete are not offered.
+
+Task matches require task read; remark matches require task read plus remark read.
+Apply these restrictions independently before counting, ranking and creating
+snippets; administrator status and timesheet flags give no bypass. Search holds
+the domain lock through authorization and page serialization without changing
+revision, and responses use `private, no-store`. Pagination takes a fresh snapshot
+per request. Browser searches clear old excerpts during requests/failures and on
+access refresh; in-flight results from an older access version are discarded.
+
+Snippets use PostgreSQL language-specific headlines with bracketed matches; the
+browser renders them as escaped text. Inline reference/image tokens are excluded
+from search vectors and excerpts; target labels and image bytes are not indexed.
+There is no OCR. Functional GIN indexes use exactly the shared vector expressions,
+cover existing rows on migration and update transactionally with content changes.
+See [the search approach](../architecture.md#search-approach) for language extension.

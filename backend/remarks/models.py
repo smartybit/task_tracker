@@ -2,6 +2,8 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
+from content.search_config import search_vector
 
 
 class Remark(models.Model):
@@ -16,4 +18,5 @@ class Remark(models.Model):
 
     class Meta:
         ordering = ['created_at', 'id']
-        indexes = [models.Index(fields=['task', 'created_at', 'id'], name='remark_task_chronology')]
+        indexes = [models.Index(fields=['task', 'created_at', 'id'], name='remark_task_chronology'),
+                   GinIndex(search_vector('body'), name='remark_content_search')]

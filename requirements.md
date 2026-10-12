@@ -273,6 +273,11 @@ interval is invented. More involved Friday corrections use Edit day.
   snippets respect task and remark access permissions.
 - Initial search supports English and Russian, including content that mixes the
   two languages. Additional languages may be added later.
+- Implementation default in Stage 8: keyword AND semantics within one task
+  (title/description) or one remark, with English/Russian word forms. Return
+  readable task and remark matches separately, ranked with excerpts and navigation
+  to the original. Inline target identifiers/labels and image bytes are not
+  searched. Advanced query syntax and OCR remain optional.
 - Report data requires task read access for its project, either granted directly
   or inherited from the organization. Read Others' Timesheets alone does not
   permit reporting on inaccessible projects.

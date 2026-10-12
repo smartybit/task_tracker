@@ -9,6 +9,7 @@ from content.models import ContentImage
 from content.images import FORMATS, image_storage
 from core.domain import DomainError, current_user
 from django.http import FileResponse
+from content.search import search_content
 
 
 class ResolveView(APIView):
@@ -16,6 +17,15 @@ class ResolveView(APIView):
     def post(self, request):
         MutationLock.objects.select_for_update().get(pk='domain')
         return Response(resolve_references(request.user, request.data))
+
+
+class SearchView(APIView):
+    @transaction.atomic
+    def get(self, request):
+        MutationLock.objects.select_for_update().get(pk='domain')
+        response = Response(search_content(request.user, request.query_params))
+        response['Cache-Control'] = 'private, no-store'
+        return response
 
 
 class ImageView(APIView):

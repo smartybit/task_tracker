@@ -2,6 +2,8 @@ import uuid
 
 from django.conf import settings
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
+from content.search_config import search_vector
 
 
 class TaskStatus(models.Model):
@@ -29,6 +31,7 @@ class Task(models.Model):
 
     class Meta:
         ordering = ['title', 'id']
+        indexes = [GinIndex(search_vector('title', 'description'), name='task_content_search')]
         constraints = [models.CheckConstraint(condition=~models.Q(parent=models.F('id')), name='task_not_own_parent')]
 
 

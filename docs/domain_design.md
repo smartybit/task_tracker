@@ -12,7 +12,8 @@ time-record relationships used for deletion protection. Stage 5 implements the
 recording/correction engine and revised lifecycle. Stage 6 delivers the timesheet
 interface, Stage 7 delivers reports/CSV, and Stage 8 delivers
 [remarks and shared stars](remarks_api.md) plus [references and images](content_api.md).
-Search is underway. Remaining feature operations are a
+Search uses the [shared PostgreSQL configuration](../architecture.md#search-approach).
+Remaining feature operations are a
 design contract; verification status belongs in the implementation tracker.
 
 The timesheet sections were revised on 2026-10-09 for the agreed
@@ -323,8 +324,8 @@ proposals. The Friday/Monday scenario is also specified in
 - Search tasks/descriptions and remarks separately under their own read gates,
   then merge/paginate ranked results. Add PostgreSQL indexes with migrations.
   English and Russian, including mixed-language content, are agreed for initial
-  search. Select the concrete indexing/query configuration in Stage 8; it does
-  not require a separate search service.
+  search. The shared [search configuration](../architecture.md#search-approach)
+  and functional GIN indexes are delivered in Stage 8 without a separate service.
 
 ## Remaining Decisions and Implementation Boundary
 

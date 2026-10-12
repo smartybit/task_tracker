@@ -2,7 +2,7 @@
 
 Stage 8 adds plain-text remarks and shared stars. Reference and image tokens and
 the optional `images` field on create/edit are documented in
-[content_api.md](content_api.md); search remains underway. All paths below begin with `/api/v1/` and
+[content_api.md](content_api.md), together with search. All paths below begin with `/api/v1/` and
 require an authenticated session. Writes also require CSRF protection.
 
 | Operation | Path | Input / response |

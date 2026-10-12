@@ -265,8 +265,7 @@ Execution evidence is recorded in the implementation tracker.
 - Browser workflows cover two-user collaboration, star navigation/focus, keyboard
   input, repeated submissions, narrow screens, write-only posting, read-only
   controls, revocation, stale edits, failed writes, and saved/reload-failed recovery.
-- Search and application/attachment restart checks remain
-  planned until their Stage 8 milestones are implemented.
+- Full-stage lifecycle acceptance remains required alongside focused milestones.
 
 ### Stage 8 Reference Checks
 
@@ -291,9 +290,25 @@ Execution evidence is recorded in the implementation tracker.
   transactions for streamed-response lifecycle and after-commit cleanup checks.
 - Browser workflows cover new-task images, text edits retaining existing images,
   remark screenshot paste, private downloads, narrow screens, deletion previews,
-  invalid uploads, and pending draft retention after failed saves.
+  invalid uploads, pending draft retention after failed saves, and retaining
+  pending image bytes across denied remark writes and access restoration.
 - Verify persistent upload storage across application container recreation before
   full-stage acceptance; use only synthetic test data and a scoped test volume.
+
+### Stage 8 Search Checks
+
+- Verify English, Russian and mixed inflections across titles, descriptions and
+  remark bodies; require all non-stop words in one indexed document.
+- Exercise every local task/remark flag combination plus inheritance, no admin
+  bypass, count/snippet restrictions, live edits/moves/deletion and access loss.
+- Check stable pagination, distant match excerpts, escaped browser rendering,
+  token exclusion, strict query bounds, stop words, authentication and unchanged
+  revision. Verify both functional GIN indexes are usable with query plans.
+- Upgrade existing content without editing it. A search waiting behind a grant
+  revocation must return current authorized counts/excerpts after the lock releases.
+- Browser checks cover mixed queries, original-task/remark navigation, narrow
+  screens, failed-query recovery, repeated queries after revocation and clearing
+  cached excerpts when access refreshes.
 
 ## Verification Approach
 
@@ -310,7 +325,9 @@ and 25 Chromium scenarios each, including timesheet browser acceptance. Stage 7
 passed two full runs with 97 PostgreSQL tests and 30 Chromium scenarios each,
 including reporting and CSV acceptance. Stage 8's remarks milestone adds focused
 API/browser checks; its executed evidence is recorded in the implementation
-tracker. Search workflow and attachment restart acceptance remain pending.
+tracker. Stage 8 adds reference/image/search workflows and a separate synthetic
+attachment-container replacement check; full-stage lifecycle acceptance is tracked
+in the implementation plan.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real
