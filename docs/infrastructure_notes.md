@@ -436,5 +436,19 @@ Keep remaining runtime suites sequential. The account regression now awaits and
 asserts the password-reset HTTP response before its unchanged completion-message
 deadline. That workflow passed in 26.6 seconds during serial `stage7-verified2`.
 CSV review source `9ba2742` also passed all 12 focused PostgreSQL checks with
-explicit `Accept: text/csv` and JSON errors. Final full-run acceptance remains
-pending in the tracker.
+explicit `Accept: text/csv` and JSON errors. Full-run acceptance was pending at
+this milestone.
+
+Serial full acceptance completed on 2026-10-12: `stage7-verified2` and
+`stage7-verified3` each exited 0 with 97 PostgreSQL tests, fresh migrations,
+system/drift checks, TypeScript/Vite production build, and 30 Chromium scenarios.
+Application source `9ba2742` and browser follow-up `7f7e583` were exercised in
+both runs. The repeat's account reset workflow passed in 27.2 seconds with the
+same assertion deadline; its full browser suite passed in 8.2 minutes. No runtime
+suites overlapped these final runs. Both started with healthy prepared test
+services, verified their reset, and completed scoped cleanup. Final inspection
+found no test containers, networks, or volumes; the five original unrelated
+container IDs and both original persistent volumes remained unchanged. Development
+data was not migrated/reset/seeded. Logs/status are retained under ignored
+`.artifacts/verification/`; final browser screenshots are preserved in
+`.artifacts/verification/stage7-verified3-browser/`. Stage 7 is complete.

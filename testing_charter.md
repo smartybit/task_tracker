@@ -222,8 +222,9 @@ viewport screenshots for inspection; Chromium remains the acceptance browser.
   Inspect desktop and narrow screenshots and verify usable keyboard controls.
 
 The backend component milestone passed 12 PostgreSQL tests, and all five focused
-Chromium scenarios passed. Complete lifecycle acceptance remains pending until
-recorded in the implementation tracker.
+Chromium scenarios passed. Stage 7 then passed two sequential full lifecycle runs,
+each with 97 PostgreSQL tests, the production build, and 30 Chromium scenarios.
+Execution evidence is recorded in the implementation tracker.
 
 ### 5. Complete Everyday Workflows and Preserve Data
 
@@ -256,8 +257,9 @@ results. Stage 2–4 checks passed, including two complete Stage 4 lifecycle run
 with 54 PostgreSQL tests and 16 Chromium checks each. Stage 5 also passed two full
 runs with 82 PostgreSQL tests and 16 browser checks, including recording/correction
 engine acceptance. Stage 6 passed two full lifecycle runs with 85 PostgreSQL tests
-and 25 Chromium scenarios each, including timesheet browser acceptance. Report
-and content workflow checks remain planned.
+and 25 Chromium scenarios each, including timesheet browser acceptance. Stage 7
+passed two full runs with 97 PostgreSQL tests and 30 Chromium scenarios each,
+including reporting and CSV acceptance. Content workflow checks remain planned.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

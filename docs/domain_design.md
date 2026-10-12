@@ -266,8 +266,8 @@ deletion. Keep file bytes out of transaction error responses and logs.
 
 These examples define expected outcomes. Task/status scenarios now have Stage 4
 coverage; timeline examples have Stage 5 coverage and report examples now have
-Stage 7 backend coverage. Browser report acceptance is in progress. Executed verification
-is recorded in the implementation tracker. Times use a controlled fixed zone;
+Stage 7 backend and browser coverage. Executed verification is recorded in the
+implementation tracker. Times use a controlled fixed zone;
 all durations are independently calculated.
 
 The historical middle-edit examples below now describe explicit day drafts, not
@@ -333,7 +333,7 @@ are chosen when their stages need them. The initial test runners are Django and
 Playwright/Chromium, introduced in Stage 2 and extended through Stage 4. Worked
 examples are design contracts; actual PostgreSQL, browser, and concurrency
 evidence is recorded in the implementation tracker. Task/status acceptance
-passed in Stage 4; timeline acceptance passed in Stage 5. Report
-backend acceptance passed 12 focused PostgreSQL checks in Stage 7; browser report
-acceptance is in progress. Content acceptance remains planned. Concrete reporting
+passed in Stage 4; timeline acceptance passed in Stage 5. Stage 7 reporting and
+CSV acceptance passed two full lifecycle runs, each with 97 PostgreSQL tests and
+30 Chromium scenarios. Content acceptance remains planned. Concrete reporting
 contracts are in [the reporting API](reporting_api.md).

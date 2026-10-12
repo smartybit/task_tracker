@@ -309,8 +309,8 @@ design. Stage 5 owns backend implementation; Stage 6 owns the interface.
   Read Others' Timesheets. Do not expose account-administration fields or emails.
 - The concrete routes, filters, rounding, zone allocation, and CSV contract are
   documented in [the reporting API](docs/reporting_api.md). No schema changes or
-  additional runtime libraries are required. Backend and browser component checks
-  passed; full lifecycle verification remains in progress in the tracker.
+  additional runtime libraries are required. Backend and browser acceptance passed
+  two full lifecycle runs; execution evidence is recorded in the tracker.
 - Verify report results against independently calculated examples and exercise
   permission boundaries and concurrent mutations using PostgreSQL.
 
@@ -367,8 +367,8 @@ and independent-connection concurrency checks. Development Compose startup,
 frontend-to-API connectivity, repeatable tests, and scoped cleanup were verified
 on 2026-10-08. See [README.md](README.md) for commands and the tracker for exact
 results. Stages 4–5 extend it with task and timesheet-engine acceptance; Stage 6
-adds timesheet browser workflows. Extend the same harness as reporting/content
-features arrive. The [testing charter](testing_charter.md)
+adds timesheet browser workflows, and Stage 7 adds reporting and CSV acceptance.
+Extend the same harness as content features arrive. The [testing charter](testing_charter.md)
 defines the scenarios and acceptance priorities.
 
 ### Services and Isolation

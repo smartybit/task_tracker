@@ -8,12 +8,15 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 ## Current Position
 
-- Last updated: 2026-10-11.
-- Stages 1–6 are complete: 6 of 9 implementation stages complete.
+- Last updated: 2026-10-12.
+- Stages 1–7 are complete: 7 of 9 implementation stages complete.
 - Stage 7 started from `0fd2774`. Backend milestone `020cd88` passed 12 focused
   PostgreSQL tests, including a 64-combination access matrix and a concurrent
   report snapshot check. Report screens and five browser scenarios are implemented;
-  full lifecycle acceptance is in progress. Stage 7 remains In progress.
+  `stage7-verified2` and `stage7-verified3` passed sequential full lifecycles, each
+  with 97 PostgreSQL tests, production build, and 30 Chromium scenarios, exit 0.
+  Healthy-stack resets, cleanup, and original-resource preservation were inspected.
+  Stage 7 is Done; Stage 8 remarks, references, images, and search is next.
 - Stage 6 passed two sequential full lifecycle runs: `stage6-verified1` on interface
   source `820028b` and `stage6-verified2` on final application source `daf9299`.
   Each exited 0 with 85 PostgreSQL tests, fresh migrations/system/drift checks,
@@ -32,9 +35,8 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Stage 6 local milestones: discovery `363bb93`, interface `820028b`, review
   follow-up `daf9299`. Both runs preserved the five original unrelated container
   IDs and both original volumes; no test containers, networks or volumes remain.
-  Development data was not migrated/reset/seeded. Next action is Stage 7:
-  project-restricted reporting and CSV export. Stage 7 is now In progress;
-  Stages 8–9 remain Not started.
+  Development data was not migrated/reset/seeded. Stage 7 reporting and CSV export
+  are also complete; Stages 8–9 remain Not started.
 - Stage 5 source `2c12aa6` passed two sequential complete test-script runs,
   `stage5-verified2` and `stage5-verified3`: each exited 0 with 82 PostgreSQL
   tests, the TypeScript/production build, and 16 Chromium checks. The first
@@ -56,7 +58,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Stage 5 local milestones: engine `601ed20`, write-only error fix `2c12aa6`.
   Detailed contracts are in [the timesheet API](docs/timesheet_api.md).
   Stage 6 completed its timesheet workspace, Edit day, and browser acceptance on
-  2026-10-11. Stage 7 reporting is in progress; remarks, images and search remain
+  2026-10-11. Stage 7 reporting is complete; remarks, images and search remain
   unimplemented.
 - Timesheet design revised by agreement on 2026-10-09: ordinary shared-boundary
   edits and last-row deletion, an atomic Edit day draft for middle corrections,
@@ -119,7 +121,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 4 | Task management and task interface | Done | Two full lifecycle runs: 54 PostgreSQL tests, build, 16 Chromium checks each; running-stack reset and cleanup verified |
 | 5 | Timesheet engine | Done | Two full lifecycle runs: 82 PostgreSQL tests, build, 16 Chromium checks each; lifecycle upgrade, six new races, running-stack reset and cleanup verified |
 | 6 | Timesheet interface | Done | Two full lifecycle runs: 85 PostgreSQL tests, build, 25 Chromium scenarios each; discovery permissions, drafts, revocation/reload recovery, running-stack reset and cleanup verified |
-| 7 | Reporting and CSV export | In progress | Contracts and existing services reviewed; backend, interface, and acceptance verification in progress |
+| 7 | Reporting and CSV export | Done | Two sequential full lifecycles: 97 PostgreSQL tests, build, 30 Chromium scenarios each; reporting access, CSV, running-stack reset and cleanup verified |
 | 8 | Remarks, references, images, and search | Not started | — |
 | 9 | Deployment preparation and release verification | Not started | — |
 
@@ -662,9 +664,9 @@ Completion evidence (2026-10-11):
 Started 2026-10-11 from clean source `0fd2774`. Reviewed reporting/access rules,
 snapshot and shared-zone contracts, existing account/task/timesheet services, and
 infrastructure notes. Use the existing Django/REST Framework and React/TypeScript
-stack plus Python's standard CSV module; no new runtime dependencies are planned.
-Backend milestone `020cd88` passed component verification. Report screens and
-browser scenarios are implemented; full lifecycle verification remains in progress.
+stack plus Python's standard CSV module; no new runtime dependencies were added.
+Backend milestone `020cd88` and interface milestone `f4dfd00` are implemented.
+Full lifecycle verification passed twice; Stage 7 completed on 2026-10-12.
 
 - [x] Implement a shared query restricted to readable projects and permitted
   timesheet users before aggregating or exporting records.
@@ -693,8 +695,8 @@ dependency changes. All 12 focused PostgreSQL checks passed, including 64 grant/
 timesheet-flag combinations across reports/options/CSV, real-session deactivation,
 historical day correction, hierarchy/project moves, subsecond rounding, Berlin
 midnight reallocation, materialized downloads, and an independent-connection
-move/revocation during a report snapshot. Interface and full acceptance remain
-pending. Contract: [reporting API](docs/reporting_api.md).
+move/revocation during a report snapshot. Interface and full acceptance were
+pending at this milestone. Contract: [reporting API](docs/reporting_api.md).
 
 Interface milestone (2026-10-11): all three report views, inclusive date/person/
 project/subtree filters, and CSV downloads are implemented. Failed or stale loads
@@ -706,8 +708,8 @@ restrictions, keyboard navigation, failure/retry/stale responses, Edit day
 corrections, and current project moves. Desktop and narrow screenshots inspected.
 The first full attempt passed all 97 PostgreSQL tests and the production build;
 three browser selectors timed out before correction, and that attempt was
-interrupted, with scoped cleanup inspected. This is component evidence only;
-two sequential full lifecycles on the final source remain required for completion.
+interrupted, with scoped cleanup inspected. At this component milestone, two
+sequential full lifecycles on the final source remained required for completion.
 
 Review follow-up (2026-10-11): CSV downloads now accept explicit `Accept: text/csv`
 requests while validation/authentication errors retain JSON responses. All 12
@@ -715,8 +717,8 @@ focused PostgreSQL checks passed with the explicit CSV header, including the
 64-combination matrix and JSON validation-error regression. This suite overlapped
 the `stage7-verified1` browser phase; an existing password-reset assertion exceeded
 its five-second wait while the operation was still pending. Cause is not established;
-remaining runtime suites will run sequentially. Full final-source acceptance is
-still pending, and the failed run is not counted toward completion.
+remaining runtime suites were scheduled sequentially. Full final-source acceptance
+was still pending, and the failed run is not counted toward completion.
 
 Browser timing follow-up (2026-10-11): the failed `stage7-verified1` trace shows
 password reset returned HTTP 200 after 4.6 seconds, followed by the normal catalog
@@ -725,7 +727,32 @@ response before the existing five-second completion-message assertion, rather
 than including the password operation in that assertion window. No application
 behavior or assertion deadline changed. The corrected account lifecycle passed
 in 26.6 seconds during serial `stage7-verified2`; that run's 97 PostgreSQL tests
-and production build also passed. Full browser completion and repeat remain pending.
+and production build also passed. Full browser completion and repeat were pending
+at this milestone.
+
+First successful full lifecycle (2026-10-11): `stage7-verified2` exited 0 with all
+97 PostgreSQL tests, fresh migrations/system/drift checks, TypeScript/production
+build, and all 30 Chromium scenarios. Application source `9ba2742` and browser
+timing follow-up `7f7e583` were exercised. The run reset healthy prepared test
+services, and cleanup inspection found no test containers/networks/volumes. All
+five original unrelated container IDs and both original persistent volumes were
+unchanged. Logs/status and browser artifacts are retained under ignored
+`.artifacts/verification/`. One sequential complete repeat remained at this milestone.
+
+Completion verification (2026-10-12): `stage7-verified3` exited 0 on `7f7e583`,
+including application follow-up `9ba2742`, after the successful `stage7-verified2`.
+Both serial full lifecycles passed 97 PostgreSQL tests, fresh migrations, system
+and migration-drift checks, TypeScript/Vite production build, and 30 Chromium
+scenarios each. The repeat's browser suite passed in 8.2 minutes, including the
+account reset workflow in 27.2 seconds. Both runs reset healthy prepared test
+services and completed scoped cleanup. Final inspection found no test containers,
+network, or volumes; all five original unrelated container IDs and both original
+persistent volumes were preserved. No development data was migrated/reset/seeded.
+Final log/status are `.artifacts/verification/stage7-verified3.log` and `.status`;
+browser screenshots are preserved under ignored
+`.artifacts/verification/stage7-verified3-browser/`.
+Stage 7 is Done. Next action is Stage 8; administrator self-protection/recovery
+and deployment backup procedures remain the separately recorded follow-ups.
 
 ## Stage 8: Remarks, References, Images, and Search
 
@@ -844,3 +871,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-11 | Backup and administrator policies recorded | Agreed self-deactivation/demotion prohibition, permitted changes to other administrators, server-side password reset with explicit reactivation/admin-grant options, and replacement passwords without expiry or mandatory change. Recorded server-administrator backup responsibility for the PostgreSQL cluster, attachments, and necessary configuration, plus written full-system restoration instructions for another machine. Added future lifecycle/recovery/restoration checks; self-protection and server recovery remain unimplemented, and backup procedure work remains Stage 9. Documentation consistency, local links/anchors, and whitespace checked. No application code changed or application tests run; stage completion statuses and prior verification evidence preserved. Commit: `docs: record backup and administrator recovery policies`. |
 | 2026-10-11 | Stage 7 backend implemented | `020cd88` adds shared report authorization, project/person-day/hierarchy APIs, label-only options, exact duration accounting, read-only repeatable-read snapshots, and spooled CSV downloads. Twelve focused PostgreSQL tests passed twice, including 64 access combinations and a concurrent move/revocation snapshot. No schema or dependency changes; full lifecycle acceptance pending. |
 | 2026-10-11 | Stage 7 interface component-verified | Added report navigation/screens, filters, hierarchy totals, CSV downloads, and failure/stale/access-change handling. All five focused Chromium scenarios passed (`stage7-reports1`, exit 0); desktop/narrow screenshots inspected. First full attempt passed 97 PostgreSQL tests and build but had three wrapped-select test locator timeouts and was interrupted; corrected selectors use accessible combobox roles. Full final-source repetition remains pending; Stage 7 In progress. |
+| 2026-10-12 | Stage 7 completed | Backend `020cd88`, interface `f4dfd00`, CSV negotiation `9ba2742`, and browser timing follow-up `7f7e583`. Two serial full lifecycles (`stage7-verified2`, `stage7-verified3`) each exited 0 with 97 PostgreSQL tests, production build, and 30 Chromium scenarios. Report authorization, exact totals, historical corrections, hierarchy/project moves, snapshot consistency, actual CSV downloads, and error/access recovery passed. Healthy-stack resets and scoped cleanup inspected; original unrelated containers and persistent volumes preserved. Documentation consistency, local links/anchors, and whitespace checked. Stage 7 Done; Stage 8 is next. |

@@ -11,8 +11,8 @@ password administration, organization/project catalogs, and organization/project
 grant management. Shared backend policies cover independent task/remark grants,
 organization inheritance, own-timesheet access, and global others-timesheet flags.
 Administrators have no automatic application-data grants. See the tracker for
-current verification results. Stage 6 acceptance passed two complete test runs,
-each with 85 PostgreSQL backend tests, the production build, and 25 Chromium scenarios.
+current verification results. Stage 7 acceptance passed two complete test runs,
+each with 97 PostgreSQL backend tests, the production build, and 30 Chromium scenarios.
 
 Stage 4 adds task creation/editing, ownership transfer, flat/tree lists, project
 and multiple-status filters, hierarchy/project moves, status history, and protected
@@ -22,7 +22,7 @@ Stage 5 adds the backend timesheet engine: recording, breaks, closing markers,
 independent unfinished days, overnight continuation, previews, and atomic day
 corrections. Stage 6 adds browser timesheets and the Edit day dialog; acceptance
 verification is complete. Stage 7 adds reporting APIs, report screens, and CSV
-downloads; full acceptance verification is in progress. Remarks, images, and
+downloads; full acceptance verification is complete. Remarks, images, and
 search remain unimplemented.
 No personal account is created automatically, and public registration is unavailable.
 
