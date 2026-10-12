@@ -95,6 +95,13 @@ test('invalid images and failed saves preserve the draft and pending image', asy
     await expect(input).toHaveValue(/Recovered image draft.*\[image:/);
     await expect(composer.getByRole('status')).toContainText('1 new image');
     await page.unroute('**/api/v1/tasks/*/remarks/');
+    await f.write(`users/${f.alice.id}/grants/projects/${f.project.id}/`, { task_read: true, remark_read: true }, 'PUT');
+    await composer.getByRole('button', { name: 'Post remark', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Task remarks', exact: true })).toContainText('Unsaved images are retained');
+    await expect(page.getByLabel('Unsaved remark text', { exact: true })).toContainText('Recovered image draft');
+    await f.write(`users/${f.alice.id}/grants/projects/${f.project.id}/`, flags, 'PUT');
+    await page.getByRole('button', { name: 'Reload remarks', exact: true }).click();
+    await expect(composer.getByRole('status')).toContainText('1 new image');
     await composer.getByRole('button', { name: 'Post remark', exact: true }).click();
     const stream = page.getByRole('list', { name: 'Chronological remarks', exact: true });
     await expect(stream.getByRole('article')).toHaveCount(1);

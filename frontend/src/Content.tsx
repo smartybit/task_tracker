@@ -5,7 +5,7 @@ const referencePattern = /\[(task|remark|image):([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4
 type Target = { kind: string; id: string; available: boolean; label: string; task?: string };
 export type OpenReference = (task: string, remark?: string) => void;
 export const contentPreview = (text: string) => text.replace(referencePattern, (_, kind) => kind === "image" ? "Image" : "Reference");
-type ImageUpload = { id: string; data: string };
+export type ImageUpload = { id: string; data: string };
 export const editorImages = (data: FormData): ImageUpload[] => JSON.parse(String(data.get("images") || "[]"));
 function imageId() {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
@@ -106,11 +106,19 @@ function ReferencePicker({ onInsert }: { onInsert: (token: string) => void }) {
   </div>;
 }
 
-export function ContentEditor({ label, name, initialValue = "", value, onChange, rows = 4, required = false }: {
-  label: string; name?: string; initialValue?: string; value?: string; onChange?: (value: string) => void; rows?: number; required?: boolean;
+export function ContentEditor({ label, name, initialValue = "", value, onChange, images, onImagesChange, rows = 4, required = false }: {
+  label: string; name?: string; initialValue?: string; value?: string; onChange?: (value: string) => void;
+  images?: ImageUpload[]; onImagesChange?: (images: ImageUpload[]) => void; rows?: number; required?: boolean;
 }) {
   const [local, setLocal] = useState(initialValue);
-  const [uploads, setUploads] = useState<ImageUpload[]>([]);
+  const [localImages, setLocalImages] = useState<ImageUpload[]>([]);
+  const uploads = images ?? localImages;
+  const currentUploads = useRef(uploads);
+  currentUploads.current = uploads;
+  function setUploads(update: (items: ImageUpload[]) => ImageUpload[]) {
+    const next = update(currentUploads.current);
+    currentUploads.current = next; setLocalImages(next); onImagesChange?.(next);
+  }
   const [message, setMessage] = useState("");
   const adding = useRef(false);
   const id = useId();

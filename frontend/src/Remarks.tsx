@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { allPages, api, ApiError, type Flags, type Project } from "./api";
-import { ContentEditor, ContentText, contentPreview, editorImages, type OpenReference } from "./Content";
+import { ContentEditor, ContentText, contentPreview, editorImages, type ImageUpload, type OpenReference } from "./Content";
 
 interface Remark {
   id: string; task: string; author: string; author_name: string; body: string;
   starred: boolean; created_at: string; edited_at: string | null; revision: number;
 }
-type Edit = { remark: Remark; body: string };
+type Edit = { remark: Remark; body: string; images: ImageUpload[] };
 
 export function Remarks({ task, project, version, onError, children, onOpen, targetRemark }: {
   task: string; project: string; version: number; onError: (error: unknown) => void; children?: ReactNode;
@@ -15,6 +15,7 @@ export function Remarks({ task, project, version, onError, children, onOpen, tar
   const [rows, setRows] = useState<Remark[]>([]);
   const [permissions, setPermissions] = useState<Flags | null>(null);
   const [draft, setDraft] = useState("");
+  const [draftImages, setDraftImages] = useState<ImageUpload[]>([]);
   const [edit, setEdit] = useState<Edit | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -71,7 +72,7 @@ export function Remarks({ task, project, version, onError, children, onOpen, tar
     inFlight.current = true; setBusy(true); setMessage("");
     try {
       await api(path, method, body);
-      if (method === "POST" && path.endsWith("/remarks/")) setDraft("");
+      if (method === "POST" && path.endsWith("/remarks/")) { setDraft(""); setDraftImages([]); }
       setEdit(null);
       const loaded = await load();
       setMessage(loaded ? success : `${success} Reload failed; reload remarks before another change.`);
@@ -120,11 +121,11 @@ export function Remarks({ task, project, version, onError, children, onOpen, tar
             {edit?.remark.id === row.id ? <form aria-label="Edit remark" onSubmit={event => {
               event.preventDefault(); void change(`remarks/${row.id}/`, "PATCH", { body: edit.body, images: editorImages(new FormData(event.currentTarget)), expected_revision: edit.remark.revision }, "Remark saved.");
             }}>
-              <ContentEditor label="Remark text" value={edit.body} onChange={body => setEdit({ ...edit, body })} required />
+              <ContentEditor label="Remark text" value={edit.body} onChange={body => setEdit(current => current ? { ...current, body } : null)} images={edit.images} onImagesChange={images => setEdit(current => current ? { ...current, images } : null)} required />
               <button disabled={!edit.body.trim()}>Save remark</button>
               <button type="button" className="secondary compact" onClick={() => setEdit(null)}>Cancel remark edit</button>
             </form> : <>
-              <button className="secondary compact" disabled={edit !== null} onClick={() => setEdit({ remark: row, body: row.body })}>Edit remark</button>
+              <button className="secondary compact" disabled={edit !== null} onClick={() => setEdit({ remark: row, body: row.body, images: [] })}>Edit remark</button>
               <button className="secondary compact" disabled={edit !== null} aria-pressed={row.starred} onClick={() => {
                 void change(`remarks/${row.id}/star/`, "POST", { starred: !row.starred, expected_revision: row.revision }, row.starred ? "Star removed." : "Remark starred.");
               }}>{row.starred ? "Unstar remark" : "Star remark"}</button>
@@ -141,9 +142,10 @@ export function Remarks({ task, project, version, onError, children, onOpen, tar
     {writable && <form aria-label="Post remark" onSubmit={event => {
       event.preventDefault(); void change(`tasks/${task}/remarks/`, "POST", { body: draft, images: editorImages(new FormData(event.currentTarget)) }, "Remark posted.");
     }}><fieldset disabled={busy || blocked}>
-      <ContentEditor label="New remark" value={draft} onChange={setDraft} required />
+      <ContentEditor label="New remark" value={draft} onChange={setDraft} images={draftImages} onImagesChange={setDraftImages} required />
       <button disabled={!draft.trim() || edit !== null}>Post remark</button>
     </fieldset></form>}
     {blocked && !writable && (draft || (edit && edit.body !== edit.remark.body)) && <p className="description" aria-label="Unsaved remark text">{edit && edit.body !== edit.remark.body ? edit.body : draft}</p>}
+    {blocked && !writable && !!(draftImages.length || edit?.images.length) && <p>Unsaved images are retained. Restore remark access and reload before saving.</p>}
   </section>;
 }
