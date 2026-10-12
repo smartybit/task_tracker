@@ -9,8 +9,10 @@ from tasks.views import StatusesView, StatusView, OwnersView, TasksView, TaskVie
 from timesheets import views as timesheet_views
 from reports import views as report_views
 from remarks import views as remark_views
+from content import views as content_views
 
 urlpatterns = [
+    path('api/v1/references/resolve/', content_views.ResolveView.as_view()),
     path('api/v1/tasks/<uuid:task_id>/remarks/', remark_views.RemarksView.as_view()),
     path('api/v1/remarks/<uuid:pk>/', remark_views.RemarkView.as_view()),
     path('api/v1/remarks/<uuid:pk>/star/', remark_views.StarView.as_view()),

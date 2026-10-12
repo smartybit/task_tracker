@@ -22,8 +22,8 @@ Stage 5 adds the backend timesheet engine: recording, breaks, closing markers,
 independent unfinished days, overnight continuation, previews, and atomic day
 corrections. Stage 6 adds browser timesheets and the Edit day dialog; acceptance
 verification is complete. Stage 7 adds reporting APIs, report screens, and CSV
-downloads; full acceptance verification is complete. References, images, and
-search remain unimplemented. Stage 8 remarks and shared stars are implemented;
+downloads; full acceptance verification is complete. Images and search remain
+unimplemented. Stage 8 remarks, shared stars, and stable references are implemented;
 verification progress is recorded in the implementation tracker.
 No personal account is created automatically, and public registration is unavailable.
 
@@ -67,8 +67,13 @@ requires remark write when remarks exist and previews the number removed.
 Failed writes retain text. Stale or denied writes require **Reload remarks** and
 review; changed edits require confirmation before disposal. A confirmed save with
 a failed reload is reported as saved. Drafts belong to the open task window;
-closing or switching tasks discards them. References, images, and search remain
-planned Stage 8 work. See [the remarks API](docs/remarks_api.md).
+closing or switching tasks discards them. See [the remarks API](docs/remarks_api.md).
+
+Descriptions and remarks offer **Insert reference** for readable tasks or remarks.
+Links use stable IDs, display current labels, and open the target task or focus
+the original remark. **Refresh references** checks labels and access again.
+Restricted and deleted targets both display **Unavailable reference**. See
+[the content API](docs/content_api.md). Images and search remain Stage 8 work.
 
 ## Timesheet Workspace
 

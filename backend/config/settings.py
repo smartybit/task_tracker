@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "tasks",
     "reports",
     "remarks",
+    "content",
 ]
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

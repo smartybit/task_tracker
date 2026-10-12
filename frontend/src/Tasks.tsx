@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, allPages, ApiError, type Project, type User } from "./api";
 import { Remarks } from "./Remarks";
+import { ContentEditor, ContentText } from "./Content";
 
 interface Status { id: string; name: string; final: boolean; used: boolean }
 interface Task {
@@ -17,6 +18,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selected, setSelected] = useState("");
+  const [targetRemark, setTargetRemark] = useState<string | undefined>();
   const [detail, setDetail] = useState<Task | null>(null);
   const [history, setHistory] = useState<History[]>([]);
   const [owners, setOwners] = useState<{ id: string; display_name: string }[]>([]);
@@ -65,7 +67,10 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
   }, [selected, loaded, projects]);
 
   useEffect(() => { if (pending) confirmation.current?.focus(); }, [pending]);
-  useEffect(() => { if (openRequest) { setSelected(openRequest.id); setEpoch(value => value + 1); } }, [openRequest]);
+  useEffect(() => { if (openRequest) { setSelected(openRequest.id); setTargetRemark(undefined); setEpoch(value => value + 1); } }, [openRequest]);
+  function openReference(id: string, remark?: string) {
+    setTargetRemark(remark); setSelected(id); setEpoch(value => value + 1);
+  }
 
   async function action(operation: () => Promise<void>) {
     if (busy) return;
@@ -99,7 +104,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
     return rows.map(task => <li key={task.id}>
       <div className="task-row" style={{ paddingInlineStart: `${depth * 20}px` }}>
         {tree && children(task.id).length > 0 && <button className="secondary disclosure" aria-label={`${collapsed.includes(task.id) ? "Expand" : "Collapse"} ${task.title}`} aria-expanded={!collapsed.includes(task.id)} onClick={() => setCollapsed(value => value.includes(task.id) ? value.filter(id => id !== task.id) : [...value, task.id])}>{collapsed.includes(task.id) ? "+" : "−"}</button>}
-        <button className="task-link" draggable onDragStart={event => { event.dataTransfer.setData("application/x-task-tracker-task", task.id); event.dataTransfer.effectAllowed = "copy"; }} aria-pressed={selected === task.id} onClick={() => { setSelected(task.id); setMessage(""); }}>{task.title}</button>
+        <button className="task-link" draggable onDragStart={event => { event.dataTransfer.setData("application/x-task-tracker-task", task.id); event.dataTransfer.effectAllowed = "copy"; }} aria-pressed={selected === task.id} onClick={() => { setSelected(task.id); setTargetRemark(undefined); setMessage(""); }}>{task.title}</button>
         {onRecord && <button className="secondary compact" aria-label={`Record ${task.title}`} onClick={() => onRecord(task.id)}>Record time</button>}
         <span>{statusName(task.status)}</span><small>{projectName(task.project)}</small>
       </div>
@@ -126,15 +131,15 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
       {detail && <section className="task-detail" role="dialog" aria-label="Task description" key={`${detail.id}:${detail.revision}`}>
         <button className="secondary" onClick={() => setSelected("")}>Close task</button>
         <h3>{detail.title}</h3>
-        <Remarks task={detail.id} project={detail.project} version={version} onError={onError}>
-          <p className="description">{detail.description || "No description."}</p>
+        <Remarks task={detail.id} project={detail.project} version={version} onError={onError} onOpen={openReference} targetRemark={targetRemark}>
+          <p className="description"><ContentText text={detail.description || "No description."} onOpen={openReference} /></p>
           <p>{projectName(detail.project)} · {statusName(detail.status)} · Owner: {detail.owner_name}</p>
         </Remarks>
         <h4>Status history</h4><ol>{history.map(row => <li key={row.id}>{row.previous_status ? `${statusName(row.previous_status)} → ` : "Created as "}{statusName(row.new_status)} — {row.actor_name} <time dateTime={row.changed_at}>{new Date(row.changed_at).toLocaleString()}</time></li>)}</ol>
         {editable && <fieldset disabled={busy || pending !== null}>
           <form aria-label="Edit task" onSubmit={event => { const data = fieldValues(event); void save(`tasks/${detail.id}/`, { title: data.get("title"), description: data.get("description"), expected_revision: detail.revision }); }}>
             <label>Task title<input name="title" defaultValue={detail.title} maxLength={200} required /></label>
-            <label>Description<textarea name="description" defaultValue={detail.description} rows={5} /></label><button>Save task</button>
+            <ContentEditor label="Description" name="description" initialValue={detail.description} rows={5} /><button>Save task</button>
           </form>
           <form aria-label="Transfer ownership" onSubmit={event => { const data = fieldValues(event); void action(async () => { await api(`tasks/${detail.id}/owner/`, "POST", { owner: data.get("owner"), expected_revision: detail.revision }); refresh(); setMessage("Owner saved."); }); }}>
             <label>New owner<select name="owner" required defaultValue=""><option value="" disabled>Choose an eligible owner</option>{owners.map(owner => <option key={owner.id} value={owner.id}>{owner.display_name}{owner.id === user.id ? " (you)" : ""}</option>)}</select></label><button>Transfer ownership</button>
@@ -154,7 +159,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
       const data = fieldValues(event);
       void preview("tasks/", { title: data.get("title"), description: data.get("description"), project: data.get("project"), parent: data.get("parent") || null, status: data.get("status"), ...reopenValue(data) }, "Create task");
     }}><h3>Create task</h3><fieldset disabled={busy || pending !== null}>
-      <label>Task title<input name="title" maxLength={200} required /></label><label>Description<textarea name="description" rows={4} /></label>
+      <label>Task title<input name="title" maxLength={200} required /></label><ContentEditor label="Description" name="description" />
       <label>Task project<select name="project" required value={createProject} onChange={event => setCreateProject(event.target.value)}><option value="" disabled>Choose a project</option>{writable.map(project => <option key={project.id} value={project.id}>{project.name}{!project.permissions.task_read ? " (write only)" : ""}</option>)}</select></label>
       <label>Parent task<select name="parent" key={createProject} defaultValue=""><option value="">Top level</option>{tasks.filter(task => task.project === createProject).map(task => <option key={task.id} value={task.id}>{task.title}</option>)}</select></label>
       <label>Initial status<select name="status" defaultValue={nonFinal.find(item => item.name === "In Progress")?.id}>{statuses.map(status => <option key={status.id} value={status.id}>{status.name}</option>)}</select></label>

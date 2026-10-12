@@ -233,6 +233,9 @@ def change_task(actor, kind, data, pk=None):
             if previous is not None:
                 row.revision += 1
             row.save()
+            if kind in {'create', 'edit'}:
+                from content.references import sync_references
+                sync_references(row)
             if previous != row.status_id:
                 TaskStatusChange.objects.create(task=row, previous_status_id=previous,
                                                new_status_id=row.status_id, actor=actor)

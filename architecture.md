@@ -335,7 +335,23 @@ after stale or denied writes. Acknowledged writes with failed reloads are report
 as saved. Drafts belong to the open task window; closing/switching tasks does not
 persist them. No supplementary frontend or backend dependency is introduced.
 See [the remarks API](docs/remarks_api.md) for the delivered contract.
-References, images, and multilingual search remain Stage 8 work.
+Images and multilingual search remain Stage 8 work.
+
+### Stable References
+
+The `content` app stores source-owned `Reference` rows synchronized in the same
+transaction as task-description or remark-body changes. Plain text contains
+`[task:UUID]` / `[remark:UUID]` tokens; constraints enforce one source and unique
+targets per source. Targets are identifiers without foreign keys, preserving
+placeholders after deletion. A data migration indexes existing tokens without
+editing their source content or revision.
+
+A batched resolver holds the domain lock and applies current task/remark read
+permissions before returning current labels and destination task IDs. Restricted
+and missing targets share an unavailable response. The React editor provides a
+picker, selection insertion and focus restoration; rendered links resolve current
+labels and navigate through the permission-checked task view. Star previews avoid
+embedding a second navigation link. See [the content API](docs/content_api.md).
 
 ## Planned Search Approach
 

@@ -774,9 +774,13 @@ is In progress as of 2026-10-12. The first milestone implements remarks and
 shared stars through the API and task window, including permission-aware task
 deletion. References, images, and multilingual search follow this milestone.
 
+Stable inline references now synchronize transactionally and resolve current
+permissions through a batched API; the browser provides insertion/navigation.
+Images, search, and final lifecycle acceptance follow.
+
 - [x] Implement chronological remarks with authors/timestamps, shared stars at
   the top of the task window, and navigation to original remarks.
-- [ ] Implement task/remark cross-references with stable targets and appropriate
+- [x] Implement task/remark cross-references with stable targets and appropriate
   handling of restricted or deleted objects.
 - [ ] Implement images in descriptions and remarks, validated formats/size limits,
   persistent storage, and permission-checked downloads. Include screenshot pasting
@@ -848,6 +852,23 @@ and search are unimplemented. Stage 8 remains In progress; the remarks milestone
 application checks are complete.
 Next milestone: stable task/remark references with restricted/deleted placeholders,
 then validated private images and English/Russian PostgreSQL search.
+
+### References Milestone: 2026-10-12
+
+Added source-owned stable references, strict batched resolution under the domain
+lock, and migration backfill. Target deletion preserves unavailable tokens;
+renames/moves resolve current labels/containment. Restricted and missing responses
+have identical shapes. Editors provide task/remark pickers with selection insertion
+and focus restoration. Reference links navigate to the original task or remark;
+star previews use a generic token label.
+
+Five focused PostgreSQL checks passed (24.620 seconds), including source rollback,
+constraints, permissions/lifecycle, strict inputs, and migration backfill. Fresh
+migrations, system/drift checks and TypeScript/Vite build passed. Both new Chromium
+reference scenarios passed after correcting locators to use accessible roles;
+the four existing remark scenarios are being rerun with the shared editor.
+Checked 81 local documentation links/anchors and whitespace. Full-stage acceptance
+remains pending; next work is private image insertion and multilingual search.
 
 ## Stage 9: Deployment and Release Verification
 

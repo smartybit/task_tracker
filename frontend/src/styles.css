@@ -66,6 +66,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px
 .starred-remarks { padding-inline-start: 22px; }
 .starred-remarks li { padding-block: 8px; }
 .starred-remarks a { color: #183c35; overflow-wrap: anywhere; }
+.description a { color: #1d4e45; overflow-wrap: anywhere; }
+.unavailable-reference { color: #65766e; font-style: italic; }
+.reference-picker { margin-bottom: 12px; }
+.reference-picker fieldset { border: 1px solid #cbd7c8; padding: 12px; border-radius: 6px; }
 @media (max-width: 800px) { .task-workspace { grid-template-columns: 1fr; } }
 
 main { max-width: 1600px; }

@@ -265,8 +265,20 @@ Execution evidence is recorded in the implementation tracker.
 - Browser workflows cover two-user collaboration, star navigation/focus, keyboard
   input, repeated submissions, narrow screens, write-only posting, read-only
   controls, revocation, stale edits, failed writes, and saved/reload-failed recovery.
-- References, images, search, and application/attachment restart checks remain
+- Images, search, and application/attachment restart checks remain
   planned until their Stage 8 milestones are implemented.
+
+### Stage 8 Reference Checks
+
+- Verify source synchronization, duplicate tokens, removal, source deletion,
+  database constraints, and rollback after a reference-storage failure.
+- Upgrade existing tokens without changing source content or revisions.
+- Resolve current labels after rename/move, live grant changes, and deletion.
+  Restricted and deleted targets must share exactly the same response shape;
+  remark resolution requires both task and remark read and has no admin bypass.
+- Verify strict bounded resolver inputs, authentication, and unchanged domain
+  revision for resolution. Browser checks cover picker insertion/focus, current
+  labels, unavailable placeholders, and navigation to the original remark.
 
 ## Verification Approach
 
@@ -283,7 +295,7 @@ and 25 Chromium scenarios each, including timesheet browser acceptance. Stage 7
 passed two full runs with 97 PostgreSQL tests and 30 Chromium scenarios each,
 including reporting and CSV acceptance. Stage 8's remarks milestone adds focused
 API/browser checks; its executed evidence is recorded in the implementation
-tracker. Reference, image, and search workflow checks remain planned.
+tracker. Image and search workflow checks remain planned.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

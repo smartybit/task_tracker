@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { allPages, api, ApiError, type Flags, type Project } from "./api";
+import { ContentEditor, ContentText, contentPreview, type OpenReference } from "./Content";
 
 interface Remark {
   id: string; task: string; author: string; author_name: string; body: string;
@@ -7,8 +8,9 @@ interface Remark {
 }
 type Edit = { remark: Remark; body: string };
 
-export function Remarks({ task, project, version, onError, children }: {
+export function Remarks({ task, project, version, onError, children, onOpen, targetRemark }: {
   task: string; project: string; version: number; onError: (error: unknown) => void; children?: ReactNode;
+  onOpen: OpenReference; targetRemark?: string;
 }) {
   const [rows, setRows] = useState<Remark[]>([]);
   const [permissions, setPermissions] = useState<Flags | null>(null);
@@ -21,6 +23,7 @@ export function Remarks({ task, project, version, onError, children }: {
   const inFlight = useRef(false);
   const generation = useRef(0);
   const errorHandler = useRef(onError);
+  const focused = useRef("");
   errorHandler.current = onError;
 
   async function load() {
@@ -46,6 +49,14 @@ export function Remarks({ task, project, version, onError, children }: {
     void load();
     return () => { generation.current += 1; };
   }, [task, project, version]);
+
+  useEffect(() => {
+    if (!loading && targetRemark && focused.current !== targetRemark) {
+      const original = document.getElementById(`remark-${targetRemark}`);
+      if (original) { original.scrollIntoView({ block: "center" }); original.focus(); focused.current = targetRemark; }
+      else if (permissions) setMessage("The referenced remark is unavailable.");
+    }
+  }, [loading, rows, targetRemark, permissions]);
 
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
@@ -87,7 +98,7 @@ export function Remarks({ task, project, version, onError, children }: {
           <a href={`#${target(row.id)}`} onClick={event => {
             event.preventDefault(); const original = document.getElementById(target(row.id));
             original?.scrollIntoView({ block: "center" }); original?.focus();
-          }}><span className="description">{row.body}</span> — {row.author_name}</a>
+          }}><span className="description">{contentPreview(row.body)}</span> — {row.author_name}</a>
         </li>)}</ol> : <p>No starred remarks.</p>}
       </section>
     }
@@ -104,12 +115,12 @@ export function Remarks({ task, project, version, onError, children }: {
       <ol className="remark-stream" aria-label="Chronological remarks">{rows.map(row => <li key={row.id}>
         <article id={target(row.id)} tabIndex={-1} aria-label={`Remark by ${row.author_name}`}>
           <p className="remark-meta">{row.author_name} · {stamp(row.created_at)}{row.edited_at && <> · Edited {stamp(row.edited_at)}</>}{row.starred && " · Starred"}</p>
-          <p className="description">{row.body}</p>
+          <p className="description"><ContentText text={row.body} onOpen={onOpen} /></p>
           {writable && <fieldset disabled={busy || blocked}>
             {edit?.remark.id === row.id ? <form aria-label="Edit remark" onSubmit={event => {
               event.preventDefault(); void change(`remarks/${row.id}/`, "PATCH", { body: edit.body, expected_revision: edit.remark.revision }, "Remark saved.");
             }}>
-              <label>Remark text<textarea value={edit.body} onChange={event => setEdit({ ...edit, body: event.target.value })} rows={4} required /></label>
+              <ContentEditor label="Remark text" value={edit.body} onChange={body => setEdit({ ...edit, body })} required />
               <button disabled={!edit.body.trim()}>Save remark</button>
               <button type="button" className="secondary compact" onClick={() => setEdit(null)}>Cancel remark edit</button>
             </form> : <>
@@ -130,7 +141,7 @@ export function Remarks({ task, project, version, onError, children }: {
     {writable && <form aria-label="Post remark" onSubmit={event => {
       event.preventDefault(); void change(`tasks/${task}/remarks/`, "POST", { body: draft }, "Remark posted.");
     }}><fieldset disabled={busy || blocked}>
-      <label>New remark<textarea value={draft} onChange={event => setDraft(event.target.value)} rows={4} required /></label>
+      <ContentEditor label="New remark" value={draft} onChange={setDraft} required />
       <button disabled={!draft.trim() || edit !== null}>Post remark</button>
     </fieldset></form>}
     {blocked && !writable && (draft || (edit && edit.body !== edit.remark.body)) && <p className="description" aria-label="Unsaved remark text">{edit && edit.body !== edit.remark.body ? edit.body : draft}</p>}

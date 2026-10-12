@@ -367,6 +367,11 @@ turn them into additional user-confirmed requirements.
   break links. Show a generic unavailable label for restricted targets, without
   exposing titles, authors, snippets, or attachment previews.
 - Deleted references show a generic unavailable/deleted-target placeholder.
+- Adopted in Stage 8 under delegated reference behavior: descriptions and remarks
+  use stable inline task/remark tokens with a picker. Resolve current labels on
+  access or explicit refresh; navigate to the task or original remark. Restricted
+  and deleted targets share “Unavailable reference”, without revealing which case
+  applies. Unknown target identifiers may be stored without an existence probe.
 - In an accessible timesheet, show the task label and recorded times for each
   entry. If the task is restricted, disable access to its details and show the
   access restriction when the user attempts to open it.

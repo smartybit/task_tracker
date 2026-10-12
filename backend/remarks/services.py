@@ -69,5 +69,8 @@ def change_remark(actor, kind, data, pk):
             remark.starred = values['starred']
         remark.revision += 1
         remark.save()
+    if kind in {'create', 'edit'}:
+        from content.references import sync_references
+        sync_references(remark)
     return remark_data(remark) if can_remark(actor, task.project) else {
         'id': str(remark.pk), 'revision': remark.revision}
