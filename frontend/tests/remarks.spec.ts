@@ -39,14 +39,22 @@ async function setup(browser: Browser, name: string) {
   }));
   const org = await write("organizations/", { name: `Remarks ${key}` });
   const project = await write("projects/", { name: `Discussion ${key}`, organization: org.id });
-  const me = await (await admin.request.get(`${baseURL}/api/v1/auth/me/`)).json();
-  for (const user of [...users, me]) await write(`users/${user.id}/grants/projects/${project.id}/`, flags, "PUT");
-  const statuses = await (await admin.request.get(`${baseURL}/api/v1/statuses/`)).json();
+  for (const user of users) await write(`users/${user.id}/grants/projects/${project.id}/`, flags, "PUT");
+  const content = await browser.newContext();
+  const contentToken = await apiLogin(content.request, users[1].email, password);
+  async function contentWrite(path: string, data: unknown) {
+    const response = await content.request.post(`${baseURL}/api/v1/${path}`, {
+      headers: { "X-CSRFToken": contentToken, Origin: baseURL }, data,
+    });
+    expect(response.ok()).toBeTruthy();
+    return response.json();
+  }
+  const statuses = await (await content.request.get(`${baseURL}/api/v1/statuses/`)).json();
   const payload = { title: `Discussion ${name}`, description: "Task with remarks", project: project.id,
     status: statuses.results.find((row: { name: string }) => row.name === "In Progress").id };
-  const preview = await write("tasks/preview/", payload);
-  const task = await write("tasks/", { ...payload, confirm: true, expected_domain_revision: preview.domain_revision });
-  return { admin, write, alice: users[0], bob: users[1], project, task };
+  const preview = await contentWrite("tasks/preview/", payload);
+  const task = await contentWrite("tasks/", { ...payload, confirm: true, expected_domain_revision: preview.domain_revision });
+  return { admin, content, write, contentWrite, alice: users[0], bob: users[1], project, task };
 }
 
 const discussion = (page: Page) => page.getByRole("region", { name: "Task remarks", exact: true });
@@ -107,13 +115,13 @@ test("remarks retain chronology and authors, share stars, and navigate to origin
     await expect(stream(colleague).getByRole("article")).toHaveCount(1);
     await colleague.reload(); await open(colleague, f.task.title);
     await expect(stream(colleague).getByRole("article")).toHaveCount(1);
-  } finally { await other.close(); await f.admin.close(); }
+  } finally { await other.close(); await f.content.close(); await f.admin.close(); }
 });
 
 test("write-only remarks use safe acknowledgements and revocation preserves unsaved text", async ({ page, browser }) => {
   const f = await setup(browser, "access");
   try {
-    await f.write(`tasks/${f.task.id}/remarks/`, { body: "Protected existing discussion" });
+    await f.contentWrite(`tasks/${f.task.id}/remarks/`, { body: "Protected existing discussion" });
     await f.write(`users/${f.alice.id}/grants/projects/${f.project.id}/`, { task_read: true, remark_write: true }, "PUT");
     await login(page, f.alice.email); await open(page, f.task.title);
     await expect(discussion(page)).not.toContainText("Protected existing discussion");
@@ -133,9 +141,9 @@ test("write-only remarks use safe acknowledgements and revocation preserves unsa
     await expect(discussion(page).getByRole("alert")).toContainText("remark write access");
     await expect(discussion(page)).not.toContainText("Protected existing discussion");
     await expect(discussion(page).getByLabel("Unsaved remark text", { exact: true })).toHaveText("Unsaved private draft");
-    const stored = await (await f.admin.request.get(`${baseURL}/api/v1/tasks/${f.task.id}/remarks/`)).json();
+    const stored = await (await f.content.request.get(`${baseURL}/api/v1/tasks/${f.task.id}/remarks/`)).json();
     expect(stored.results[0].body).toBe("Protected existing discussion");
-  } finally { await f.admin.close(); }
+  } finally { await f.content.close(); await f.admin.close(); }
 });
 
 test("stale and failed saves keep edits, and acknowledged saves with failed reloads are explicit", async ({ page, browser }) => {
@@ -175,7 +183,7 @@ test("stale and failed saves keep edits, and acknowledged saves with failed relo
     await discussion(colleague).getByRole("button", { name: "Post remark", exact: true }).dblclick();
     await expect(discussion(colleague).getByRole("alert")).toHaveText("Remark posted.");
     await expect(stream(colleague).getByText("Keyboard contribution", { exact: true })).toHaveCount(1);
-  } finally { await other.close(); await f.admin.close(); }
+  } finally { await other.close(); await f.content.close(); await f.admin.close(); }
 });
 
 test("task deletion requires remark write and confirms the current remark count", async ({ page, browser }) => {
@@ -189,7 +197,7 @@ test("task deletion requires remark write and confirms the current remark count"
     await page.getByRole("button", { name: "Preview deletion", exact: true }).click();
     const confirmation = page.getByRole("dialog", { name: "Confirm task change", exact: true });
     await expect(confirmation).toContainText("deletes 1 remark(s)");
-    await f.write(`tasks/${f.task.id}/remarks/`, { body: "Arrived after preview" });
+    await f.contentWrite(`tasks/${f.task.id}/remarks/`, { body: "Arrived after preview" });
     await confirmation.getByRole("button", { name: "Confirm change", exact: true }).click();
     await expect(page.getByRole("region", { name: "Tasks", exact: true }).getByRole("alert").first()).toContainText("preview is out of date");
     await page.getByRole("button", { name: "Preview deletion", exact: true }).click();
@@ -197,5 +205,5 @@ test("task deletion requires remark write and confirms the current remark count"
     await confirmation.getByRole("button", { name: "Confirm change", exact: true }).click();
     await expect(page.getByRole("dialog", { name: "Task description", exact: true })).not.toBeVisible();
     await expect(page.getByRole("list", { name: "Task list", exact: true })).not.toContainText(f.task.title);
-  } finally { await f.admin.close(); }
+  } finally { await f.content.close(); await f.admin.close(); }
 });

@@ -452,3 +452,31 @@ container IDs and both original persistent volumes remained unchanged. Developme
 data was not migrated/reset/seeded. Logs/status are retained under ignored
 `.artifacts/verification/`; final browser screenshots are preserved in
 `.artifacts/verification/stage7-verified3-browser/`. Stage 7 is complete.
+
+## Stage 8 Remarks Verification Findings: 2026-10-12
+
+Focused source-mounted PostgreSQL verification passed 29 remarks/task checks
+after correcting non-object JSON validation in the shared strict serializer.
+Raising a string-shaped serializer error had caused DRF's error dictionary
+construction to fail; a `non_field_errors` dictionary now returns 400 and the
+regression includes arrays, strings, and numbers. No schema or dependency change
+was needed for that fix. The new remarks migration passed fresh and upgrade checks.
+
+All four focused Chromium workflows passed. The first full run
+(`stage8-remarks-verified1`) passed 107 PostgreSQL tests, the production build,
+and the four final-layout remarks scenarios. Its new fixtures granted the shared
+administrator access to their projects, contaminating the later administrator
+no-data-access assertion in the existing task workflow. The trace shows three
+readable discussion tasks, confirming fixture contamination. Fixtures now use a
+dedicated scenario user's authenticated API context for content; management uses
+the shared administrator without changing that administrator's data permissions.
+
+The first full run was interrupted before completion and has no successful
+lifecycle status. Subsequent connection failures followed teardown. The retained
+one-off browser was inspected by project label; scoped cleanup removed the test
+network, and separate label-filtered listings confirmed no test containers,
+networks, or volumes remained. Artifacts are retained in ignored
+`.artifacts/verification/stage8-remarks-attempt1-browser/`. The corrected full run
+is pending; completion evidence belongs in the implementation tracker. Docker
+and Git writes required session-specific approved access; no host permissions
+or development data were changed.

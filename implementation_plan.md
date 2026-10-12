@@ -14,8 +14,9 @@ actual progress; it does not turn proposals into confirmed requirements.
   The corrected focused PostgreSQL run passed 29 checks (10 new remarks checks
   plus 19 task regressions), including all 256 grant combinations, three new
   independent-connection races, rollback, and the Stage 7 upgrade. The four new
-  Chromium workflows passed. The full run has passed all 107 PostgreSQL checks
-  and the final production build; its complete browser suite is underway.
+  Chromium workflows passed. The first full run passed 107 PostgreSQL checks
+  and the final production build; browser fixture isolation required a follow-up.
+  Corrected full lifecycle verification is pending.
   References, images, and English/Russian search remain unimplemented.
 - Stage 7 started from `0fd2774`. Backend milestone `020cd88` passed 12 focused
   PostgreSQL tests, including a 64-combination access matrix and a concurrent
@@ -811,9 +812,20 @@ keyboard/repeated submissions, and deletion previews. Desktop/narrow screenshots
 were inspected. Final review moves the shared stars above the description;
 the full lifecycle is checking this final layout and all existing regressions.
 
-The full run passed all 107 PostgreSQL tests and the final TypeScript/Vite build;
-its complete browser suite, lifecycle result, and cleanup are pending.
-Stage 8 remains In progress.
+Application milestone: `7d331c6`. The first full run
+(`stage8-remarks-verified1`) passed all 107 PostgreSQL tests, the final
+TypeScript/Vite build, and all four final-layout remark browser scenarios. The
+new browser fixtures granted the shared administrator application access, causing
+the later task-access baseline to fail (three discussion tasks remained readable).
+The run was interrupted before completion; later browser connection failures
+followed test-service teardown. It is not a successful lifecycle run. Its browser
+artifacts are preserved under ignored
+`.artifacts/verification/stage8-remarks-attempt1-browser/`.
+
+Fixtures now create content through a dedicated scenario user context and never
+grant the shared administrator data access. Test containers/networks/volumes were
+inspected as empty after scoped cleanup. Corrected full lifecycle verification is
+pending. Stage 8 remains In progress.
 Next milestone: stable task/remark references with restricted/deleted placeholders,
 then validated private images and English/Russian PostgreSQL search.
 
@@ -914,3 +926,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-12 | Stage 7 completed | Backend `020cd88`, interface `f4dfd00`, CSV negotiation `9ba2742`, and browser timing follow-up `7f7e583`. Two serial full lifecycles (`stage7-verified2`, `stage7-verified3`) each exited 0 with 97 PostgreSQL tests, production build, and 30 Chromium scenarios. Report authorization, exact totals, historical corrections, hierarchy/project moves, snapshot consistency, actual CSV downloads, and error/access recovery passed. Healthy-stack resets and scoped cleanup inspected; original unrelated containers and persistent volumes preserved. Documentation consistency, local links/anchors, and whitespace checked. Stage 7 Done; Stage 8 is next. |
 | 2026-10-12 | Initial search languages agreed | Recorded English and Russian, including mixed-language content, in requirements, architecture, design, and testing charter. Concrete multilingual indexing/query configuration remains Stage 8 work, with centralized language handling for later additions. Documentation consistency, local links/anchors, and whitespace checked; no application code changed or application tests run. Stage 8 remains Not started. |
 | 2026-10-12 | Stage 8 remarks milestone implemented | Chronological remarks, shared stars/navigation, edit/delete commands, independent permissions, safe write-only acknowledgements, and content-aware task-deletion previews. Corrected focused suite passed 29 PostgreSQL checks; all four new Chromium workflows passed and desktop/narrow screenshots were inspected. Full run passed 107 PostgreSQL checks and the final production build; full browser/lifecycle result and cleanup are pending. Fixed non-object JSON validation exposed by the new regression. Requirements, architecture, API/design, README, and testing charter aligned; 79 local links/anchors and whitespace checked. References, images, and English/Russian search remain next; Stage 8 In progress. Commit: `feat: add task remarks and shared stars`. |
+| 2026-10-12 | Remarks browser fixtures isolated | Removed shared-administrator application grants from remarks fixtures; content operations use a separate scenario user's authenticated context. The first full attempt passed 107 PostgreSQL checks, build, and all four remarks workflows, but later task access failed due to fixture contamination; the attempt was interrupted and is not lifecycle acceptance. Artifacts retained and scoped cleanup inspected. Corrected repeat again passed 107 PostgreSQL checks, build, and all four remarks workflows; remaining browser/lifecycle verification pending. Final desktop/narrow screenshots inspected; local links/whitespace checked. Commit: `test: isolate remarks browser fixtures from administrator access`. |
