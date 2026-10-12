@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { allPages, api, ApiError, type Flags, type Project } from "./api";
-import { ContentEditor, ContentText, contentPreview, type OpenReference } from "./Content";
+import { ContentEditor, ContentText, contentPreview, editorImages, type OpenReference } from "./Content";
 
 interface Remark {
   id: string; task: string; author: string; author_name: string; body: string;
@@ -118,7 +118,7 @@ export function Remarks({ task, project, version, onError, children, onOpen, tar
           <p className="description"><ContentText text={row.body} onOpen={onOpen} /></p>
           {writable && <fieldset disabled={busy || blocked}>
             {edit?.remark.id === row.id ? <form aria-label="Edit remark" onSubmit={event => {
-              event.preventDefault(); void change(`remarks/${row.id}/`, "PATCH", { body: edit.body, expected_revision: edit.remark.revision }, "Remark saved.");
+              event.preventDefault(); void change(`remarks/${row.id}/`, "PATCH", { body: edit.body, images: editorImages(new FormData(event.currentTarget)), expected_revision: edit.remark.revision }, "Remark saved.");
             }}>
               <ContentEditor label="Remark text" value={edit.body} onChange={body => setEdit({ ...edit, body })} required />
               <button disabled={!edit.body.trim()}>Save remark</button>
@@ -139,7 +139,7 @@ export function Remarks({ task, project, version, onError, children, onOpen, tar
     </>}
     {permissions && !readable && <p>Remark reading is not permitted.</p>}
     {writable && <form aria-label="Post remark" onSubmit={event => {
-      event.preventDefault(); void change(`tasks/${task}/remarks/`, "POST", { body: draft }, "Remark posted.");
+      event.preventDefault(); void change(`tasks/${task}/remarks/`, "POST", { body: draft, images: editorImages(new FormData(event.currentTarget)) }, "Remark posted.");
     }}><fieldset disabled={busy || blocked}>
       <ContentEditor label="New remark" value={draft} onChange={setDraft} required />
       <button disabled={!draft.trim() || edit !== null}>Post remark</button>

@@ -1,8 +1,8 @@
 # Remarks API
 
-Stage 8's first milestone adds plain-text remarks and shared stars. References,
-images, and search are still planned; their design is in
-[domain_design.md](domain_design.md). All paths below begin with `/api/v1/` and
+Stage 8 adds plain-text remarks and shared stars. Reference and image tokens and
+the optional `images` field on create/edit are documented in
+[content_api.md](content_api.md); search remains underway. All paths below begin with `/api/v1/` and
 require an authenticated session. Writes also require CSRF protection.
 
 | Operation | Path | Input / response |

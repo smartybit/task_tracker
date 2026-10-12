@@ -20,14 +20,20 @@ actual progress; it does not turn proposals into confirmed requirements.
   during final cleanup (exit 124), so successful full-lifecycle acceptance remains
   pending. Cleanup and preservation of original resources were independently
   verified. The wrapper now allows 30 minutes for the growing suite.
-  References, images, and English/Russian search remain unimplemented.
+  Stable references are delivered in `3de23bf`; five focused PostgreSQL and two
+  reference browser scenarios passed, alongside four remark regressions. Private
+  images now have validated atomic saves, screenshot paste and persistent storage;
+  eleven content checks, seven browser workflows and test-container replacement
+  passed. The expanded twelve-check content suite passed, including cleanup
+  failures and nested rollback. English/Russian search is
+  underway; full-stage lifecycle acceptance remains pending.
 - Stage 7 started from `0fd2774`. Backend milestone `020cd88` passed 12 focused
   PostgreSQL tests, including a 64-combination access matrix and a concurrent
   report snapshot check. Report screens and five browser scenarios are implemented;
   `stage7-verified2` and `stage7-verified3` passed sequential full lifecycles, each
   with 97 PostgreSQL tests, production build, and 30 Chromium scenarios, exit 0.
   Healthy-stack resets, cleanup, and original-resource preservation were inspected.
-  Stage 7 is Done; Stage 8 is In progress, beginning with remarks and shared stars.
+  Stage 7 is Done; Stage 8 is In progress.
 - Stage 6 passed two sequential full lifecycle runs: `stage6-verified1` on interface
   source `820028b` and `stage6-verified2` on final application source `daf9299`.
   Each exited 0 with 85 PostgreSQL tests, fresh migrations/system/drift checks,
@@ -70,7 +76,8 @@ actual progress; it does not turn proposals into confirmed requirements.
   Detailed contracts are in [the timesheet API](docs/timesheet_api.md).
   Stage 6 completed its timesheet workspace, Edit day, and browser acceptance on
   2026-10-11. Stage 7 reporting is complete; Stage 8 remarks are implemented with
-  regression checks passed. References, images and search remain unimplemented.
+  regression checks passed. References and images are delivered; search and
+  full-stage acceptance remain pending.
 - Timesheet design revised by agreement on 2026-10-09: ordinary shared-boundary
   edits and last-row deletion, an atomic Edit day draft for middle corrections,
   and independent new-day recording with historical unfinished sessions. Friday
@@ -782,7 +789,7 @@ Images, search, and final lifecycle acceptance follow.
   the top of the task window, and navigation to original remarks.
 - [x] Implement task/remark cross-references with stable targets and appropriate
   handling of restricted or deleted objects.
-- [ ] Implement images in descriptions and remarks, validated formats/size limits,
+- [x] Implement images in descriptions and remarks, validated formats/size limits,
   persistent storage, and permission-checked downloads. Include screenshot pasting
   if practical, recording its delivered or deferred status explicitly.
 - [ ] Implement search over tasks, descriptions, and remarks with authorized
@@ -847,11 +854,11 @@ migrated/reset/seeded. Log/status are retained under ignored
 
 The full runner now allows 30 minutes; its shell syntax and documentation checks
 passed. The expanded deadline has not been exercised with another full application
-run. Full-stage lifecycle acceptance remains pending while references, images,
-and search are unimplemented. Stage 8 remains In progress; the remarks milestone's
+run. At that point references, images and search were unimplemented. Stage 8
+remains In progress; the remarks milestone's
 application checks are complete.
-Next milestone: stable task/remark references with restricted/deleted placeholders,
-then validated private images and English/Russian PostgreSQL search.
+The next milestone was stable references, followed by private images and search;
+their subsequent progress is recorded below.
 
 ### References Milestone: 2026-10-12
 
@@ -866,9 +873,34 @@ Five focused PostgreSQL checks passed (24.620 seconds), including source rollbac
 constraints, permissions/lifecycle, strict inputs, and migration backfill. Fresh
 migrations, system/drift checks and TypeScript/Vite build passed. Both new Chromium
 reference scenarios passed after correcting locators to use accessible roles;
-the four existing remark scenarios are being rerun with the shared editor.
+the four existing remark scenarios also passed (six scenarios, 2.7 minutes).
 Checked 81 local documentation links/anchors and whitespace. Full-stage acceptance
 remains pending; next work is private image insertion and multilingual search.
+
+### Images Milestone: 2026-10-12
+
+Delivered source-owned private files/metadata, inclusive
+2 MiB validation, atomic source saves with rollback cleanup, after-commit removal,
+file selection/paste, and a persistent development volume. Eleven focused content
+PostgreSQL checks passed (52.233 seconds), including six image scenarios and the
+reference regressions. The frontend build passed. Initial browser runs exposed
+`crypto.randomUUID` being unavailable on the HTTP test service hostname; UUID v4
+generation now uses `crypto.getRandomValues`, and file-read failures settle their
+promises. Image/browser and container-recreation acceptance are still running or
+pending at that point. All three image and four remark Chromium workflows
+subsequently passed (2.8 minutes), including the corrected narrow layout.
+Inspected screenshots are retained under ignored
+`.artifacts/verification/stage8-images-focused-browser/`.
+
+`sh scripts/check-image-persistence.sh` exited 0: original image bytes, PostgreSQL
+metadata and private download access survived forced test-web container replacement
+with a temporary named volume. Its cleanup removed the scoped test stack/network/
+volume, preserving all original unrelated containers and volumes. Development
+services/data were untouched. The expanded suite passed all twelve content checks
+(42.084 seconds), including stale/nested rollback and cleanup-failure recovery.
+Fresh migrations, system/drift, both Compose configurations, production build,
+82 local documentation links/anchors and whitespace passed. Search and final
+lifecycle acceptance remain outstanding.
 
 ## Stage 9: Deployment and Release Verification
 

@@ -68,15 +68,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px
 .starred-remarks a { color: #183c35; overflow-wrap: anywhere; }
 .description a { color: #1d4e45; overflow-wrap: anywhere; }
 .unavailable-reference { color: #65766e; font-style: italic; }
+.content-image { display: inline-block; max-width: 100%; max-height: 420px; object-fit: contain; vertical-align: middle; }
+.content-help { font-size: 13px; color: #526056; }
 .reference-picker { margin-bottom: 12px; }
 .reference-picker fieldset { border: 1px solid #cbd7c8; padding: 12px; border-radius: 6px; }
-@media (max-width: 800px) { .task-workspace { grid-template-columns: 1fr; } }
+@media (max-width: 800px) { .task-workspace { grid-template-columns: minmax(0, 1fr); } }
 
 main { max-width: 1600px; }
 .work-area { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 30px; align-items: start; }
 .work-area > * { min-width: 0; }
 .timesheet-panel { padding-inline-start: 24px; border-inline-start: 1px solid #cbd7c8; }
-.work-area .task-workspace { grid-template-columns: 1fr; }
+.work-area .task-workspace { grid-template-columns: minmax(0, 1fr); }
 .time-table-wrap { max-width: 100%; overflow-x: auto; }
 .time-table, .draft-table { display: table; width: 100%; font-size: 14px; }
 .time-table td { vertical-align: top; }

@@ -7,6 +7,7 @@ from access.policies import can_remark, can_task
 from core.api import StrictSerializer
 from core.domain import current_user
 from content.models import Reference
+from content.images import IMAGE_TOKEN
 from projects.services import validated
 from remarks.models import Remark
 from tasks.models import Task
@@ -48,6 +49,6 @@ def resolve_references(actor, data):
         item = {'kind': target['kind'], 'id': str(target['id']), 'available': False, 'label': 'Unavailable reference'}
         if row and (can_task(actor, row.project) if target['kind'] == 'task' else can_remark(actor, row.task.project)):
             item.update(available=True, task=str(row.pk if target['kind'] == 'task' else row.task_id),
-                        label=row.title if target['kind'] == 'task' else f'Remark: {row.body[:120]}')
+                        label=row.title if target['kind'] == 'task' else f"Remark: {IMAGE_TOKEN.sub('Image', TOKEN.sub('Reference', row.body))[:120]}")
         result.append(item)
     return {'results': result}

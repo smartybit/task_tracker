@@ -335,7 +335,7 @@ after stale or denied writes. Acknowledged writes with failed reloads are report
 as saved. Drafts belong to the open task window; closing/switching tasks does not
 persist them. No supplementary frontend or backend dependency is introduced.
 See [the remarks API](docs/remarks_api.md) for the delivered contract.
-Images and multilingual search remain Stage 8 work.
+Multilingual search remains Stage 8 work.
 
 ### Stable References
 
@@ -368,16 +368,31 @@ normalization must use compatible configurations. Adding a language requires
 appropriate dictionaries, any affected search-data/index rebuild, and regression
 checks; languages without suitable built-in processing may require extra tooling.
 
-## Proposed Images and Content Handling
+## Images and Content Handling
 
-- Store image files in a persistent local volume, with metadata and ownership
+- Image files use a persistent local volume, with metadata and ownership
   relationships in PostgreSQL. Images belong to descriptions or remarks, as
   specified in the requirements.
-- Validate the actual image format and the selected upload size limit.
+- Validate actual static PNG/JPEG/WebP content with hash-locked Pillow 12.3.0,
+  including a full decode, an inclusive 2 MiB input limit and a 20-million-pixel
+  limit. The implementation follows Pillow's [image validation API](https://pillow.readthedocs.io/en/stable/reference/Image.html).
 - Serve downloads through permission-checked endpoints, applying the containing
   task/remark's current permissions rather than exposing a public upload directory.
 - Use stable identifiers for cross-references and resolve visibility on access.
   Keep file cleanup consistent with deletion of an eligible containing object.
+- New images travel as base64 in ordinary source commands, up to five per save,
+  with inline UUID tokens. This keeps creation, edits, revisions and uploads in
+  one permission-checked operation and avoids orphan draft uploads. The editor
+  supports file selection and screenshot paste, retaining pending bytes on failure.
+- `ContentImage` stores exactly one task/remark source, verified metadata and a
+  generated private file path. Domain mutations register rollback file cleanup;
+  deletion uses robust after-commit callbacks. Process crashes or failed cleanup
+  can leave orphan files; `prune_content_images` reconciles files under the domain
+  lock, with an hour's grace, and reports missing referenced files.
+- Download endpoints open files only after current source permission checks;
+  private/no-store and nosniff headers prevent public cache reuse or MIME guessing.
+  Development uses `development-uploads`, initialized for UID 1000; test storage
+  remains temporary. See [the content API](docs/content_api.md).
 
 ## Agreed Backup and Restoration Policy
 

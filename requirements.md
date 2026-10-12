@@ -379,6 +379,12 @@ turn them into additional user-confirmed requirements.
   same permissions as views. For descriptions, the containing object is the task.
   Accept verified PNG, JPEG, and WebP images initially; use a 2 MiB
   (2,097,152-byte) upload limit as the interpretation of 2 MB.
+- Adopted in Stage 8 under delegated image-format details: initial images are
+  static, limited to 20 million decoded pixels. Select files or paste screenshots
+  into the description/remark editor; save them with the containing text. Up to
+  five new images may be saved per operation, with further batches allowed.
+  Failed saves retain pending images and text. Removing an image token deletes
+  that source's image after a successful save.
 - Adopted in Stage 8: users with task read and remark write permission may edit,
   delete, or star any remark. Task write and authorship are not required. Preserve
   the original author and creation timestamp when editing; show an edit timestamp.

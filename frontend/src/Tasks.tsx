@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, allPages, ApiError, type Project, type User } from "./api";
 import { Remarks } from "./Remarks";
-import { ContentEditor, ContentText } from "./Content";
+import { ContentEditor, ContentText, editorImages } from "./Content";
 
 interface Status { id: string; name: string; final: boolean; used: boolean }
 interface Task {
@@ -9,7 +9,7 @@ interface Task {
   owner: string; owner_name: string; creator: string; status: string; revision: number;
 }
 interface History { id: number; previous_status: string | null; new_status: string; actor_name: string; changed_at: string }
-interface Preview { domain_revision: number; affected: Task[]; confirmation_required: boolean; delete?: { remarks: number } | null }
+interface Preview { domain_revision: number; affected: Task[]; confirmation_required: boolean; delete?: { remarks: number; images: number } | null }
 interface Pending { preview: Preview; path: string; method: string; body: Record<string, unknown>; label: string }
 type Props = { user: User; version: number; onError: (error: unknown) => void; onRecord?: (id: string) => void; openRequest?: { id: string; nonce: number } | null; onChanged?: () => void };
 
@@ -32,6 +32,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [epoch, setEpoch] = useState(0);
+  const [editBlocked, setEditBlocked] = useState(false);
   const confirmation = useRef<HTMLElement>(null);
   const creation = useRef<HTMLFormElement>(null);
   const errorHandler = useRef(onError);
@@ -40,7 +41,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
 
   useEffect(() => {
     let current = true;
-    setLoaded(false); setDetail(null); setHistory([]); setPending(null);
+    setLoaded(false); setDetail(null); setHistory([]); setPending(null); setEditBlocked(false);
     Promise.all([allPages<Project>("projects/"), allPages<Status>("statuses/"), allPages<Task>("tasks/")]).then(([p, s, t]) => {
       if (!current) return;
       setProjects(p.filter(item => item.permissions.task_read || item.permissions.task_write));
@@ -72,13 +73,15 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
     setTargetRemark(remark); setSelected(id); setEpoch(value => value + 1);
   }
 
-  async function action(operation: () => Promise<void>) {
+  async function action(operation: () => Promise<void>, preserveDraft = false) {
     if (busy) return;
     setBusy(true); setMessage("");
     try { await operation(); }
     catch (error) {
       setMessage(error instanceof Error ? error.message : "The request failed.");
-      if (error instanceof ApiError && ["stale_revision", "stale_preview", "permission_denied", "not_found"].includes(error.code)) refresh();
+      if (error instanceof ApiError && ["stale_revision", "stale_preview", "permission_denied", "not_found"].includes(error.code)) {
+        if (preserveDraft) setEditBlocked(true); else refresh();
+      }
       if (error instanceof ApiError && error.code === "authentication_required") errorHandler.current(error);
     } finally { setBusy(false); }
   }
@@ -90,7 +93,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
     });
   }
   async function save(path: string, body: Record<string, unknown>) {
-    await action(async () => { await api(path, "PATCH", body); refresh(); setMessage("Changes saved."); });
+    await action(async () => { await api(path, "PATCH", body); refresh(); setMessage("Changes saved."); }, true);
   }
   const nonFinal = statuses.filter(item => !item.final);
   const statusName = (id: string) => statuses.find(item => item.id === id)?.name ?? "Unknown status";
@@ -136,8 +139,9 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
           <p>{projectName(detail.project)} · {statusName(detail.status)} · Owner: {detail.owner_name}</p>
         </Remarks>
         <h4>Status history</h4><ol>{history.map(row => <li key={row.id}>{row.previous_status ? `${statusName(row.previous_status)} → ` : "Created as "}{statusName(row.new_status)} — {row.actor_name} <time dateTime={row.changed_at}>{new Date(row.changed_at).toLocaleString()}</time></li>)}</ol>
-        {editable && <fieldset disabled={busy || pending !== null}>
-          <form aria-label="Edit task" onSubmit={event => { const data = fieldValues(event); void save(`tasks/${detail.id}/`, { title: data.get("title"), description: data.get("description"), expected_revision: detail.revision }); }}>
+        {editBlocked && <p>Refresh tasks and review the latest record before saving again. Copy any unsaved text first.</p>}
+        {editable && <fieldset disabled={busy || pending !== null || editBlocked}>
+          <form aria-label="Edit task" onSubmit={event => { const data = fieldValues(event); void save(`tasks/${detail.id}/`, { title: data.get("title"), description: data.get("description"), images: editorImages(data), expected_revision: detail.revision }); }}>
             <label>Task title<input name="title" defaultValue={detail.title} maxLength={200} required /></label>
             <ContentEditor label="Description" name="description" initialValue={detail.description} rows={5} /><button>Save task</button>
           </form>
@@ -157,7 +161,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
     </div>}
     {writable.length > 0 && loaded && <form ref={creation} aria-label="Create task" onSubmit={event => {
       const data = fieldValues(event);
-      void preview("tasks/", { title: data.get("title"), description: data.get("description"), project: data.get("project"), parent: data.get("parent") || null, status: data.get("status"), ...reopenValue(data) }, "Create task");
+      void preview("tasks/", { title: data.get("title"), description: data.get("description"), images: editorImages(data), project: data.get("project"), parent: data.get("parent") || null, status: data.get("status"), ...reopenValue(data) }, "Create task");
     }}><h3>Create task</h3><fieldset disabled={busy || pending !== null}>
       <label>Task title<input name="title" maxLength={200} required /></label><ContentEditor label="Description" name="description" />
       <label>Task project<select name="project" required value={createProject} onChange={event => setCreateProject(event.target.value)}><option value="" disabled>Choose a project</option>{writable.map(project => <option key={project.id} value={project.id}>{project.name}{!project.permissions.task_read ? " (write only)" : ""}</option>)}</select></label>
@@ -170,6 +174,7 @@ export function Tasks({ user, version, onError, onRecord, openRequest, onChanged
       {pending.preview.affected.length > 0 ? <ul>{pending.preview.affected.map(task => <li key={task.id}>{task.title} — {statusName(task.status)}, {projectName(task.project)}{task.parent ? `, parent: ${tasks.find(item => item.id === task.parent)?.title ?? "selected parent"}` : ", top level"}</li>)}</ul> : <p>The action can be confirmed. Task details require read access.</p>}
       {pending.method === "DELETE" && <p>This permanently deletes the task and its status history.</p>}
       {pending.method === "DELETE" && !!pending.preview.delete?.remarks && <p>This also permanently deletes {pending.preview.delete.remarks} remark(s).</p>}
+      {pending.method === "DELETE" && !!pending.preview.delete?.images && <p>This also permanently deletes {pending.preview.delete.images} image(s).</p>}
       <button disabled={busy} onClick={() => { void action(async () => { const result = await api<{ id: string }>(pending.path, pending.method, { ...pending.body, confirm: true, expected_domain_revision: pending.preview.domain_revision }); if (pending.path === "tasks/") creation.current?.reset(); refresh(); if (pending.method === "DELETE") setSelected(""); else setSelected(result.id); setMessage("Changes saved."); }); }}>{busy ? "Applying…" : "Confirm change"}</button>
       <button className="secondary" disabled={busy} onClick={() => setPending(null)}>Cancel change</button>
     </section>}

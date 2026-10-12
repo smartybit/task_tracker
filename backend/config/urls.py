@@ -12,6 +12,7 @@ from remarks import views as remark_views
 from content import views as content_views
 
 urlpatterns = [
+    path('api/v1/images/<uuid:pk>/', content_views.ImageView.as_view()),
     path('api/v1/references/resolve/', content_views.ResolveView.as_view()),
     path('api/v1/tasks/<uuid:task_id>/remarks/', remark_views.RemarksView.as_view()),
     path('api/v1/remarks/<uuid:pk>/', remark_views.RemarkView.as_view()),

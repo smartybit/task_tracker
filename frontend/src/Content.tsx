@@ -1,18 +1,34 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { allPages, api } from "./api";
 
-const referencePattern = /\[(task|remark):([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})\]/g;
+const referencePattern = /\[(task|remark|image):([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})\]/g;
 type Target = { kind: string; id: string; available: boolean; label: string; task?: string };
 export type OpenReference = (task: string, remark?: string) => void;
-export const contentPreview = (text: string) => text.replace(referencePattern, "Reference");
+export const contentPreview = (text: string) => text.replace(referencePattern, (_, kind) => kind === "image" ? "Image" : "Reference");
+type ImageUpload = { id: string; data: string };
+export const editorImages = (data: FormData): ImageUpload[] => JSON.parse(String(data.get("images") || "[]"));
+function imageId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+function ContentImage({ id, reload }: { id: string; reload: number }) {
+  const [failed, setFailed] = useState(false);
+  const url = `/api/v1/images/${id}/?v=${reload}`;
+  return failed ? <span className="unavailable-reference">Unavailable image</span>
+    : <a href={url} target="_blank" rel="noreferrer"><img className="content-image" src={url} alt="Attached image" onError={() => setFailed(true)} loading="lazy" /></a>;
+}
 
 export function ContentText({ text, onOpen }: { text: string; onOpen: OpenReference }) {
   const [targets, setTargets] = useState<Target[]>([]);
   const [reload, setReload] = useState(0);
   const [failed, setFailed] = useState(false);
   const matches = [...text.matchAll(referencePattern)];
-  const keys = [...new Set(matches.map(match => `${match[1]}:${match[2].toLowerCase()}`))];
+  const keys = [...new Set(matches.filter(match => match[1] !== "image").map(match => `${match[1]}:${match[2].toLowerCase()}`))];
   const signature = keys.join(",");
+  const hasImages = matches.some(match => match[1] === "image");
   useEffect(() => {
     let current = true;
     setTargets([]); setFailed(false);
@@ -32,6 +48,11 @@ export function ContentText({ text, onOpen }: { text: string; onOpen: OpenRefere
   const parts: React.ReactNode[] = [];
   for (const match of matches) {
     parts.push(text.slice(previous, match.index));
+    if (match[1] === "image") {
+      parts.push(<ContentImage key={`${match.index}:${reload}`} id={match[2].toLowerCase()} reload={reload} />);
+      previous = match.index! + match[0].length;
+      continue;
+    }
     const target = targets.find(item => item.kind === match[1] && item.id === match[2].toLowerCase());
     parts.push(target?.available ? <a key={match.index} href={`#${target.kind}-${target.id}`} onClick={event => {
       event.preventDefault(); onOpen(target.task!, target.kind === "remark" ? target.id : undefined);
@@ -39,7 +60,7 @@ export function ContentText({ text, onOpen }: { text: string; onOpen: OpenRefere
     previous = match.index! + match[0].length;
   }
   parts.push(text.slice(previous));
-  return <><span className="description">{parts}</span>{signature && <button type="button" className="secondary compact" onClick={() => setReload(value => value + 1)}>{failed ? "Retry references" : "Refresh references"}</button>}</>;
+  return <><span className="description">{parts}</span>{(signature || hasImages) && <button type="button" className="secondary compact" onClick={() => setReload(value => value + 1)}>{failed ? "Retry references" : signature ? "Refresh references" : "Refresh images"}</button>}</>;
 }
 
 function ReferencePicker({ onInsert }: { onInsert: (token: string) => void }) {
@@ -89,16 +110,56 @@ export function ContentEditor({ label, name, initialValue = "", value, onChange,
   label: string; name?: string; initialValue?: string; value?: string; onChange?: (value: string) => void; rows?: number; required?: boolean;
 }) {
   const [local, setLocal] = useState(initialValue);
+  const [uploads, setUploads] = useState<ImageUpload[]>([]);
+  const [message, setMessage] = useState("");
+  const adding = useRef(false);
   const id = useId();
   const textarea = useRef<HTMLTextAreaElement>(null);
   const text = value ?? local;
   const change = (value: string) => { setLocal(value); onChange?.(value); };
-  return <><label htmlFor={id}>{label}</label><textarea id={id} ref={textarea} name={name} value={text} onChange={event => change(event.target.value)} rows={rows} required={required} />
-    <ReferencePicker onInsert={token => {
+  const currentText = useRef(text);
+  currentText.current = text;
+  const pending = uploads.filter(item => text.includes(`[image:${item.id}]`));
+  useEffect(() => { setUploads(items => items.filter(item => text.includes(`[image:${item.id}]`))); }, [text]);
+  function insert(token: string) {
+      const body = currentText.current;
       const start = textarea.current?.selectionStart ?? text.length;
       const end = textarea.current?.selectionEnd ?? start;
-      change(text.slice(0, start) + token + text.slice(end));
+      change(body.slice(0, start) + token + body.slice(end));
       requestAnimationFrame(() => { textarea.current?.focus(); textarea.current?.setSelectionRange(start + token.length, start + token.length); });
-    }} />
+  }
+  async function addImages(files: File[]) {
+    if (adding.current || !files.length) return;
+    setMessage("");
+    if (pending.length + files.length > 5) { setMessage("Save at most five new images at a time."); return; }
+    if (files.some(file => file.size > 2_097_152 || !["image/png", "image/jpeg", "image/webp"].includes(file.type))) {
+      setMessage("Choose PNG, JPEG, or WebP images, at most 2 MiB each."); return;
+    }
+    adding.current = true; textarea.current?.setCustomValidity("Wait for images to finish loading.");
+    try {
+      const images = await Promise.all(files.map(file => new Promise<ImageUpload>((resolve, reject) => {
+        const id = imageId();
+        const reader = new FileReader(); reader.onerror = () => reject(new Error("Unable to read the selected image."));
+        reader.onabort = () => reject(new Error("Image reading was canceled."));
+        reader.onload = () => resolve({ id, data: String(reader.result).split(",")[1] });
+        reader.readAsDataURL(file);
+      })));
+      setUploads(items => [...items, ...images]);
+      insert(images.map(item => `[image:${item.id}]`).join("\n"));
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to read images."); }
+    finally { adding.current = false; textarea.current?.setCustomValidity(""); }
+  }
+  return <><label htmlFor={id}>{label}</label><textarea id={id} ref={textarea} name={name} value={text} onChange={event => change(event.target.value)} rows={rows} required={required} onPaste={event => {
+    const files = Array.from(event.clipboardData.files);
+    if (files.length) { event.preventDefault(); void addImages(files); }
+  }} />
+    <ReferencePicker onInsert={insert} />
+    <label>Add images<input type="file" accept="image/png,image/jpeg,image/webp" multiple onChange={event => {
+      void addImages(Array.from(event.target.files ?? [])); event.target.value = "";
+    }} /></label>
+    <p className="content-help">PNG, JPEG or WebP, up to 2 MiB each. You can paste a screenshot into the text. Images upload when you save.</p>
+    <input type="hidden" name="images" value={JSON.stringify(pending)} />
+    {!!pending.length && <p role="status">{pending.length} new image(s) ready to save. Remove their image tokens to discard them.</p>}
+    {message && <p role="alert">{message}</p>}
   </>;
 }

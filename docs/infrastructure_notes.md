@@ -497,3 +497,34 @@ The older 1200-second command above records the Stage 4 arrangement. Use the
 repository wrapper and README for current commands. Final-stage acceptance still
 requires successful full lifecycle evidence; remarks component checks alone do
 not complete Stage 8.
+
+## Stage 8 References and Images: 2026-10-12
+
+Reference source/migration/API checks passed five PostgreSQL tests; both new
+Chromium scenarios and all four existing remarks scenarios passed (2.7 minutes).
+The shared editor now uses explicit textarea labels; browser locators use control
+roles because label text can include select options or textarea children.
+
+Image streaming tests now use `TransactionTestCase`. Closing a `FileResponse`
+sends request-finished and closes the database connection; doing that inside a
+wrapping `TestCase` transaction made subsequent queries unusable. Real transactions
+also verify after-commit file deletion. The corrected run passed all eleven
+content tests (52.233 seconds). Boundary-validation assertions now verify actual
+API 400 responses rather than expecting domain exceptions from serializer errors.
+
+The HTTP Compose hostname does not provide `crypto.randomUUID`; its exception in
+FileReader.onload left uploads pending. UUID v4 generation now uses
+`crypto.getRandomValues`, and read failures/aborts settle their promises. A browser
+narrow-screen check found intrinsic grid sizing overflowing with file inputs;
+single-column task grids now use `minmax(0, 1fr)`. All three image and four remark
+Chromium scenarios passed (2.8 minutes); inspected screenshots are retained under
+ignored `.artifacts/verification/stage8-images-focused-browser/`.
+
+`sh scripts/check-image-persistence.sh` exited 0. It attached a scoped synthetic
+image volume, verified bytes/metadata/authorized download and admin denial, forcibly
+recreated the test web container, and verified the same data and permissions again.
+Cleanup removed the test stack/network/image volume. All five original unrelated
+containers and both original volumes were preserved. The development image volume
+is configured but no development services or data were changed. The expanded
+twelve-check content suite passed (42.084 seconds), adding stale/nested rollback
+and cleanup-failure recovery. Full-stage acceptance follows search implementation.

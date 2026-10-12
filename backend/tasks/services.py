@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Q
 from rest_framework import serializers
 
 from access.policies import can_remark, can_task
@@ -9,6 +10,8 @@ from core.models import MutationLock
 from projects.models import Project
 from projects.services import validated
 from tasks.models import Task, TaskStatus, TaskStatusChange
+from content.images import image_upload_field, sync_images, validate_image_tokens
+from content.models import ContentImage
 
 
 class StatusInput(StrictSerializer):
@@ -54,11 +57,13 @@ class CreateInput(CompoundInput):
     project = serializers.UUIDField()
     parent = serializers.UUIDField(allow_null=True, default=None)
     status = serializers.UUIDField()
+    images = image_upload_field()
 
 
 class EditInput(RevisionInput):
     title = serializers.CharField(max_length=200, required=False)
     description = serializers.CharField(allow_blank=True, required=False)
+    images = image_upload_field()
 
 
 class OwnerInput(RevisionInput):
@@ -199,6 +204,8 @@ def prepare(actor, kind, data, pk=None):
                 require_write(actor, row.project)
                 row.status = reopen
                 changes.append(row)
+    if kind in {'create', 'edit'}:
+        validate_image_tokens(task.description, values['images'])
     return actor, task, changes, values
 
 
@@ -212,7 +219,8 @@ def preview_task(actor, kind, data, pk=None):
     return {'domain_revision': lock.revision, 'confirmation_required': True,
             'affected': [task_data(row) for row in visible],
             'target': acknowledgement(task) if pk else None,
-            'delete': {**acknowledgement(task), 'remarks': task.remarks.count()} if kind == 'delete' else None}
+            'delete': {**acknowledgement(task), 'remarks': task.remarks.count(),
+                       'images': ContentImage.objects.filter(Q(source_task=task) | Q(source_remark__task=task)).count()} if kind == 'delete' else None}
 
 
 @mutation
@@ -236,6 +244,7 @@ def change_task(actor, kind, data, pk=None):
             if kind in {'create', 'edit'}:
                 from content.references import sync_references
                 sync_references(row)
+                sync_images(row, values['images'] if row.pk == task.pk else [])
             if previous != row.status_id:
                 TaskStatusChange.objects.create(task=row, previous_status_id=previous,
                                                new_status_id=row.status_id, actor=actor)

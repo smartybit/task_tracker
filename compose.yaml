@@ -27,9 +27,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-development-only-password}
       POSTGRES_HOST: db
       WORKING_TIME_ZONE: ${WORKING_TIME_ZONE:-UTC}
-      UPLOAD_ROOT: /tmp/development-uploads
+      UPLOAD_ROOT: /var/lib/task-tracker/uploads
     volumes:
       - ./backend:/app
+      - development-uploads:/var/lib/task-tracker/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -54,3 +55,4 @@ services:
         condition: service_healthy
 volumes:
   development-db:
+  development-uploads:

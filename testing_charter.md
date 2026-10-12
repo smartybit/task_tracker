@@ -265,7 +265,7 @@ Execution evidence is recorded in the implementation tracker.
 - Browser workflows cover two-user collaboration, star navigation/focus, keyboard
   input, repeated submissions, narrow screens, write-only posting, read-only
   controls, revocation, stale edits, failed writes, and saved/reload-failed recovery.
-- Images, search, and application/attachment restart checks remain
+- Search and application/attachment restart checks remain
   planned until their Stage 8 milestones are implemented.
 
 ### Stage 8 Reference Checks
@@ -279,6 +279,21 @@ Execution evidence is recorded in the implementation tracker.
 - Verify strict bounded resolver inputs, authentication, and unchanged domain
   revision for resolution. Browser checks cover picker insertion/focus, current
   labels, unavailable placeholders, and navigation to the original remark.
+
+### Stage 8 Image Checks
+
+- Validate actual PNG/JPEG/WebP, inclusive 2 MiB boundary, invalid/truncated data,
+  animation/pixel limits, base64, batch size, token ownership and strict inputs.
+- Verify file/metadata/body rollback after partial storage and database failures;
+  token/source deletion removes files only after commit. Exercise orphan pruning.
+- Stream bytes with current task/remark permissions, no administrator bypass,
+  write-only denial, move/revocation, safe headers and missing files. Use real
+  transactions for streamed-response lifecycle and after-commit cleanup checks.
+- Browser workflows cover new-task images, text edits retaining existing images,
+  remark screenshot paste, private downloads, narrow screens, deletion previews,
+  invalid uploads, and pending draft retention after failed saves.
+- Verify persistent upload storage across application container recreation before
+  full-stage acceptance; use only synthetic test data and a scoped test volume.
 
 ## Verification Approach
 
@@ -295,7 +310,7 @@ and 25 Chromium scenarios each, including timesheet browser acceptance. Stage 7
 passed two full runs with 97 PostgreSQL tests and 30 Chromium scenarios each,
 including reporting and CSV acceptance. Stage 8's remarks milestone adds focused
 API/browser checks; its executed evidence is recorded in the implementation
-tracker. Image and search workflow checks remain planned.
+tracker. Search workflow and attachment restart acceptance remain pending.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

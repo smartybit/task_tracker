@@ -125,6 +125,8 @@ test("stale and failed saves keep edits, and acknowledged saves with failed relo
     await newText.focus(); await colleague.keyboard.type("Keyboard contribution"); await colleague.keyboard.press("Tab");
     await expect(discussion(colleague).getByRole("button", { name: "Insert reference", exact: true })).toBeFocused();
     await colleague.keyboard.press("Tab");
+    await expect(discussion(colleague).getByLabel("Add images", { exact: true })).toBeFocused();
+    await colleague.keyboard.press("Tab");
     await expect(discussion(colleague).getByRole("button", { name: "Post remark", exact: true })).toBeFocused();
     await discussion(colleague).getByRole("button", { name: "Post remark", exact: true }).dblclick();
     await expect(discussion(colleague).getByRole("alert")).toHaveText("Remark posted.");

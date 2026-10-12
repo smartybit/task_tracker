@@ -79,6 +79,7 @@ TIME_ZONE = os.environ.get("WORKING_TIME_ZONE", "UTC")
 USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 MEDIA_ROOT = Path(os.environ.get("UPLOAD_ROOT", "/tmp/task-tracker-uploads"))
+DATA_UPLOAD_MAX_MEMORY_SIZE = 16 * 1024 * 1024
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 SECURE_CONTENT_TYPE_NOSNIFF = True

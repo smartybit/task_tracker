@@ -7,10 +7,12 @@ from core.domain import DomainError, current_user, find, mutation
 from projects.services import validated
 from remarks.models import Remark
 from tasks.models import Task
+from content.images import image_upload_field, sync_images
 
 
 class CreateInput(StrictSerializer):
     body = serializers.CharField(trim_whitespace=False)
+    images = image_upload_field()
 
     def validate_body(self, value):
         if not value.strip():
@@ -72,5 +74,6 @@ def change_remark(actor, kind, data, pk):
     if kind in {'create', 'edit'}:
         from content.references import sync_references
         sync_references(remark)
+        sync_images(remark, values['images'])
     return remark_data(remark) if can_remark(actor, task.project) else {
         'id': str(remark.pk), 'revision': remark.revision}

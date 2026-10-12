@@ -34,6 +34,8 @@ export class ApiError extends Error {
   constructor(public code: string, message: string, public fields: Record<string, unknown> = {}) { super(message); }
 }
 let csrfToken = "";
+const errorDetails = (value: unknown): string[] => typeof value === "string" ? [value]
+  : value && typeof value === "object" ? Object.values(value).flatMap(errorDetails) : [];
 export async function api<T>(path: string, method = "GET", body?: unknown): Promise<T> {
   if (method !== "GET" && !csrfToken) {
     const csrf = await api<{ csrf_token: string }>("auth/csrf/");
@@ -48,7 +50,7 @@ export async function api<T>(path: string, method = "GET", body?: unknown): Prom
   const data = await response.json();
   if (!response.ok) {
     if (data.code === "csrf_failed") csrfToken = "";
-    const details = data.fields ? Object.values(data.fields).flat().filter(value => typeof value === "string").join(" ") : "";
+    const details = errorDetails(data.fields).join(" ");
     throw new ApiError(data.code ?? "request_failed", [data.message ?? "The request failed.", details].filter(Boolean).join(" "), data.fields ?? {});
   }
   if (typeof data.csrf_token === "string") csrfToken = data.csrf_token;

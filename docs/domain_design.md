@@ -10,8 +10,9 @@ Timesheet record; verification status is tracked in the implementation plan.
 Stage 4 implements tasks/statuses, preview/confirmation operations, and the minimal
 time-record relationships used for deletion protection. Stage 5 implements the
 recording/correction engine and revised lifecycle. Stage 6 delivers the timesheet
-interface, Stage 7 delivers reports/CSV, and Stage 8 begins with
-[remarks and shared stars](remarks_api.md). Remaining feature operations are a
+interface, Stage 7 delivers reports/CSV, and Stage 8 delivers
+[remarks and shared stars](remarks_api.md) plus [references and images](content_api.md).
+Search is underway. Remaining feature operations are a
 design contract; verification status belongs in the implementation tracker.
 
 The timesheet sections were revised on 2026-10-09 for the agreed
@@ -41,7 +42,7 @@ derive them through current relationships so historical attribution stays correc
 | timesheets / WorkSession | timesheet, started_at, ended_at (nullable), lifecycle state (active/unfinished/closed) | Continuity is required inside a session, not between sessions. One active recording session per user; multiple unfinished historical sessions are permitted. A closed session's end represents its End of Working Day marker. Stage 5 adds the lifecycle field and revised constraints. |
 | timesheets / TimeEntry | timesheet, session, kind (task/break), task (nullable), started_at, ended_at (nullable) | Timesheet agrees with session; task required exactly for task entries; closed end greater than start; known intervals cannot overlap. One open tail per session, with unknown end/zero duration until closure; its session determines whether it is active recording or historical unfinished work. Task foreign key protects deletion, including hidden records. |
 | remarks / Remark | task, author, body, starred, created_at, edited_at, revision | Shared stars; original author/time survive edits. Task deletion may remove remarks only after its eligibility and content-write checks. |
-| content / Image | containing task OR remark, private storage key, verified format, byte size, uploader | Exactly one containing object; no standalone task attachment collection or public media URL. Deletion cleanup follows its containing object. |
+| content / ContentImage | containing task OR remark, private storage key, verified format, byte size, width/height | Exactly one containing object; no standalone task attachment collection or public media URL. Rollback/after-commit cleanup follows its containing object. |
 | content / Reference | source task OR remark, target kind and stable UUID | Validate source ownership; resolve target permissions on every access. Target identifiers survive deletion for an unavailable placeholder; no target cascade. |
 | core / MutationLock | singleton key | Persistent transaction coordination row, created by a migration; see locking below. Not an audit log. |
 
@@ -123,7 +124,7 @@ references, and applicable business invariants before committing.
 | `timesheets/{user}/days/{date}` | Whole day rows, session identifiers/lifecycle, daily work total, revision, task labels and open/end markers, midnight connections | Timesheet read gate, never project-filtered. Expose unfinished-day warnings without embedding protected task content. |
 | `timesheets/{user}/commands` | Typed start/switch/break/end-day/append/boundary/delete_last/resume/continue/replace_day command, explicit target date/session, expected revision and preview where required | Timesheet write gate. New task selection requires task read; retained references require no additional task read. `replace_day` carries the complete selected-day rows/markers with stable row identifiers; there is no individual middle-insert/delete command. Write-only responses are acknowledgements. |
 | `tasks/{id}/remarks`, `remarks/{id}`, `remarks/{id}/star` | Ordered remarks, create/edit body, delete, toggle shared star | Task read plus corresponding remark flag. Preserve original author/time; return body only if remark read is also granted. |
-| Description/remark `images`, `images/{id}/download` | Multipart upload; protected download/delete | Containing-object read/write gates; verified PNG/JPEG/WebP, maximum 2 MiB. Reject invalid, oversized, or foreign-source image identifiers. |
+| Description/remark `images`, `images/{id}/` | Base64 upload array on source create/edit; protected download; remove token to delete | Containing-object read/write gates; verified static PNG/JPEG/WebP, maximum 2 MiB, 20 million pixels, five new uploads per save. Reject invalid/oversized uploads and ID reassignment. Unknown/foreign tokens do not claim another source's image; downloads still require its own source read. |
 | `references/resolve` | Stable target identifiers; visible target or generic unavailable result | Resolve each target independently with task/remark read rules; never leak restricted titles, authors, snippets, or image previews. Source edits check source write access. |
 | `search` | Query, pagination; task/description/remark matches and safe snippets | PostgreSQL full-text queries over separately authorized task and remark sources; permission-filter counts/ranking inputs, not just returned rows. No separate search service. |
 | `reports/options` | Working zone/today and readable project/task/permitted-person labels | No administration fields or emails; other people require authorized task records in readable projects plus Read Others' Timesheets. |

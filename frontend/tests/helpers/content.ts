@@ -42,9 +42,9 @@ export async function setup(browser: Browser, name: string) {
   for (const user of users) await write(`users/${user.id}/grants/projects/${project.id}/`, flags, "PUT");
   const content = await browser.newContext();
   const contentToken = await apiLogin(content.request, users[1].email, password);
-  async function contentWrite(path: string, data: unknown) {
-    const response = await content.request.post(`${baseURL}/api/v1/${path}`, {
-      headers: { "X-CSRFToken": contentToken, Origin: baseURL }, data,
+  async function contentWrite(path: string, data: unknown, method = "POST") {
+    const response = await content.request.fetch(`${baseURL}/api/v1/${path}`, {
+      method, headers: { "X-CSRFToken": contentToken, Origin: baseURL }, data,
     });
     expect(response.ok()).toBeTruthy();
     return response.json();

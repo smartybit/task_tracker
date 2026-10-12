@@ -22,8 +22,8 @@ Stage 5 adds the backend timesheet engine: recording, breaks, closing markers,
 independent unfinished days, overnight continuation, previews, and atomic day
 corrections. Stage 6 adds browser timesheets and the Edit day dialog; acceptance
 verification is complete. Stage 7 adds reporting APIs, report screens, and CSV
-downloads; full acceptance verification is complete. Images and search remain
-unimplemented. Stage 8 remarks, shared stars, and stable references are implemented;
+downloads; full acceptance verification is complete. Search remains unimplemented.
+Stage 8 remarks, shared stars, stable references, and private images are implemented;
 verification progress is recorded in the implementation tracker.
 No personal account is created automatically, and public registration is unavailable.
 
@@ -73,7 +73,19 @@ Descriptions and remarks offer **Insert reference** for readable tasks or remark
 Links use stable IDs, display current labels, and open the target task or focus
 the original remark. **Refresh references** checks labels and access again.
 Restricted and deleted targets both display **Unavailable reference**. See
-[the content API](docs/content_api.md). Images and search remain Stage 8 work.
+[the content API](docs/content_api.md).
+
+Select **Add images** or paste screenshots into a description or remark. Images
+upload with the text when saved; failed writes retain pending images. Accepted
+formats are static PNG/JPEG/WebP, at most 2 MiB each and five new images per save.
+Remove image tokens to delete them on save. Downloads require current access to
+their description or remark. Development uploads persist in a separate named
+volume; include it with the database in backups. Search remains Stage 8 work.
+
+`sh scripts/check-image-persistence.sh` verifies synthetic image bytes, metadata
+and private access across test-web container replacement using a temporary test
+volume, then removes that isolated stack and volume. Run it separately from other
+test commands; it never uses development data.
 
 ## Timesheet Workspace
 
@@ -162,11 +174,12 @@ The browser address is `http://127.0.0.1:5173`. On the VDS, use an SSH
 tunnel to reach its loopback address from your computer. PostgreSQL and Django
 are not published on host ports in this configuration. Vite proxies `/api` to
 Django. Backend sources and frontend sources/config are mounted for development;
-dependency changes require rebuilding. Database data uses the development volume.
-Image persistence is not implemented yet; no upload endpoint exists.
+dependency changes require rebuilding. Database data uses `development-db`;
+private image files use `development-uploads`. Source create/edit endpoints accept
+images as documented in [the content API](docs/content_api.md).
 
 Stop development containers with `docker compose down`, which retains that
-database volume. Do not use `down --volumes` on the development project if you
+database and image volumes. Do not use `down --volumes` on the development project if you
 want to retain its data. This Compose setup is not a production deployment.
 
 ## Reports and CSV Export
@@ -280,8 +293,9 @@ Stage 3 schema upgrades. Stage 5 adds controlled multi-day timelines, atomic
 correction and permission checks, UTC/Berlin midnight allocation, lifecycle upgrades,
 and independent-connection recording/day-save races. Stage 6 adds timesheet browser
 acceptance. Stage 7 adds report fixtures with independently known totals, a report
-access matrix, snapshot consistency, and actual CSV downloads. Image fixtures
-remain later-stage work. See the tracker for component versus full-run results.
+access matrix, snapshot consistency, and actual CSV downloads. Stage 8 adds
+reference lifecycle, private-image validation/rollback and screenshot fixtures.
+See the tracker for component versus full-run results.
 Browser mutation scenarios create separate synthetic accounts so password/grant changes
 do not alter another scenario’s credentials. The guarded `seed_test_data` command
 restores the three baseline fixture accounts and grants when repeated.
