@@ -319,8 +319,9 @@ proposals. The Friday/Monday scenario is also specified in
   Avoid joining remarks into the time-record query and multiplying durations.
 - Search tasks/descriptions and remarks separately under their own read gates,
   then merge/paginate ranked results. Add PostgreSQL indexes with migrations.
-  English/Russian/mixed-language configuration remains to be selected before
-  Stage 8; it does not require a separate search service.
+  English and Russian, including mixed-language content, are agreed for initial
+  search. Select the concrete indexing/query configuration in Stage 8; it does
+  not require a separate search service.
 
 ## Remaining Decisions and Implementation Boundary
 
@@ -328,8 +329,9 @@ The shared working zone is configurable in settings, defaulting to UTC. Backup
 responsibility and full-system restoration requirements are agreed in the
 [architecture](../architecture.md#agreed-backup-and-restoration-policy); tooling,
 schedule, retention, and destination remain deployment decisions. They do not
-block schema/API design. Search language configuration, supplementary UI libraries, and server/proxy
-are chosen when their stages need them. The initial test runners are Django and
+block schema/API design. Initial search languages are English and Russian;
+the concrete multilingual configuration, supplementary UI libraries, and
+server/proxy are chosen when their stages need them. The initial test runners are Django and
 Playwright/Chromium, introduced in Stage 2 and extended through Stage 4. Worked
 examples are design contracts; actual PostgreSQL, browser, and concurrency
 evidence is recorded in the implementation tracker. Task/status acceptance

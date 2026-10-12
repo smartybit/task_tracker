@@ -756,6 +756,11 @@ and deployment backup procedures remain the separately recorded follow-ups.
 
 ## Stage 8: Remarks, References, Images, and Search
 
+Initial search languages agreed on 2026-10-12: English and Russian, including
+mixed-language content. Concrete multilingual indexing/query configuration is
+Stage 8 work; centralize language handling to allow later additions. Stage 8
+remains Not started.
+
 - [ ] Implement chronological remarks with authors/timestamps, shared stars at
   the top of the task window, and navigation to original remarks.
 - [ ] Implement task/remark cross-references with stable targets and appropriate
@@ -872,3 +877,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-11 | Stage 7 backend implemented | `020cd88` adds shared report authorization, project/person-day/hierarchy APIs, label-only options, exact duration accounting, read-only repeatable-read snapshots, and spooled CSV downloads. Twelve focused PostgreSQL tests passed twice, including 64 access combinations and a concurrent move/revocation snapshot. No schema or dependency changes; full lifecycle acceptance pending. |
 | 2026-10-11 | Stage 7 interface component-verified | Added report navigation/screens, filters, hierarchy totals, CSV downloads, and failure/stale/access-change handling. All five focused Chromium scenarios passed (`stage7-reports1`, exit 0); desktop/narrow screenshots inspected. First full attempt passed 97 PostgreSQL tests and build but had three wrapped-select test locator timeouts and was interrupted; corrected selectors use accessible combobox roles. Full final-source repetition remains pending; Stage 7 In progress. |
 | 2026-10-12 | Stage 7 completed | Backend `020cd88`, interface `f4dfd00`, CSV negotiation `9ba2742`, and browser timing follow-up `7f7e583`. Two serial full lifecycles (`stage7-verified2`, `stage7-verified3`) each exited 0 with 97 PostgreSQL tests, production build, and 30 Chromium scenarios. Report authorization, exact totals, historical corrections, hierarchy/project moves, snapshot consistency, actual CSV downloads, and error/access recovery passed. Healthy-stack resets and scoped cleanup inspected; original unrelated containers and persistent volumes preserved. Documentation consistency, local links/anchors, and whitespace checked. Stage 7 Done; Stage 8 is next. |
+| 2026-10-12 | Initial search languages agreed | Recorded English and Russian, including mixed-language content, in requirements, architecture, design, and testing charter. Concrete multilingual indexing/query configuration remains Stage 8 work, with centralized language handling for later additions. Documentation consistency, local links/anchors, and whitespace checked; no application code changed or application tests run. Stage 8 remains Not started. |

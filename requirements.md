@@ -271,6 +271,8 @@ interval is invented. More involved Friday corrections use Edit day.
 
 - Search covers tasks, their descriptions, and task remarks. Search results and
   snippets respect task and remark access permissions.
+- Initial search supports English and Russian, including content that mixes the
+  two languages. Additional languages may be added later.
 - Report data requires task read access for its project, either granted directly
   or inherited from the organization. Read Others' Timesheets alone does not
   permit reporting on inaccessible projects.

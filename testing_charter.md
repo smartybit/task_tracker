@@ -232,6 +232,9 @@ Execution evidence is recorded in the implementation tracker.
   permission management, and denial of unauthorized operations.
 - Create tasks, filter multiple statuses, switch flat/hierarchical lists, drag a
   task into the timesheet, correct past work, and inspect resulting reports.
+- Search English, Russian, and mixed-language tasks/descriptions/remarks,
+  including different word forms and permission-restricted matches. Verify query
+  and indexed-content normalization agree for each enabled language.
 - Post remarks, verify author/timestamp and chronology, share stars between users,
   and jump from a starred remark to its original position.
 - Follow references after renames, moves, access loss, and deletion. Verify image

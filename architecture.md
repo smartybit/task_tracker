@@ -321,6 +321,14 @@ full-text search and database indexes through Django. No separate search service
 is planned for the first version. The backend enforces task and remark permissions
 for search results and snippets.
 
+English and Russian, including mixed-language content, are the agreed initial
+scope (2026-10-12). Select the concrete multilingual indexing/query strategy in
+Stage 8, keeping language handling centralized so additional languages can be
+added without redesigning the content UI or permission model. Indexing and query
+normalization must use compatible configurations. Adding a language requires
+appropriate dictionaries, any affected search-data/index rebuild, and regression
+checks; languages without suitable built-in processing may require extra tooling.
+
 ## Proposed Images and Content Handling
 
 - Store image files in a persistent local volume, with metadata and ownership
