@@ -1,10 +1,10 @@
+import { newTestContext, baseURL, origin, appURL } from "./helpers/urls";
 import { expect, test, type APIRequestContext, type BrowserContext, type Page } from "@playwright/test";
 
 const fixturePassword = "synthetic-test-only-password";
 const password = "browser-stage-three-long-password";
-const baseURL = process.env.BASE_URL ?? "http://frontend:5173";
 async function login(page: Page, email = "admin@example.test", secret = fixturePassword) {
-  await page.goto("/");
+  await page.goto(appURL);
   const form = page.getByRole("form", { name: "Sign in", exact: true });
   await form.getByLabel("Email", { exact: true }).fill(email);
   await form.getByLabel("Password", { exact: true }).fill(secret);
@@ -14,7 +14,7 @@ async function login(page: Page, email = "admin@example.test", secret = fixtureP
 async function apiLogin(request: APIRequestContext) {
   const csrf = await (await request.get(`${baseURL}/api/v1/auth/csrf/`)).json();
   const response = await request.post(`${baseURL}/api/v1/auth/login/`, {
-    headers: { "X-CSRFToken": csrf.csrf_token, Origin: baseURL },
+    headers: { "X-CSRFToken": csrf.csrf_token, Origin: origin },
     data: { email: "admin@example.test", password: fixturePassword },
   });
   expect(response.status()).toBe(200);
@@ -23,7 +23,7 @@ async function apiLogin(request: APIRequestContext) {
 async function setupUser(context: BrowserContext, email: string, extra = {}) {
   const token = await apiLogin(context.request);
   const response = await context.request.post(`${baseURL}/api/v1/users/`, {
-    headers: { "X-CSRFToken": token, Origin: baseURL }, data: { email, password, ...extra },
+    headers: { "X-CSRFToken": token, Origin: origin }, data: { email, password, ...extra },
   });
   expect(response.status()).toBe(201);
   return { user: await response.json(), token };
@@ -75,7 +75,7 @@ test("administrator creates, edits, deactivates, and resets an account through t
   await edit.getByLabel("Display name").fill("Updated Person");
   await edit.getByRole("button", { name: "Save account" }).click();
   await expect(page.getByRole("row").filter({ hasText: email })).toContainText("Updated Person");
-  const other = await browser.newContext();
+  const other = await newTestContext(browser);
   try {
     const colleague = await other.newPage();
     await login(colleague, email, password);
@@ -132,7 +132,7 @@ test("catalog administration protects references and supports rename/delete", as
 test("grant inheritance and live revocation work across separate browser sessions", async ({ page, context, browser }) => {
   const email = "ui-grants@example.test";
   const { user, token } = await setupUser(context, email);
-  await page.goto("/");
+  await page.goto(appURL);
   await page.getByRole("button", { name: "Grants", exact: true }).click();
   await page.getByLabel("Grant account").selectOption(user.id);
   await page.getByLabel("Grant target").selectOption({ label: "Example Studio" });
@@ -141,7 +141,7 @@ test("grant inheritance and live revocation work across separate browser session
   await expect(grant.getByLabel("Task read", { exact: true })).toBeChecked();
   await grant.getByRole("button", { name: "Save grant" }).click();
   await expect(page.getByRole("alert")).toHaveText("Changes saved.");
-  const other = await browser.newContext();
+  const other = await newTestContext(browser);
   try {
     const colleague = await other.newPage();
     await login(colleague, email, password);
@@ -164,7 +164,7 @@ test("grant inheritance and live revocation work across separate browser session
     // Direct API configuration retains the supported write-without-read state.
     const projects = (await (await context.request.get(`${baseURL}/api/v1/projects/`)).json()).results;
     const internal = projects.find((item: { name: string }) => item.name === "Internal");
-    expect((await context.request.put(`${baseURL}/api/v1/users/${user.id}/grants/projects/${internal.id}/`, { headers: { "X-CSRFToken": token, Origin: baseURL }, data: { task_write: true } })).status()).toBe(200);
+    expect((await context.request.put(`${baseURL}/api/v1/users/${user.id}/grants/projects/${internal.id}/`, { headers: { "X-CSRFToken": token, Origin: origin }, data: { task_write: true } })).status()).toBe(200);
     await colleague.getByRole("button", { name: "Refresh access" }).click();
     await expect(colleague.getByRole("region", { name: "Available projects" })).toContainText("No task read, Task write");
     expect((await other.request.get(`${baseURL}/api/v1/users/`)).status()).toBe(403);
@@ -173,12 +173,12 @@ test("grant inheritance and live revocation work across separate browser session
 
 test("revoking administrator status removes management access without another login", async ({ page, context, browser }) => {
   const { user, token } = await setupUser(context, "ui-admin-revocation@example.test", { is_admin: true });
-  const other = await browser.newContext();
+  const other = await newTestContext(browser);
   try {
     const administrator = await other.newPage();
     await login(administrator, user.email, password);
     await expect(administrator.getByRole("navigation", { name: "Management" })).toBeVisible();
-    expect((await context.request.patch(`${baseURL}/api/v1/users/${user.id}/`, { headers: { "X-CSRFToken": token, Origin: baseURL }, data: { is_admin: false } })).status()).toBe(200);
+    expect((await context.request.patch(`${baseURL}/api/v1/users/${user.id}/`, { headers: { "X-CSRFToken": token, Origin: origin }, data: { is_admin: false } })).status()).toBe(200);
     await administrator.getByRole("button", { name: "Refresh access" }).click();
     await expect(administrator.getByRole("navigation", { name: "Management" })).toHaveCount(0);
     await expect(administrator.getByRole("heading", { name: "Your projects", exact: true })).toBeVisible();
@@ -207,7 +207,7 @@ test("administrator self-protection preserves own edits and permits changes to a
   const csrf = (await (await context.request.get(`${baseURL}/api/v1/auth/csrf/`)).json()).csrf_token;
   for (const data of [{ is_admin: false }, { is_active: false }]) {
     const response = await context.request.patch(`${baseURL}/api/v1/users/${actor.id}/`, {
-      headers: { "X-CSRFToken": csrf, Origin: baseURL }, data,
+      headers: { "X-CSRFToken": csrf, Origin: origin }, data,
     });
     expect(response.status()).toBe(400);
     expect((await response.json()).code).toBe("self_protection");
@@ -219,7 +219,7 @@ test("administrator self-protection preserves own edits and permits changes to a
   await expect(edit.getByRole("button", { name: "Save account" })).toBeFocused();
   await page.screenshot({ path: testInfo.outputPath("self-protection-narrow.png"), fullPage: true });
   await page.setViewportSize({ width: 1280, height: 720 });
-  const colleagueContext = await browser.newContext();
+  const colleagueContext = await newTestContext(browser);
   try {
     const colleague = await colleagueContext.newPage();
     await login(colleague, other.email, password);
@@ -243,7 +243,7 @@ test("a stale administrator account form rejects edits after privilege revocatio
   const suffix = Date.now();
   const { user: actor } = await setupUser(context, `stale-admin-${suffix}@example.test`, { is_admin: true });
   const { user: target, token } = await setupUser(context, `stale-target-${suffix}@example.test`);
-  const other = await browser.newContext();
+  const other = await newTestContext(browser);
   try {
     const page = await other.newPage();
     await login(page, actor.email, password);
@@ -251,7 +251,7 @@ test("a stale administrator account form rejects edits after privilege revocatio
     const edit = page.getByRole("form", { name: "Edit account", exact: true });
     await edit.getByLabel("Display name").fill("Must not be saved");
     const revoke = await context.request.patch(`${baseURL}/api/v1/users/${actor.id}/`, {
-      headers: { "X-CSRFToken": token, Origin: baseURL }, data: { is_admin: false },
+      headers: { "X-CSRFToken": token, Origin: origin }, data: { is_admin: false },
     });
     expect(revoke.status()).toBe(200);
     const denied = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/users/${target.id}/`));

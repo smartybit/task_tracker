@@ -1,10 +1,10 @@
+import { newTestContext, baseURL, origin, appURL } from "./helpers/urls";
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
-const baseURL = process.env.BASE_URL ?? "http://frontend:5173";
 const fixturePassword = "synthetic-test-only-password";
 const password = "browser-stage-four-long-password";
 async function login(page: Page, email: string, secret = password) {
-  await page.goto("/");
+  await page.goto(appURL);
   const form = page.getByRole("form", { name: "Sign in", exact: true });
   await form.getByLabel("Email", { exact: true }).fill(email);
   await form.getByLabel("Password", { exact: true }).fill(secret);
@@ -13,16 +13,16 @@ async function login(page: Page, email: string, secret = password) {
 }
 async function loginAPI(request: APIRequestContext, email = "admin@example.test", secret = fixturePassword) {
   const csrf = await (await request.get(`${baseURL}/api/v1/auth/csrf/`)).json();
-  const response = await request.post(`${baseURL}/api/v1/auth/login/`, { headers: { "X-CSRFToken": csrf.csrf_token, Origin: baseURL }, data: { email, password: secret } });
+  const response = await request.post(`${baseURL}/api/v1/auth/login/`, { headers: { "X-CSRFToken": csrf.csrf_token, Origin: origin }, data: { email, password: secret } });
   expect(response.status()).toBe(200);
   return (await response.json()).csrf_token as string;
 }
 async function setup(browser: Browser, key: string, flags = { task_read: true, task_write: true }) {
   key = `${key}-${Date.now()}`;
-  const admin = await browser.newContext();
+  const admin = await newTestContext(browser);
   const token = await loginAPI(admin.request);
   async function write(path: string, data: unknown, method = "POST") {
-    const result = await admin.request.fetch(`${baseURL}/api/v1/${path}`, { method, headers: { "X-CSRFToken": token, Origin: baseURL }, data });
+    const result = await admin.request.fetch(`${baseURL}/api/v1/${path}`, { method, headers: { "X-CSRFToken": token, Origin: origin }, data });
     expect(result.ok()).toBeTruthy();
     return result.status() === 204 ? null : result.json();
   }
@@ -164,7 +164,7 @@ test("moves reject cycles, move complete subtrees, and deletion protects parents
 
 test("stale tabs and stale previews reject changes and require another review", async ({ page, browser }) => {
   const f = await setup(browser, "stale");
-  const second = await browser.newContext();
+  const second = await newTestContext(browser);
   try {
     await login(page, f.user.email);
     await create(page, "Stale task", f.project.id);

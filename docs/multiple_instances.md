@@ -5,14 +5,14 @@ independent installations under different paths on one host, for example
 `https://projects.example.com/time-tracker-test/` and
 `https://projects.example.com/time-tracker-prod/`. Product scope is recorded in
 [requirements](../requirements.md#independent-instances); technical defaults below
-are implementation proposals. Prefix support is not implemented or runtime-verified
-yet. Actual production server/proxy configuration, deployment and operational
+describe the selected implementation. Core prefix configuration, URL construction,
+cookies and development configuration are implemented; paired-instance and full
+regression acceptance remain pending. Actual production server/proxy configuration, deployment and operational
 backup/restoration are deferred to Stage 11.
 
 ## Configuration Contract
 
-Introduce one canonical application path and one stable instance identifier.
-These proposed environment variables do not exist in the application yet:
+The application uses one canonical path and one stable instance identifier:
 
 | Setting | Test example | Production example | Purpose |
 | --- | --- | --- | --- |
@@ -202,7 +202,7 @@ hostnames. This design supports the requested common-host layout without claimin
 protection from arbitrary same-origin script execution.
 
 Stage 10 completes only after the code/tooling and these checks are implemented
-and pass. This document is planning evidence only; production readiness still
+and pass. Current focused evidence is recorded in the tracker; production readiness still
 requires Stage 11 deployment and full-system restoration verification.
 
 ## Technical References

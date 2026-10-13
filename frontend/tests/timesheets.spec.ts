@@ -1,16 +1,16 @@
+import { newTestContext, baseURL, origin, appURL } from "./helpers/urls";
 import { expect, test, type APIRequestContext, type Browser, type Page, type Locator } from '@playwright/test';
 
-const baseURL = process.env.BASE_URL ?? 'http://frontend:5173';
 const password = 'browser-timesheet-long-password';
 const friday = '2020-10-09';
 async function authenticate(request: APIRequestContext, email: string, secret = password) {
   const csrf = await (await request.get(`${baseURL}/api/v1/auth/csrf/`)).json();
-  const response = await request.post(`${baseURL}/api/v1/auth/login/`, { headers: { 'X-CSRFToken': csrf.csrf_token, Origin: baseURL }, data: { email, password: secret } });
+  const response = await request.post(`${baseURL}/api/v1/auth/login/`, { headers: { 'X-CSRFToken': csrf.csrf_token, Origin: origin }, data: { email, password: secret } });
   expect(response.status()).toBe(200);
   return (await response.json()).csrf_token as string;
 }
 async function login(page: Page, email: string) {
-  await page.goto('/');
+  await page.goto(appURL);
   const form = page.getByRole('form', { name: 'Sign in', exact: true });
   await form.getByLabel('Email', { exact: true }).fill(email);
   await form.getByLabel('Password', { exact: true }).fill(password);
@@ -21,10 +21,10 @@ const sheet = (page: Page) => page.getByRole('region', { name: 'Timesheet', exac
 const editor = (page: Page) => page.getByRole('dialog', { name: 'Edit day', exact: true });
 async function setup(browser: Browser, key: string) {
   key = `${key}-${Date.now()}`;
-  const admin = await browser.newContext();
+  const admin = await newTestContext(browser);
   const token = await authenticate(admin.request, 'admin@example.test', 'synthetic-test-only-password');
   async function write(path: string, data: unknown, method = 'POST') {
-    const response = await admin.request.fetch(`${baseURL}/api/v1/${path}`, { method, headers: { 'X-CSRFToken': token, Origin: baseURL }, data });
+    const response = await admin.request.fetch(`${baseURL}/api/v1/${path}`, { method, headers: { 'X-CSRFToken': token, Origin: origin }, data });
     expect(response.ok(), await response.text()).toBeTruthy();
     return response.status() === 204 ? null : response.json();
   }
@@ -34,10 +34,10 @@ async function setup(browser: Browser, key: string) {
   const project = await write('projects/', { name: `Time project ${key}`, organization: org.id });
   const other = await write('projects/', { name: `Other time project ${key}`, organization: org.id });
   for (const p of [project, other]) await write(`users/${person.id}/grants/projects/${p.id}/`, { task_read: true, task_write: true }, 'PUT');
-  const actor = await browser.newContext();
+  const actor = await newTestContext(browser);
   const actorToken = await authenticate(actor.request, person.email);
   async function actorWrite(path: string, data: unknown) {
-    const response = await actor.request.post(`${baseURL}/api/v1/${path}`, { headers: { 'X-CSRFToken': actorToken, Origin: baseURL }, data });
+    const response = await actor.request.post(`${baseURL}/api/v1/${path}`, { headers: { 'X-CSRFToken': actorToken, Origin: origin }, data });
     expect(response.ok(), await response.text()).toBeTruthy(); return response.json();
   }
   const statuses = (await (await actor.request.get(`${baseURL}/api/v1/statuses/`)).json()).results;
@@ -182,7 +182,7 @@ test('Edit day preserves invalid and failed drafts, supports cancel, sorting, fo
 });
 
 test('competing tabs preserve stale drafts and require explicit reload and review', async ({ page, browser }) => {
-  const f = await setup(browser, 'stale'); const second = await browser.newContext();
+  const f = await setup(browser, 'stale'); const second = await newTestContext(browser);
   try {
     await f.closed(); await f.start(f.today);
     await login(page, f.person.email); await selectDay(page, friday);

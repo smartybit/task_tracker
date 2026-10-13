@@ -1,3 +1,4 @@
+import { origin } from "./helpers/urls";
 import { expect, test } from "@playwright/test";
 import { baseURL, flags, login, setup } from "./helpers/content";
 
@@ -35,7 +36,7 @@ test("description references survive renames and mask revoked or deleted targets
     const deleted = await f.contentWrite(`tasks/${target.id}/delete/preview/`, { expected_revision: 1 });
     const token = await (await f.content.request.get(`${baseURL}/api/v1/auth/csrf/`)).json();
     const response = await f.content.request.delete(`${baseURL}/api/v1/tasks/${target.id}/`, {
-      headers: { 'X-CSRFToken': token.csrf_token, Origin: baseURL },
+      headers: { 'X-CSRFToken': token.csrf_token, Origin: origin },
       data: { expected_revision: 1, expected_domain_revision: deleted.domain_revision, confirm: true },
     });
     expect(response.ok()).toBeTruthy();

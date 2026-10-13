@@ -19,5 +19,6 @@ compose_test exec -T web python manage.py check
 compose_test exec -T web python manage.py makemigrations --check --dry-run
 compose_test exec -T web python manage.py test --noinput -v 2
 compose_test exec -T web python manage.py seed_test_data
+compose_test exec -T frontend npm run test:config
 compose_test exec -T frontend npm run build
 compose_test run --rm browser

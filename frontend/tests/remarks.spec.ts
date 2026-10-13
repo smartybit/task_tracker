@@ -1,3 +1,4 @@
+import { newTestContext, origin } from "./helpers/urls";
 import { expect, test, type Page } from "@playwright/test";
 import { baseURL, flags, login, setup } from "./helpers/content";
 
@@ -19,7 +20,7 @@ async function post(page: Page, text: string) {
 
 test("remarks retain chronology and authors, share stars, and navigate to originals", async ({ page, browser }, testInfo) => {
   const f = await setup(browser, "collaboration");
-  const other = await browser.newContext();
+  const other = await newTestContext(browser);
   try {
     await login(page, f.alice.email); await open(page, f.task.title);
     const text = "First remark\nРусский текст <script>alert('unsafe')</script>";
@@ -92,7 +93,7 @@ test("write-only remarks use safe acknowledgements and revocation preserves unsa
 
 test("stale and failed saves keep edits, and acknowledged saves with failed reloads are explicit", async ({ page, browser }) => {
   const f = await setup(browser, "recovery");
-  const other = await browser.newContext();
+  const other = await newTestContext(browser);
   try {
     await login(page, f.alice.email); await open(page, f.task.title); await post(page, "Original discussion");
     const colleague = await other.newPage(); await login(colleague, f.bob.email); await open(colleague, f.task.title);

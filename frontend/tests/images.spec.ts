@@ -1,3 +1,4 @@
+import { absoluteUrl } from "./helpers/urls";
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { baseURL, flags, login, setup } from './helpers/content';
@@ -34,7 +35,7 @@ test('description images save inline, survive reload, and require current task r
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
     await page.screenshot({ path: testInfo.outputPath('inline-image-narrow.png'), fullPage: true });
     await f.write(`users/${f.alice.id}/grants/projects/${f.project.id}/`, { task_write: true }, 'PUT');
-    expect((await page.request.get(`${baseURL}${url}`)).status()).toBe(404);
+    expect((await page.request.get(absoluteUrl(url))).status()).toBe(404);
     await detail.getByRole('button', { name: 'Refresh images', exact: true }).click();
     await expect(detail.getByText('Unavailable image', { exact: true })).toBeVisible();
     await f.write(`users/${f.alice.id}/grants/projects/${f.project.id}/`, flags, 'PUT');
@@ -44,7 +45,7 @@ test('description images save inline, survive reload, and require current task r
     const preview = page.getByRole('dialog', { name: 'Confirm task change', exact: true });
     await expect(preview).toContainText('deletes 1 image(s)');
     await preview.getByRole('button', { name: 'Confirm change', exact: true }).click();
-    expect((await page.request.get(`${baseURL}${url}`)).status()).toBe(404);
+    expect((await page.request.get(absoluteUrl(url))).status()).toBe(404);
   } finally { await f.content.close(); await f.admin.close(); }
 });
 
@@ -67,7 +68,7 @@ test('clipboard screenshots save in remarks and downloads require remark read', 
     const url = await image.getAttribute('src');
     await expect(composer.getByRole('status')).toHaveCount(0);
     await f.write(`users/${f.alice.id}/grants/projects/${f.project.id}/`, { task_read: true, remark_write: true }, 'PUT');
-    expect((await page.request.get(`${baseURL}${url}`)).status()).toBe(404);
+    expect((await page.request.get(absoluteUrl(url))).status()).toBe(404);
     await page.getByRole('button', { name: 'Reload remarks', exact: true }).click();
     await expect(stream).toHaveCount(0);
   } finally { await f.content.close(); await f.admin.close(); }

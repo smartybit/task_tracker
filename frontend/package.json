@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:config": "node --experimental-strip-types --test checks/instance-config.test.ts"
   },
   "dependencies": {
     "react": "^19.2.0",

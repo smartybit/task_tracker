@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { allPages, api } from "./api";
+import { allPages, api, apiUrl } from "./api";
 
 const referencePattern = /\[(task|remark|image):([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})\]/g;
 type Target = { kind: string; id: string; available: boolean; label: string; task?: string };
@@ -16,7 +16,7 @@ function imageId() {
 
 function ContentImage({ id, reload }: { id: string; reload: number }) {
   const [failed, setFailed] = useState(false);
-  const url = `/api/v1/images/${id}/?v=${reload}`;
+  const url = apiUrl(`images/${id}/?v=${reload}`);
   return failed ? <span className="unavailable-reference">Unavailable image</span>
     : <a href={url} target="_blank" rel="noreferrer"><img className="content-image" src={url} alt="Attached image" onError={() => setFailed(true)} loading="lazy" /></a>;
 }

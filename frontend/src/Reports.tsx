@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { api, ApiError, type User } from './api';
+import { api, apiUrl, ApiError, type User } from './api';
 
 interface Options {
   time_zone: string; today: string; read_others_timesheets: boolean;
@@ -75,7 +75,7 @@ export function Reports({ user, version, onError }: { user: User; version: numbe
     const generation = ++downloadGeneration.current;
     setDownloading(true); setMessage('');
     try {
-      const response = await fetch(`/api/v1/reports/records.csv?${new URLSearchParams({ from, to })}`, { credentials: 'same-origin' });
+      const response = await fetch(apiUrl(`reports/records.csv?${new URLSearchParams({ from, to })}`), { credentials: 'same-origin' });
       if (!response.ok) {
         const error = await response.json();
         throw new ApiError(error.code ?? 'request_failed', error.message ?? 'CSV download failed.');

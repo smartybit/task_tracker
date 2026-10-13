@@ -16,6 +16,11 @@ actual progress; it does not turn proposals into confirmed requirements.
   with its design documented, while implementation/runtime verification are pending.
   Stage 11 remains Not started. Next is implementing the
   [multiple-instance design](docs/multiple_instances.md).
+- Stage 10 implementation started from clean source `0b7389a`: canonical path/ID
+  validation, prefixed frontend URLs, scoped cookies and frontend/backend startup
+  matching are implemented. Three focused PostgreSQL/WSGI checks, two frontend
+  configuration checks and the production build passed. Paired-instance tooling and runtime acceptance
+  remain pending; Stage 9's completed evidence is preserved.
 - Stage 9 final application source `1f79ff6` passed `stage9-verified1`, exit 0:
   139 PostgreSQL tests (594.845 seconds), fresh migrations/system/drift checks,
   TypeScript/Vite production build and all 43 Chromium scenarios (13.6 minutes).
@@ -1096,11 +1101,11 @@ new services or runtime checks have been implemented/run at this milestone.
 - [x] Describe existing gaps, proposed configuration, affected files, routing,
   session/data isolation, development tooling, and acceptance checks. Record
   the agreed capability in requirements and the technical design in architecture.
-- [ ] Implement validated application-path and instance-ID configuration, preserving
+- [x] Implement validated application-path and instance-ID configuration, preserving
   root-path defaults and enforcing consistent frontend/backend configuration.
-- [ ] Configure Vite base/dev proxy and centralize frontend API URL construction;
+- [x] Configure Vite base/dev proxy and centralize frontend API URL construction;
   cover health, JSON requests, private images, CSV and existing fragment navigation.
-- [ ] Configure Django script prefix, distinct session/CSRF names and cookie paths;
+- [x] Configure Django script prefix, distinct session/CSRF names and cookie paths;
   verify redirects, CSRF, login rotation/logout deletion and current authorization.
 - [ ] Add isolated development-instance configuration, separate PostgreSQL/uploads,
   project/port/env targeting, independent image/artifact references and health checks.
@@ -1132,6 +1137,19 @@ altering Stage 9 application behavior. Documentation consistency, 96 local Markd
 links/anchors and whitespace checks passed. No application code changed, services
 started or application tests ran; runtime verification remains planned. Commit:
 `docs: plan multiple-instance prefix support before deployment`.
+
+Core implementation milestone (2026-10-13): canonical `APP_BASE_PATH` and
+`INSTANCE_ID` validation, shared frontend API URLs, Vite base/proxy and build
+identity metadata, backend script prefix and scoped session/CSRF cookies are
+implemented. Frontend startup rejects mismatched image/runtime/backend identities.
+The separate development-instance Compose configuration and env examples preserve
+root defaults and provide independently named images/storage. Browser helpers now
+retain prefixes and use origin-only CSRF headers. Three focused PostgreSQL/WSGI
+checks (0.405s), two Node configuration checks and TypeScript/Vite build passed.
+Two initial TypeScript errors in rewritten helpers were corrected before the
+successful build. No schema/dependency changes. Paired-instance and full lifecycle
+acceptance remain pending; Stage 10 stays In progress. Commit:
+`feat: support configurable instance prefixes and scoped sessions`.
 
 ## Stage 11: Production Deployment and Operational Verification
 

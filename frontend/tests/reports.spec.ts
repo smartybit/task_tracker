@@ -1,25 +1,25 @@
+import { newTestContext, baseURL, origin, appURL } from "./helpers/urls";
 import { readFile } from 'node:fs/promises';
 import { expect, test, type APIRequestContext, type Browser, type Page } from '@playwright/test';
 
-const baseURL = process.env.BASE_URL ?? 'http://frontend:5173';
 const password = 'browser-report-long-password';
 const from = '2020-10-09', to = '2020-10-10';
 const rootTitle = 'Report root, "quoted"\nЗадача';
 async function authenticate(request: APIRequestContext, email: string, secret = password) {
   const csrf = await (await request.get(`${baseURL}/api/v1/auth/csrf/`)).json();
   const response = await request.post(`${baseURL}/api/v1/auth/login/`, {
-    headers: { 'X-CSRFToken': csrf.csrf_token, Origin: baseURL }, data: { email, password: secret },
+    headers: { 'X-CSRFToken': csrf.csrf_token, Origin: origin }, data: { email, password: secret },
   });
   expect(response.status()).toBe(200);
   return (await response.json()).csrf_token as string;
 }
 async function setup(browser: Browser, key: string, readOthers = false) {
   key = `${key}-${Date.now()}`;
-  const admin = await browser.newContext();
+  const admin = await newTestContext(browser);
   const token = await authenticate(admin.request, 'admin@example.test', 'synthetic-test-only-password');
   async function write(path: string, data: unknown, method = 'POST') {
     const response = await admin.request.fetch(`${baseURL}/api/v1/${path}`, {
-      method, headers: { 'X-CSRFToken': token, Origin: baseURL }, data,
+      method, headers: { 'X-CSRFToken': token, Origin: origin }, data,
     });
     expect(response.ok(), await response.text()).toBeTruthy();
     return response.status() === 204 ? null : response.json();
@@ -33,11 +33,11 @@ async function setup(browser: Browser, key: string, readOthers = false) {
   for (const p of [project, other]) for (const u of [person, colleague]) {
     await write(`users/${u.id}/grants/projects/${p.id}/`, { task_read: true, task_write: true }, 'PUT');
   }
-  const actor = await browser.newContext();
+  const actor = await newTestContext(browser);
   const actorToken = await authenticate(actor.request, person.email);
   async function actorWrite(path: string, data: unknown, method = 'POST') {
     const response = await actor.request.fetch(`${baseURL}/api/v1/${path}`, {
-      method, headers: { 'X-CSRFToken': actorToken, Origin: baseURL }, data,
+      method, headers: { 'X-CSRFToken': actorToken, Origin: origin }, data,
     });
     expect(response.ok(), await response.text()).toBeTruthy();
     return response.json();
@@ -79,7 +79,7 @@ async function setup(browser: Browser, key: string, readOthers = false) {
 }
 const reports = (page: Page) => page.getByRole('region', { name: 'Reports', exact: true });
 async function login(page: Page, email: string, secret = password) {
-  await page.goto('/');
+  await page.goto(appURL);
   const form = page.getByRole('form', { name: 'Sign in', exact: true });
   await form.getByLabel('Email', { exact: true }).fill(email);
   await form.getByLabel('Password', { exact: true }).fill(secret);

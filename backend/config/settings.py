@@ -2,9 +2,16 @@ import os
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
+from config.instance import instance_config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 APP_ENV = os.environ.get("APP_ENV", "development")
+APP_BASE_PATH, INSTANCE_ID, COOKIE_SECURE = instance_config(os.environ)
+FORCE_SCRIPT_NAME = APP_BASE_PATH.rstrip('/') or None
+SESSION_COOKIE_NAME = f'task_tracker_{INSTANCE_ID}_session'
+CSRF_COOKIE_NAME = f'task_tracker_{INSTANCE_ID}_csrf'
+SESSION_COOKIE_PATH = CSRF_COOKIE_PATH = APP_BASE_PATH
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = COOKIE_SECURE
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,web").split(",")
@@ -29,6 +36,7 @@ INSTALLED_APPS = [
     "content",
 ]
 MIDDLEWARE = [
+    "core.instance.InstanceHeadersMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",

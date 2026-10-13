@@ -1,3 +1,6 @@
+import { apiUrl } from "./urls";
+export { apiUrl } from "./urls";
+
 export interface Health {
   status: "ok";
   database: "postgresql";
@@ -5,7 +8,7 @@ export interface Health {
 }
 
 export async function getHealth(signal: AbortSignal): Promise<Health> {
-  const response = await fetch("/api/v1/health/", { signal });
+  const response = await fetch(apiUrl("health/"), { signal });
   if (!response.ok) throw new Error("The backend is unavailable.");
   const health: unknown = await response.json();
   if (
@@ -41,7 +44,7 @@ export async function api<T>(path: string, method = "GET", body?: unknown): Prom
     const csrf = await api<{ csrf_token: string }>("auth/csrf/");
     csrfToken = csrf.csrf_token;
   }
-  const response = await fetch(`/api/v1/${path}`, {
+  const response = await fetch(apiUrl(path), {
     method, credentials: "same-origin",
     headers: { "Content-Type": "application/json", ...(method !== "GET" ? { "X-CSRFToken": csrfToken } : {}) },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
