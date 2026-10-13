@@ -77,7 +77,7 @@ export function App() {
           <nav aria-label="Management">{["Tasks", "Reports", "Accounts", "Catalogs", "Grants", "Statuses"].map(name => <button key={name} aria-pressed={tab === name} onClick={() => { setTab(name); setMessage(""); }}>{name}</button>)}</nav>
           {tab === "Tasks" && <WorkArea key={user.id} user={user} version={version} onError={onError} />}
           {tab === "Statuses" && <StatusManagement version={version} onError={onError} />}
-          {tab === "Accounts" && <Accounts users={users} run={run} />}
+          {tab === "Accounts" && <Accounts users={users} currentUserId={user.id} run={run} />}
           {tab === "Catalogs" && <Catalogs organizations={organizations} projects={projects} run={run} />}
           {tab === "Grants" && <GrantManagement users={users} organizations={organizations} projects={projects} run={run} version={version} onError={onError} />}
         </> : <section className="workspace" aria-label="Available projects"><h2>Your projects</h2><p>You can always read and edit your own timesheet.</p>

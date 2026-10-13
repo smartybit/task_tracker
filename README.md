@@ -28,7 +28,8 @@ acceptance passed 126 PostgreSQL tests, the production build, 41 Chromium scenar
 and synthetic image-container replacement. Stage 9 contains development completion
 and application verification, including administrator safeguards/recovery. Stage 10
 contains production server/proxy configuration, deployment, backups and restoration.
-Both remain Not started; detailed evidence is recorded in the implementation tracker.
+Stage 9 is In progress; Stage 10 remains Not started. Detailed evidence is recorded
+in the implementation tracker.
 No personal account is created automatically, and public registration is unavailable.
 
 ## Task Management
@@ -238,16 +239,33 @@ Catalogs manages organizations/projects; an organization with projects cannot be
 deleted, and existing projects cannot change organizations through a field edit.
 Statuses manages task-status catalogs; projects referenced by tasks cannot be deleted.
 
-Agreed policy awaiting implementation: administrators cannot deactivate or demote
-themselves, but may change another administrator's active status or privileges.
-A planned server-side command will reset any existing user's password, with
-explicit recovery options to reactivate the user and grant administrator
-privileges. Replacement passwords have no expiry or mandatory-change workflow.
-Self-protection and this reset/recovery command are planned for Stage 9 and are
-not implemented yet; current account updates can still remove the last active
-administrator. Keep an active
-administrator available. See the [agreed policy](requirements.md#users-and-authentication)
-and [implementation follow-up](architecture.md#agreed-administrator-lifecycle-follow-up).
+Administrators cannot deactivate themselves or remove their own administrator
+privileges. Those two controls are disabled when editing your own account; the
+backend also rejects direct requests without changing any account fields or
+sessions. Other fields remain editable. Administrators may change another
+administrator's active status or privileges.
+
+From an interactive server terminal, reset any existing account's password:
+
+```sh
+docker compose exec web python manage.py reset_password --email person@example.com
+```
+
+The command prompts twice for a hidden password and validates it. It preserves
+active/admin statuses unless explicitly requested and never creates an account.
+Old passwords and sessions stop working; replacements have no expiry or mandatory
+change. To recover an existing account when no active administrator can sign in:
+
+```sh
+docker compose exec web python manage.py reset_password --email person@example.com --reactivate --grant-admin
+```
+
+Use either recovery option independently if appropriate. Password and requested
+status changes commit together. Recovery grants no project access or global
+timesheet flags. First-account setup still uses `bootstrap_admin`; `reset_password`
+works even when an existing inactive administrator prevents bootstrap. See the
+[agreed policy](requirements.md#users-and-authentication) and
+[implementation details](architecture.md#agreed-administrator-lifecycle-follow-up).
 
 The server administrator is responsible for backups of the PostgreSQL cluster,
 attachment directory, and necessary configuration. Written instructions for

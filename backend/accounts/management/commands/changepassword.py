@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
-    help = 'Use administrator account management to reset passwords.'
+    help = 'Use account management or the reset_password server command.'
 
     def handle(self, *args, **options):
-        raise CommandError('Reset passwords through the application account management screen.')
+        raise CommandError('Use application account management or reset_password --email EMAIL.')

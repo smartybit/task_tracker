@@ -16,19 +16,20 @@ function ActionForm({ title, submit, children, action }: { title: string; submit
   return <form aria-label={title} onSubmit={save}><h3>{title}</h3><fieldset disabled={busy}>{children}<button type="submit">{busy ? "Saving…" : submit}</button></fieldset></form>;
 }
 
-function AccountFlags({ user }: { user?: User }) {
+function AccountFlags({ user, protectSelf = false }: { user?: User; protectSelf?: boolean }) {
   const [flags, setFlags] = useState({ is_admin: user?.is_admin ?? false, is_active: user?.is_active ?? true, read_others_timesheets: user?.read_others_timesheets ?? false, write_others_timesheets: user?.write_others_timesheets ?? false });
   const labels = { is_admin: "Application administrator", is_active: "Active account", read_others_timesheets: "Read Others’ Timesheets", write_others_timesheets: "Write Others’ Timesheets" };
-  return <div className="checks">{(Object.keys(flags) as (keyof typeof flags)[]).map(key => <label key={key}><input type="checkbox" name={key} checked={flags[key]} onChange={event => setFlags({ ...flags, [key]: event.target.checked, ...(key === "write_others_timesheets" && event.target.checked ? { read_others_timesheets: true } : {}) })} />{labels[key]}</label>)}</div>;
+  return <div className="checks">{(Object.keys(flags) as (keyof typeof flags)[]).map(key => <label key={key}><input type="checkbox" name={key} checked={flags[key]} disabled={protectSelf && (key === "is_admin" || key === "is_active")} onChange={event => setFlags({ ...flags, [key]: event.target.checked, ...(key === "write_others_timesheets" && event.target.checked ? { read_others_timesheets: true } : {}) })} />{labels[key]}</label>)}</div>;
 }
-function accountValues(form: HTMLFormElement) {
+function accountValues(form: HTMLFormElement, protectedUser?: User) {
   const data = new FormData(form);
-  return { email: String(data.get("email")), display_name: String(data.get("display_name")), is_admin: data.has("is_admin"), is_active: data.has("is_active"), read_others_timesheets: data.has("read_others_timesheets"), write_others_timesheets: data.has("write_others_timesheets") };
+  return { email: String(data.get("email")), display_name: String(data.get("display_name")), is_admin: protectedUser?.is_admin ?? data.has("is_admin"), is_active: protectedUser?.is_active ?? data.has("is_active"), read_others_timesheets: data.has("read_others_timesheets"), write_others_timesheets: data.has("write_others_timesheets") };
 }
 
-export function Accounts({ users, run }: { users: User[]; run: Run }) {
+export function Accounts({ users, currentUserId, run }: { users: User[]; currentUserId: string; run: Run }) {
   const [selected, setSelected] = useState("");
   const user = users.find(item => item.id === selected);
+  const protectSelf = user?.id === currentUserId;
   return <section className="workspace" aria-label="Accounts">
     <h2>Accounts</h2><p>Create accounts, reset passwords, and manage application privileges. Administrator status grants no task or timesheet access.</p>
     <ActionForm title="Create account" submit="Create account" action={form => run(() => api("users/", "POST", { ...accountValues(form), password: new FormData(form).get("password") }))}>
@@ -39,10 +40,11 @@ export function Accounts({ users, run }: { users: User[]; run: Run }) {
     </ActionForm>
     <label>Manage account<select value={selected} onChange={event => setSelected(event.target.value)}><option value="">Choose an account</option>{users.map(item => <option key={item.id} value={item.id}>{item.email}</option>)}</select></label>
     {user && <div key={JSON.stringify(user)}>
-      <ActionForm title="Edit account" submit="Save account" action={form => run(() => api(`users/${user.id}/`, "PATCH", accountValues(form)))}>
+      <ActionForm title="Edit account" submit="Save account" action={form => run(() => api(`users/${user.id}/`, "PATCH", accountValues(form, protectSelf ? user : undefined)))}>
         <label>Account email<input name="email" type="email" required defaultValue={user.email} /></label>
         <label>Display name<input name="display_name" maxLength={200} defaultValue={user.display_name} /></label>
-        <AccountFlags user={user} />
+        <AccountFlags user={user} protectSelf={protectSelf} />
+        {protectSelf && <p>You cannot deactivate your own account or remove your own administrator privileges.</p>}
       </ActionForm>
       <ActionForm title="Reset password" submit="Reset password" action={form => run(async () => {
         await api(`users/${user.id}/password-reset/`, "POST", { password: new FormData(form).get("password") }); form.reset();

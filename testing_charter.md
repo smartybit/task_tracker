@@ -57,7 +57,7 @@ service contracts; repeat those checks through actual feature endpoints when
 Stages 4–8 introduce them. The Stage 3 completion boundary does not imply that
 task, time-entry, remark, or reporting workflows already work.
 
-Future administrator lifecycle checks, following the agreed policy:
+Stage 9 administrator lifecycle checks, following the agreed policy:
 
 - Reject self-deactivation and self-demotion through both the interface and direct
   API requests, including when other active administrators exist. Verify rejected
@@ -75,9 +75,9 @@ Future administrator lifecycle checks, following the agreed policy:
   independently and together, atomic rollback on failure, and successful new sign-in
   without reviving old sessions or granting implicit application-data access.
 
-Self-protection and server-side reset/recovery are not implemented yet. These
-future cases were not part of the successful Stage 3 suite. Implement and verify
-them in Stage 9 using the existing isolated application test setup.
+Stage 9 implements self-protection and server-side reset/recovery. These cases
+were not part of the successful Stage 3 suite; Stage 9 verification results are
+recorded in the implementation tracker using the existing isolated test setup.
 
 ### 2. Preserve Timesheet Integrity
 

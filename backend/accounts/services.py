@@ -48,9 +48,11 @@ def create_account(actor, data):
 
 @mutation
 def update_account(actor, user_id, data):
-    require_admin(actor)
+    actor = require_admin(actor)
     user = find(User, user_id)
     values = validate(UserUpdate, data)
+    if user.pk == actor.pk and (values.get('is_active') is False or values.get('is_admin') is False):
+        raise DomainError('self_protection', 'You cannot deactivate your own account or remove your own administrator privileges.')
     if user.is_active and values.get('is_active') is False:
         user.session_version += 1
     for field, value in values.items():
@@ -65,4 +67,22 @@ def reset_password(actor, user_id, data):
     user = find(User, user_id)
     checked_password(user, validate(PasswordInput, data)['password'])
     user.save(update_fields=['password'])
+    return user
+
+
+@mutation
+def recover_account(email, password, *, reactivate=False, grant_admin=False):
+    """Server-operator entry point, usable without an authenticated administrator."""
+    user = User.objects.filter(email__iexact=User.objects.normalize_email(email)).first()
+    if user is None:
+        raise DomainError('not_found', 'No existing account matches that email.', 404)
+    checked_password(user, validate(PasswordInput, {'password': password})['password'])
+    fields = ['password']
+    if reactivate:
+        user.is_active = True
+        fields.append('is_active')
+    if grant_admin:
+        user.is_admin = True
+        fields.append('is_admin')
+    user.save(update_fields=fields)
     return user

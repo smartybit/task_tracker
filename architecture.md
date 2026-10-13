@@ -115,25 +115,30 @@ authorization or safe serialization through task, time, or reporting endpoints.
 
 ### Agreed Administrator Lifecycle Follow-up
 
-The [administrator policy](requirements.md#users-and-authentication) is agreed but
-requires a focused implementation follow-up in Stage 9. Reject self-deactivation
-and self-demotion in the account service; permit changes to another administrator's
-active status or administrator privileges. Reuse MutationLock and recheck the
-actor's current privileges after acquiring it for competing account updates.
+Stage 9 implements the [administrator policy](requirements.md#users-and-authentication)
+in the account service. Self-deactivation or self-demotion returns `self_protection`
+(HTTP 400) before any account changes; other fields and changes to other
+administrators remain permitted. MutationLock serializes competing updates and
+the actor's current privileges are rechecked after acquiring it. The interface
+disables its own active/admin checkboxes and preserves their values on submission.
 
-Provide a server-side password-reset command for any existing user, with explicit
-options to reactivate the user and grant administrator privileges for recovery.
-Without those options, preserve both statuses. Reuse Django password validation,
-hashing, and existing session invalidation, and apply requested account changes
-atomically through the account services. Replacement passwords have no expiry or
-mandatory-change workflow. The command must work when no active administrator can
-sign in; first-administrator bootstrap remains a separate setup operation.
+The interactive `reset_password --email EMAIL` management command resets any
+existing account's password. `--reactivate` and `--grant-admin` are independent,
+explicit recovery options; without them both statuses are preserved. It prompts
+twice with getpass, accepts no password argument, and calls the `recover_account`
+service under MutationLock. That server-operator entry point needs no signed-in
+administrator, normalizes email, refuses unknown users, and shares Django password
+validation/hashing with the browser reset service. Password and requested status
+changes are atomic, and password hashes invalidate existing sessions. Recovery
+preserves other permissions and timesheet records. Replacement passwords have no
+expiry or mandatory-change workflow. First-administrator bootstrap remains separate.
 
-Current account updates allow self-deactivation/demotion and can remove the last
-active administrator. Bootstrap rejects any existing administrator, including an
-inactive one. Self-protection and the server-side reset/recovery command are not
-implemented or covered by Stage 3's completion evidence; browser password reset
-and session invalidation are already implemented.
+Bootstrap still rejects any existing administrator, including an inactive one;
+the new command can recover that account. There is no last-active-administrator
+count guard: the agreed restriction applies to self changes. Stage 9 verification
+is recorded in the tracker; Stage 3 completion evidence predates these safeguards
+and the server command. Browser password reset and session invalidation already
+existed in Stage 3. No schema or dependency change is needed for Stage 9.
 
 ## Stage 4 Implementation Decisions
 

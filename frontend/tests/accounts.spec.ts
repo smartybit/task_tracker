@@ -184,3 +184,80 @@ test("revoking administrator status removes management access without another lo
     await expect(administrator.getByRole("heading", { name: "Your projects", exact: true })).toBeVisible();
   } finally { await other.close(); }
 });
+
+test("administrator self-protection preserves own edits and permits changes to another administrator", async ({ page, context, browser }, testInfo) => {
+  const suffix = Date.now();
+  const { user: actor } = await setupUser(context, `self-admin-${suffix}@example.test`, { is_admin: true });
+  const { user: other } = await setupUser(context, `other-admin-${suffix}@example.test`, { is_admin: true });
+  await context.clearCookies();
+  await login(page, actor.email, password);
+  await page.getByLabel("Manage account").selectOption(actor.id);
+  const edit = page.getByRole("form", { name: "Edit account", exact: true });
+  for (const label of ["Application administrator", "Active account"]) {
+    await expect(edit.getByLabel(label, { exact: true })).toBeChecked();
+    await expect(edit.getByLabel(label, { exact: true })).toBeDisabled();
+  }
+  await expect(edit).toContainText("You cannot deactivate your own account");
+  await edit.getByLabel("Display name").fill("Protected administrator");
+  await edit.getByRole("button", { name: "Save account" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Changes saved.");
+  await page.reload();
+  await page.getByLabel("Manage account").selectOption(actor.id);
+  await expect(edit.getByLabel("Display name")).toHaveValue("Protected administrator");
+  const csrf = (await (await context.request.get(`${baseURL}/api/v1/auth/csrf/`)).json()).csrf_token;
+  for (const data of [{ is_admin: false }, { is_active: false }]) {
+    const response = await context.request.patch(`${baseURL}/api/v1/users/${actor.id}/`, {
+      headers: { "X-CSRFToken": csrf, Origin: baseURL }, data,
+    });
+    expect(response.status()).toBe(400);
+    expect((await response.json()).code).toBe("self_protection");
+  }
+  expect((await context.request.get(`${baseURL}/api/v1/users/`)).status()).toBe(200);
+  await page.screenshot({ path: testInfo.outputPath("self-protection-desktop.png"), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await edit.getByRole("button", { name: "Save account" }).focus();
+  await expect(edit.getByRole("button", { name: "Save account" })).toBeFocused();
+  await page.screenshot({ path: testInfo.outputPath("self-protection-narrow.png"), fullPage: true });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const colleagueContext = await browser.newContext();
+  try {
+    const colleague = await colleagueContext.newPage();
+    await login(colleague, other.email, password);
+    await page.getByLabel("Manage account").selectOption(other.id);
+    await expect(edit.getByLabel("Application administrator")).toBeEnabled();
+    await edit.getByLabel("Active account").uncheck();
+    await edit.getByRole("button", { name: "Save account" }).click();
+    await expect(page.getByRole("alert")).toHaveText("Changes saved.");
+    await colleague.reload();
+    await expect(colleague.getByRole("form", { name: "Sign in", exact: true })).toBeVisible();
+    await edit.getByLabel("Active account").check();
+    await edit.getByLabel("Application administrator").uncheck();
+    await edit.getByRole("button", { name: "Save account" }).click();
+    await expect(page.getByRole("alert")).toHaveText("Changes saved.");
+    await login(colleague, other.email, password);
+    await expect(colleague.getByRole("navigation", { name: "Management" })).toHaveCount(0);
+  } finally { await colleagueContext.close(); }
+});
+
+test("a stale administrator account form rejects edits after privilege revocation", async ({ context, browser }) => {
+  const suffix = Date.now();
+  const { user: actor } = await setupUser(context, `stale-admin-${suffix}@example.test`, { is_admin: true });
+  const { user: target, token } = await setupUser(context, `stale-target-${suffix}@example.test`);
+  const other = await browser.newContext();
+  try {
+    const page = await other.newPage();
+    await login(page, actor.email, password);
+    await page.getByLabel("Manage account").selectOption(target.id);
+    const edit = page.getByRole("form", { name: "Edit account", exact: true });
+    await edit.getByLabel("Display name").fill("Must not be saved");
+    const revoke = await context.request.patch(`${baseURL}/api/v1/users/${actor.id}/`, {
+      headers: { "X-CSRFToken": token, Origin: baseURL }, data: { is_admin: false },
+    });
+    expect(revoke.status()).toBe(200);
+    const denied = page.waitForResponse(response => response.request().method() === "PATCH" && response.url().endsWith(`/users/${target.id}/`));
+    await edit.getByRole("button", { name: "Save account" }).click();
+    expect((await denied).status()).toBe(403);
+    await expect(page.getByRole("navigation", { name: "Management" })).toHaveCount(0);
+    expect((await (await context.request.get(`${baseURL}/api/v1/users/${target.id}/`)).json()).display_name).toBe("");
+  } finally { await other.close(); }
+});
