@@ -8,8 +8,12 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 ## Current Position
 
-- Last updated: 2026-10-12.
-- Stages 1–8 are complete: 8 of 9 implementation stages complete.
+- Last updated: 2026-10-13.
+- Stages 1–8 are complete: 8 of 10 implementation stages complete.
+- By agreement on 2026-10-13, Stage 9 contains development activities only:
+  administrator safeguards/recovery and application verification. Production
+  server/proxy configuration, deployment, backups and restoration move to Stage 10.
+  Both stages remain Not started; next is Stage 9 administrator lifecycle work.
 - Stage 8 delivers remarks/shared stars, stable references, private inline images
   with screenshot paste, and English/Russian search. Final source `142611f`
   passed `stage8-final-verified2`: 126 PostgreSQL checks (571.625 seconds), fresh
@@ -20,7 +24,7 @@ actual progress; it does not turn proposals into confirmed requirements.
   Synthetic image bytes, metadata and download permissions also survived forced
   application-container replacement. Development services/data were untouched.
   Earlier failed/timed-out attempts and focused milestone evidence are retained
-  in Stage 8 below. Stage 9 deployment, restoration and administrator recovery
+  in Stage 8 below. Stage 9 development and Stage 10 deployment/restoration
   remain Not started.
 - Stage 7 started from `0fd2774`. Backend milestone `020cd88` passed 12 focused
   PostgreSQL tests, including a 64-combination access matrix and a concurrent
@@ -116,11 +120,11 @@ actual progress; it does not turn proposals into confirmed requirements.
   server-side password reset for any existing user with explicit reactivation and
   administrator-grant options. Self-protection and the reset/recovery command are
   not implemented yet; they remain a focused account-lifecycle follow-up outside
-  Stage 3's existing completion evidence.
+  Stage 3's existing completion evidence, scheduled for Stage 9.
 - Backup ownership and scope are agreed: the server administrator backs up the
   PostgreSQL cluster, attachment directory, and necessary configuration, with
   written instructions to restore the entire system on another machine. Procedure
-  implementation and verification remain Stage 9 work; tooling, schedule,
+  implementation and verification remain Stage 10 work; tooling, schedule,
   retention, and destination await deployment planning.
 
 ## Progress Overview
@@ -135,7 +139,8 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 6 | Timesheet interface | Done | Two full lifecycle runs: 85 PostgreSQL tests, build, 25 Chromium scenarios each; discovery permissions, drafts, revocation/reload recovery, running-stack reset and cleanup verified |
 | 7 | Reporting and CSV export | Done | Two sequential full lifecycles: 97 PostgreSQL tests, build, 30 Chromium scenarios each; reporting access, CSV, running-stack reset and cleanup verified |
 | 8 | Remarks, references, images, and search | Done | `142611f`: full lifecycle exit 0; 126 PostgreSQL tests, build, 41 Chromium scenarios; image replacement and scoped cleanup verified |
-| 9 | Deployment preparation and release verification | Not started | — |
+| 9 | Development completion and application verification | Not started | — |
+| 10 | Production deployment and operational verification | Not started | — |
 
 Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
 when its work and completion checks are satisfied. Record any blocker and the
@@ -960,10 +965,40 @@ full repeat passed as recorded below. Test follow-up: `142611f`.
 - Browser acceptance targets Chromium. Static PNG/JPEG/WebP, five new images per
   save, 2 MiB per image, keyword search and English/Russian are the documented
   initial defaults. Other languages, advanced search, OCR and general attachments
-  remain optional. Production setup, backup/restoration and agreed administrator
-  safeguards/recovery remain Stage 9 work. Stage 8 is Done; Stage 9 is next.
+  remain optional. Agreed administrator safeguards/recovery remain Stage 9 work;
+  production setup and backup/restoration move to Stage 10 under the 2026-10-13
+  stage split. Stage 8 is Done; Stage 9 is next.
 
-## Stage 9: Deployment and Release Verification
+## Stage 9: Development Completion and Application Verification
+
+- [ ] Implement the agreed administrator self-protection in the account service
+  and interface: reject self-deactivation/demotion, permit changes to other
+  administrators, and recheck actor privileges after acquiring the mutation lock.
+- [ ] Implement server-side password reset for any existing user, with explicit
+  reactivation and administrator-grant options. Preserve statuses unless requested,
+  validate passwords, invalidate existing sessions, and apply changes atomically.
+- [ ] Add focused PostgreSQL/API, concurrency, command and browser checks for
+  self-protection and recovery, following the testing charter.
+- [ ] Run the application regression lifecycle, including migrations/system/drift
+  checks, the frontend build, and critical API/database and Chromium workflows.
+  Complete exploratory sessions for permissions and competing edits; resolve
+  defects and record remaining application limitations.
+- [ ] Document the implemented account/recovery workflows and verified development
+  commands; align requirements, architecture, README and testing charter.
+
+Test environment: the existing isolated development/test Compose workflow with
+PostgreSQL, synthetic accounts/data, temporary uploads and Chromium. Production
+server/proxy configuration, deployment and operational backup/restoration belong
+to Stage 10. The production frontend build remains a development verification check.
+
+Completion check: the agreed administrator safeguards and recovery command are
+implemented and verified, application checks and exploratory sessions pass, and
+development documentation reflects actual behavior. No unresolved application
+issue exposes unauthorized data, loses records, corrupts timelines, or produces
+incorrect totals. Stage 9 completion does not claim production readiness; deployment
+and the full first-version completion criteria remain Stage 10 checks.
+
+## Stage 10: Production Deployment and Operational Verification
 
 - [ ] Select and configure the application server, reverse proxy, production
   frontend assets, and deployment settings for the VDS.
@@ -992,15 +1027,15 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 ## Decisions and Dependencies to Track
 
 - Implement the [agreed administrator policy](requirements.md#users-and-authentication)
-  before production use: reject self-deactivation/demotion, allow changes to
-  other administrators, and provide server-side password reset with explicit
+  in Stage 9 before production use: reject self-deactivation/demotion, allow changes
+  to other administrators, and provide server-side password reset with explicit
   reactivation and administrator-grant options. Include serialized competing-update
   and recovery checks from the testing charter. Self-protection and the recovery
   command are planned work, not part of Stage 3's existing completion evidence.
 - Shared zone is configurable in `.env`/backend settings by agreement on
   2026-10-09; verify UTC and Europe/Berlin with controlled clocks in Stage 5.
 - Implement and verify the [agreed backup policy](architecture.md#agreed-backup-and-restoration-policy)
-  in Stage 9 before production use, including written full-system restoration
+  in Stage 10 before production use, including written full-system restoration
   instructions. Deployment planning selects tooling, schedule, retention, and
   destination. This does not block earlier implementation stages.
 - Select supplementary frontend libraries, the application server, and reverse
@@ -1026,6 +1061,8 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 
 These entries record results at each milestone. Current status and next work are
 defined in Current Position and the stage sections above.
+Historical entries retain the stage numbering used at the time; the 2026-10-13
+split moves deployment/restoration from Stage 9 to Stage 10.
 
 | Date | Milestone | Evidence |
 | --- | --- | --- |
@@ -1064,3 +1101,4 @@ defined in Current Position and the stage sections above.
 | 2026-10-12 | Remarks regression verification recorded | Application `7d331c6` and fixtures `f4329c8` passed all 107 PostgreSQL checks, production build, and all 34 Chromium scenarios in serial `stage8-remarks-verified2`. The wrapper's 20-minute limit expired during final cleanup (124); this is not successful lifecycle acceptance. Independent inspection confirmed no test resources and preservation of all five original container IDs and both persistent volumes. Final desktop/narrow screenshots and log/status retained. Extended the full runner to 30 minutes and updated README; shell syntax, local links, consistency, and whitespace checked. No application rerun under the new deadline. Remarks milestone checks complete; references, images, English/Russian search, and full-stage lifecycle acceptance remain pending. Stage 8 In progress. |
 | 2026-10-12 | Stage 8 references, images and search delivered | References `3de23bf`, images `cad8b4d`, image-draft fix `286f491` and search `551d18a` implement stable navigation, private validated inline images/paste, atomic file lifecycle and English/Russian indexed search. Focused PostgreSQL/browser checks and synthetic image-container replacement passed. Detailed milestone evidence is retained in Stage 8 above. |
 | 2026-10-12 | Stage 8 completed | Final source `142611f` passed `stage8-final-verified2`, exit 0: 126 PostgreSQL tests, production build and all 41 Chromium scenarios, with healthy-stack reset and inspected cleanup. Total lifecycle 25m31s; image persistence also passed across forced container replacement. Original unrelated containers/volumes preserved; development untouched. Corrected stale-task expectation passed focused and full checks. Documentation, local links/anchors and whitespace checked. Stage 8 Done; Stage 9 deployment/restoration and administrator safeguards/recovery are next. |
+| 2026-10-13 | Development and deployment stages separated | By user decision, Stage 9 contains development only: agreed administrator safeguards/recovery, application regression and exploratory checks, and development documentation. Production server/proxy configuration, deployment, backups/restoration and operational verification move to new Stage 10. Both remain Not started; 8 of 10 stages complete. Tracker, architecture, testing charter, README and operational references aligned; historical milestones preserved. Documentation consistency, 89 local links/anchors and whitespace checked. No application code changed or application tests run. Commit: `docs: separate development completion from production deployment`. |

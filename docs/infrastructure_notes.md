@@ -558,4 +558,6 @@ original unrelated container IDs and both original volumes were preserved. Logs,
 status and screenshots are retained under ignored
 `.artifacts/verification/stage8-final-verified2*`; final narrow image layout was
 inspected on the same application source. Development data/services were untouched.
-Production deployment and full backup/restoration remain Stage 9 work.
+Production deployment and full backup/restoration remain unimplemented. The
+2026-10-13 stage split schedules this operational work in Stage 10; Stage 9 now
+contains development activities only.

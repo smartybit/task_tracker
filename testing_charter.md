@@ -76,7 +76,8 @@ Future administrator lifecycle checks, following the agreed policy:
   without reviving old sessions or granting implicit application-data access.
 
 Self-protection and server-side reset/recovery are not implemented yet. These
-future cases were not part of the successful Stage 3 suite.
+future cases were not part of the successful Stage 3 suite. Implement and verify
+them in Stage 9 using the existing isolated application test setup.
 
 ### 2. Preserve Timesheet Integrity
 
@@ -242,7 +243,7 @@ Execution evidence is recorded in the implementation tracker.
   screenshot pasting if implemented.
 - Restart the application and verify persisted records and attachments. Exercise
   failed multi-record operations and confirm rollback without data loss.
-- In Stage 9, follow the written restoration instructions on an isolated second
+- In Stage 10, follow the written restoration instructions on an isolated second
   machine or equivalent fresh environment using synthetic backups of the
   PostgreSQL cluster, attachment directory, and necessary configuration. Verify
   startup, accounts/permissions, recorded work and totals, and consistency between
@@ -351,9 +352,15 @@ unresolved defects that expose unauthorized data, lose records, corrupt timeline
 or produce incorrect totals. Document remaining limitations and reproduce failures
 clearly. Verify startup and persistence in the deployment configuration.
 
+Stage 9 covers development completion, administrator safeguards/recovery, and
+application regression and exploratory checks in the existing test environment.
+Stage 10 covers production server/proxy configuration, deployment and operational
+verification. Completing Stage 9 alone does not satisfy production readiness;
+deployment startup, persistence and full-system restoration remain Stage 10 checks.
+
 Native Android/desktop clients, offline synchronization, general file attachments,
 email delivery, approvals, immutable auditing, and daylight-saving behavior are
-outside the first-version charter. Stage 9 must verify full-system restoration
+outside the first-version charter. Stage 10 must verify full-system restoration
 under the [agreed backup policy](architecture.md#agreed-backup-and-restoration-policy);
 tooling, schedule, retention, and destination remain deployment-planning decisions.
 The shared working time zone is configurable through settings (UTC default).

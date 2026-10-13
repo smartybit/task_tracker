@@ -25,8 +25,10 @@ verification is complete. Stage 7 adds reporting APIs, report screens, and CSV
 downloads; full acceptance verification is complete. Stage 8 remarks, shared stars,
 stable references, private images and multilingual search are complete. Final
 acceptance passed 126 PostgreSQL tests, the production build, 41 Chromium scenarios
-and synthetic image-container replacement. Stage 9 deployment and restoration
-remain next; detailed evidence is recorded in the implementation tracker.
+and synthetic image-container replacement. Stage 9 contains development completion
+and application verification, including administrator safeguards/recovery. Stage 10
+contains production server/proxy configuration, deployment, backups and restoration.
+Both remain Not started; detailed evidence is recorded in the implementation tracker.
 No personal account is created automatically, and public registration is unavailable.
 
 ## Task Management
@@ -241,15 +243,16 @@ themselves, but may change another administrator's active status or privileges.
 A planned server-side command will reset any existing user's password, with
 explicit recovery options to reactivate the user and grant administrator
 privileges. Replacement passwords have no expiry or mandatory-change workflow.
-Self-protection and this reset/recovery command are not implemented yet; current
-account updates can still remove the last active administrator. Keep an active
+Self-protection and this reset/recovery command are planned for Stage 9 and are
+not implemented yet; current account updates can still remove the last active
+administrator. Keep an active
 administrator available. See the [agreed policy](requirements.md#users-and-authentication)
 and [implementation follow-up](architecture.md#agreed-administrator-lifecycle-follow-up).
 
 The server administrator is responsible for backups of the PostgreSQL cluster,
 attachment directory, and necessary configuration. Written instructions for
 restoring the entire system on another machine and verification of that procedure
-remain Stage 9 work; tooling, schedule, retention, and destination await deployment
+remain Stage 10 work; tooling, schedule, retention, and destination await deployment
 planning. See the [backup policy](architecture.md#agreed-backup-and-restoration-policy).
 
 Grants manages local task/remark read/write flags per organization or project and

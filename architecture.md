@@ -116,8 +116,8 @@ authorization or safe serialization through task, time, or reporting endpoints.
 ### Agreed Administrator Lifecycle Follow-up
 
 The [administrator policy](requirements.md#users-and-authentication) is agreed but
-requires a focused implementation follow-up. Reject self-deactivation and
-self-demotion in the account service; permit changes to another administrator's
+requires a focused implementation follow-up in Stage 9. Reject self-deactivation
+and self-demotion in the account service; permit changes to another administrator's
 active status or administrator privileges. Reuse MutationLock and recheck the
 actor's current privileges after acquiring it for competing account updates.
 
@@ -422,9 +422,13 @@ another machine, including the required configuration and startup steps.
 
 Select backup tooling, schedule, retention, and destination during deployment
 planning. The backup/restore procedure and isolated full-system restoration check
-remain Stage 9 work; no completed backup or restoration is claimed here.
+remain Stage 10 work; no completed backup or restoration is claimed here.
 
 ## Proposed Deployment and Operations
+
+By agreement on 2026-10-13, production configuration and deployment belong to
+Stage 10. Stage 9 contains development activities only: the agreed administrator
+lifecycle follow-up and application verification in the existing test setup.
 
 - Use Docker Compose for reproducible development and VDS deployment.
 - Keep runtime services to the backend, PostgreSQL, and a reverse proxy serving
@@ -479,7 +483,7 @@ defines the scenarios and acceptance priorities.
   Use separate authenticated browser contexts for different users or clients.
 - Check TypeScript and the production frontend build; add focused component tests
   where useful. Mock-based UI checks do not replace end-to-end integration checks.
-- Extend the environment in Stage 9 with production assets, the selected server
+- Extend the environment in Stage 10 with production assets, the selected server
   and reverse proxy, and persistent test volumes for restart, migration, and
   agreed backup/restore checks. Never restore test backups into live storage.
 
