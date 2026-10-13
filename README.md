@@ -27,10 +27,12 @@ stable references, private images and multilingual search are complete. Final
 acceptance passed 126 PostgreSQL tests, the production build, 41 Chromium scenarios
 and synthetic image-container replacement. Stage 9 contains development completion
 and application verification, including administrator safeguards/recovery. Stage 10
-contains production server/proxy configuration, deployment, backups and restoration.
+covers multiple-instance URL-prefix support; its design is documented and application
+implementation is pending. Stage 11 contains production server/proxy configuration,
+deployment, backups and restoration.
 Stage 9 is complete: administrator safeguards/recovery and development acceptance
 passed 139 PostgreSQL tests, the production build and all 43 Chromium scenarios.
-Stage 10 remains Not started. Detailed evidence is recorded in the implementation
+Stage 11 remains Not started. Detailed evidence is recorded in the implementation
 tracker.
 No personal account is created automatically, and public registration is unavailable.
 
@@ -272,7 +274,7 @@ works even when an existing inactive administrator prevents bootstrap. See the
 The server administrator is responsible for backups of the PostgreSQL cluster,
 attachment directory, and necessary configuration. Written instructions for
 restoring the entire system on another machine and verification of that procedure
-remain Stage 10 work; tooling, schedule, retention, and destination await deployment
+remain Stage 11 work; tooling, schedule, retention, and destination await deployment
 planning. See the [backup policy](architecture.md#agreed-backup-and-restoration-policy).
 
 Grants manages local task/remark read/write flags per organization or project and
@@ -445,6 +447,9 @@ in [Timesheet API and Configuration](#timesheet-api-and-configuration).
 
 ## Design and Verification References
 
+- [Multiple-instance design](docs/multiple_instances.md) for planned Stage 10 path,
+  session/data isolation and development verification changes; support is not yet
+  implemented. Actual deployment remains Stage 11 work.
 - [Architecture](architecture.md), including test isolation and search direction.
 - [Domain/API design](docs/domain_design.md), including delegated initial defaults.
 - [Testing charter](testing_charter.md) for risk-based scenarios and release criteria.

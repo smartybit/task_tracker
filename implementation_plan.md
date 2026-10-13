@@ -9,11 +9,13 @@ actual progress; it does not turn proposals into confirmed requirements.
 ## Current Position
 
 - Last updated: 2026-10-13.
-- Stages 1–9 are complete: 9 of 10 implementation stages complete.
-- By agreement on 2026-10-13, Stage 9 contains development activities only:
-  administrator safeguards/recovery and application verification. Production
-  server/proxy configuration, deployment, backups and restoration move to Stage 10.
-  Stage 9 is Done; Stage 10 remains Not started and is next.
+- Stages 1–9 are complete: 9 of 11 implementation stages complete.
+- By the revised agreement on 2026-10-13, Stage 10 develops independent instances
+  at configurable URL prefixes; production server/proxy configuration, deployment,
+  backups and restoration move to Stage 11. Stage 9 is Done; Stage 10 is In progress
+  with its design documented, while implementation/runtime verification are pending.
+  Stage 11 remains Not started. Next is implementing the
+  [multiple-instance design](docs/multiple_instances.md).
 - Stage 9 final application source `1f79ff6` passed `stage9-verified1`, exit 0:
   139 PostgreSQL tests (594.845 seconds), fresh migrations/system/drift checks,
   TypeScript/Vite production build and all 43 Chromium scenarios (13.6 minutes).
@@ -33,7 +35,7 @@ actual progress; it does not turn proposals into confirmed requirements.
   Synthetic image bytes, metadata and download permissions also survived forced
   application-container replacement. Development services/data were untouched.
   Earlier failed/timed-out attempts and focused milestone evidence are retained
-  in Stage 8 below. Stage 9 development is Done; Stage 10 deployment and
+  in Stage 8 below. Stage 9 development is Done; Stage 11 deployment and
   restoration remain Not started.
 - Stage 7 started from `0fd2774`. Backend milestone `020cd88` passed 12 focused
   PostgreSQL tests, including a 64-combination access matrix and a concurrent
@@ -133,7 +135,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 - Backup ownership and scope are agreed: the server administrator backs up the
   PostgreSQL cluster, attachment directory, and necessary configuration, with
   written instructions to restore the entire system on another machine. Procedure
-  implementation and verification remain Stage 10 work; tooling, schedule,
+  implementation and verification remain Stage 11 work; tooling, schedule,
   retention, and destination await deployment planning.
 
 ## Progress Overview
@@ -149,7 +151,8 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 7 | Reporting and CSV export | Done | Two sequential full lifecycles: 97 PostgreSQL tests, build, 30 Chromium scenarios each; reporting access, CSV, running-stack reset and cleanup verified |
 | 8 | Remarks, references, images, and search | Done | `142611f`: full lifecycle exit 0; 126 PostgreSQL tests, build, 41 Chromium scenarios; image replacement and scoped cleanup verified |
 | 9 | Development completion and application verification | Done | `1f79ff6`: full lifecycle exit 0; 139 PostgreSQL tests, build, 43 Chromium scenarios; exploratory account checks and scoped cleanup verified |
-| 10 | Production deployment and operational verification | Not started | — |
+| 10 | Multiple-instance prefix support | In progress | Design documented; implementation and runtime verification pending |
+| 11 | Production deployment and operational verification | Not started | — |
 
 Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
 when its work and completion checks are satisfied. Record any blocker and the
@@ -984,7 +987,8 @@ Started 2026-10-13 from clean source `7f838a4`. Existing account services alread
 serialized updates and rechecked administrator access; Stage 9 adds self-protection.
 The interactive `reset_password` command reuses password validation/hashing,
 session invalidation and the domain lock with explicit recovery flags. Verification
-uses only the existing synthetic test project; Stage 10 remains unstarted.
+uses only the existing synthetic test project. At that milestone the then-planned
+Stage 10 deployment work remained unstarted; it is now scheduled as Stage 11.
 Completed on 2026-10-13; final acceptance evidence is recorded below.
 
 - [x] Implement the agreed administrator self-protection in the account service
@@ -1005,14 +1009,15 @@ Completed on 2026-10-13; final acceptance evidence is recorded below.
 Test environment: the existing isolated development/test Compose workflow with
 PostgreSQL, synthetic accounts/data, temporary uploads and Chromium. Production
 server/proxy configuration, deployment and operational backup/restoration belong
-to Stage 10. The production frontend build remains a development verification check.
+to Stage 11 under the revised sequencing. The production frontend build remains
+a development verification check.
 
 Completion check: the agreed administrator safeguards and recovery command are
 implemented and verified, application checks and exploratory sessions pass, and
 development documentation reflects actual behavior. No unresolved application
 issue exposes unauthorized data, loses records, corrupts timelines, or produces
 incorrect totals. Stage 9 completion does not claim production readiness; deployment
-and the full first-version completion criteria remain Stage 10 checks.
+and the full first-version completion criteria remain Stage 11 checks.
 
 ### Administrator Lifecycle Milestone: 2026-10-13
 
@@ -1074,12 +1079,65 @@ and the full first-version completion criteria remain Stage 10 checks.
   and implemented behavior. Documentation consistency, 89 local links/anchors and
   whitespace checks passed. No schema or dependency changes were required.
   Full log/status remain in `.artifacts/verification/stage9-verified1.*`.
-- Stage 9 is Done. Stage 10 production server/proxy configuration, deployment and
-  full-system backup/restoration remain Not started. Chromium is the accepted
+- Stage 9 is Done. Production server/proxy configuration, deployment and
+  full-system backup/restoration remain Not started (now Stage 11 under the later
+  2026-10-13 sequencing update). Chromium is the accepted
   browser; existing first-version exclusions remain unchanged. Completion commit:
   `docs: record Stage 9 completion and verification`.
 
-## Stage 10: Production Deployment and Operational Verification
+## Stage 10: Multiple-Instance Prefix Support
+
+Started 2026-10-13 as a documentation/design activity from clean source `9eaf07f`.
+The user requested this development stage before production deployment. Detailed
+changes and integration contracts are in the
+[multiple-instance design](docs/multiple_instances.md). No prefix-support code,
+new services or runtime checks have been implemented/run at this milestone.
+
+- [x] Describe existing gaps, proposed configuration, affected files, routing,
+  session/data isolation, development tooling, and acceptance checks. Record
+  the agreed capability in requirements and the technical design in architecture.
+- [ ] Implement validated application-path and instance-ID configuration, preserving
+  root-path defaults and enforcing consistent frontend/backend configuration.
+- [ ] Configure Vite base/dev proxy and centralize frontend API URL construction;
+  cover health, JSON requests, private images, CSV and existing fragment navigation.
+- [ ] Configure Django script prefix, distinct session/CSRF names and cookie paths;
+  verify redirects, CSRF, login rotation/logout deletion and current authorization.
+- [ ] Add isolated development-instance configuration, separate PostgreSQL/uploads,
+  project/port/env targeting, independent image/artifact references and health checks.
+  Preserve the existing single-instance development and guarded test workflows.
+- [ ] Add a disposable paired-instance development forwarding fixture and runner;
+  make browser helpers prefix-aware. Verify root, sibling and nested mounts,
+  same-browser session isolation, separate data/uploads, errors and boundary routing,
+  targeted management commands and independent restart/update/cleanup.
+- [ ] Run the normal PostgreSQL/build/Chromium regression lifecycle and focused
+  paired-instance acceptance; document verified commands/results and limitations.
+
+Test environment: isolated synthetic development/test instances, each with its own
+PostgreSQL and uploads, behind one development forwarding fixture. Exercise two
+prefixes at one browser origin, plus root compatibility and an isolated HTTPS
+cookie check. Actual production server/proxy selection and VDS deployment remain
+Stage 11 activities; do not use live databases, uploads or production configuration.
+
+Completion check: configurable mounts and instance isolation work through the
+frontend, API, cookies, private files, CSV, management commands and instance
+lifecycle. Normal and paired-instance checks pass with scoped cleanup and preserved
+original resources. Documentation matches implemented behavior. The design alone
+does not complete Stage 10 or establish production readiness.
+
+Design milestone: source inspection identified root-absolute URLs in `api.ts`,
+`Content.tsx` and `Reports.tsx`, root-default Vite/proxy/cookies, shared mutable image
+tags, fixed development port/database settings and root-absolute browser helpers.
+The design specifies required changes without choosing a production proxy or
+altering Stage 9 application behavior. Documentation consistency, 96 local Markdown
+links/anchors and whitespace checks passed. No application code changed, services
+started or application tests ran; runtime verification remains planned. Commit:
+`docs: plan multiple-instance prefix support before deployment`.
+
+## Stage 11: Production Deployment and Operational Verification
+
+Use the Stage 10 prefix/resource contract when configuring the actual production
+server/proxy and independent deployments. Verify both configured mounts together;
+the development forwarding fixture does not establish production readiness.
 
 - [ ] Select and configure the application server, reverse proxy, production
   frontend assets, and deployment settings for the VDS.
@@ -1092,8 +1150,10 @@ and the full first-version completion criteria remain Stage 10 checks.
   consistency in isolation.
 - [ ] Run the critical API/database and browser checks from the testing charter
   and complete exploratory sessions for permissions and competing edits.
-- [ ] Verify startup, migrations, and persistence in the deployment configuration.
-  Record actual deployment state and remaining limitations.
+- [ ] Verify startup, migrations, routing, session isolation and persistence for
+  both configured mounts in the deployment configuration, including independent
+  update/restart and instance-scoped operations. Record actual deployment state
+  and remaining limitations.
 
 Test environment: an isolated deployment-like Compose setup with production
 frontend assets, the selected server/proxy, and persistent test volumes. Exercise
@@ -1116,7 +1176,7 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 - Shared zone is configurable in `.env`/backend settings by agreement on
   2026-10-09; verify UTC and Europe/Berlin with controlled clocks in Stage 5.
 - Implement and verify the [agreed backup policy](architecture.md#agreed-backup-and-restoration-policy)
-  in Stage 10 before production use, including written full-system restoration
+  in Stage 11 before production use, including written full-system restoration
   instructions. Deployment planning selects tooling, schedule, retention, and
   destination. This does not block earlier implementation stages.
 - Select supplementary frontend libraries, the application server, and reverse
@@ -1142,8 +1202,10 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 
 These entries record results at each milestone. Current status and next work are
 defined in Current Position and the stage sections above.
-Historical entries retain the stage numbering used at the time; the 2026-10-13
-split moves deployment/restoration from Stage 9 to Stage 10.
+Historical entries retain the stage numbering used at the time. The first
+2026-10-13 split moved deployment/restoration from Stage 9 to Stage 10; the later
+update inserts multiple-instance development at Stage 10 and moves operational
+work to Stage 11.
 
 | Date | Milestone | Evidence |
 | --- | --- | --- |
@@ -1185,3 +1247,4 @@ split moves deployment/restoration from Stage 9 to Stage 10.
 | 2026-10-13 | Development and deployment stages separated | By user decision, Stage 9 contains development only: agreed administrator safeguards/recovery, application regression and exploratory checks, and development documentation. Production server/proxy configuration, deployment, backups/restoration and operational verification move to new Stage 10. Both remain Not started; 8 of 10 stages complete. Tracker, architecture, testing charter, README and operational references aligned; historical milestones preserved. Documentation consistency, 89 local links/anchors and whitespace checked. No application code changed or application tests run. Commit: `docs: separate development completion from production deployment`. |
 | 2026-10-13 | Stage 9 administrator lifecycle implemented | Self-protection in API/UI and interactive server password reset/recovery implemented without schema/dependency changes. Thirteen focused PostgreSQL checks (76.019s), both new Chromium workflows (37.9s), build/drift and independent exploratory competing-update session passed; desktop/narrow screenshots inspected. Fixture sign-in and exploratory catalog-visibility expectations corrected, with failed attempts preserved. Documentation aligned; 89 local links/anchors and whitespace passed. Full lifecycle acceptance pending; Stage 9 In progress, Stage 10 Not started. Commit: `feat: protect administrator accounts and add server recovery`. |
 | 2026-10-13 | Stage 9 completed | Final application source `1f79ff6` passed `stage9-verified1`, exit 0: 139 PostgreSQL tests (594.845s), fresh migrations/system/drift, TypeScript/Vite build and all 43 Chromium scenarios (13.6m). Total lifecycle 25m09s; healthy-stack reset and scoped cleanup inspected. Separate exploratory keyboard/competing-administrator checks and desktop/narrow inspection passed. Original five unrelated container IDs and both volumes preserved; development untouched. Documentation aligned; 89 local links/anchors and whitespace checked. Stage 9 Done; Stage 10 production deployment/restoration remains Not started. Commit: `docs: record Stage 9 completion and verification`. |
+| 2026-10-13 | Multiple-instance development inserted before deployment | By user decision, production server/proxy configuration, deployment and operational verification move from Stage 10 to Stage 11. Stage 10 now covers multiple-instance URL-prefix development. Recorded the agreed capability and a detailed design for configuration, frontend/API/assets, Django script prefix/cookies, routing, resource/image isolation, development tooling and acceptance checks. Stage 10 In progress with design complete; implementation/runtime verification pending. Nine of eleven stages complete; Stage 11 Not started. Documentation consistency, 96 local links/anchors and whitespace checked; no application code, services or application tests changed/run. Commit: `docs: plan multiple-instance prefix support before deployment`. |

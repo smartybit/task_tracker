@@ -79,7 +79,7 @@ After a process crash or a failed cleanup callback, run
 `python manage.py prune_content_images`: under the domain lock it removes orphan
 files older than one hour and reports missing referenced files. It preserves recent
 and referenced files. Back up PostgreSQL and uploads consistently; the full backup
-and restoration procedure remains Stage 10 work.
+and restoration procedure remains Stage 11 work.
 
 ## Search
 

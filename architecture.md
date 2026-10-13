@@ -427,13 +427,28 @@ another machine, including the required configuration and startup steps.
 
 Select backup tooling, schedule, retention, and destination during deployment
 planning. The backup/restore procedure and isolated full-system restoration check
-remain Stage 10 work; no completed backup or restoration is claimed here.
+remain Stage 11 work; no completed backup or restoration is claimed here.
+
+## Stage 10 Multiple-Instance Design
+
+By agreement on 2026-10-13, Stage 10 covers development of independent instances
+at configurable URL prefixes on one host. The
+[multiple-instance design](docs/multiple_instances.md) records the inspected gaps,
+proposed configuration contract, frontend/API/cookie/script-prefix changes,
+resource and image isolation, development tooling, routing contract and acceptance
+matrix. Design is documented; application changes and runtime checks are pending.
+
+Use one canonical application path for Vite and Django, distinct instance/cookie
+names, separate database/upload resources, and correctly prefixed private-image
+and CSV URLs. Preserve the root-path workflow and backend permission/accounting
+rules. A development forwarding fixture verifies two mounts at one origin;
+selecting/configuring the actual production server/proxy remains Stage 11 work.
 
 ## Proposed Deployment and Operations
 
-By agreement on 2026-10-13, production configuration and deployment belong to
-Stage 10. Stage 9 contains development activities only: the agreed administrator
-lifecycle follow-up and application verification in the existing test setup.
+By the revised 2026-10-13 sequencing, production configuration and deployment
+belong to Stage 11. Stage 9 administrator lifecycle/application verification is
+complete; Stage 10 develops multiple-instance prefix support before deployment.
 
 - Use Docker Compose for reproducible development and VDS deployment.
 - Keep runtime services to the backend, PostgreSQL, and a reverse proxy serving
@@ -488,7 +503,10 @@ defines the scenarios and acceptance priorities.
   Use separate authenticated browser contexts for different users or clients.
 - Check TypeScript and the production frontend build; add focused component tests
   where useful. Mock-based UI checks do not replace end-to-end integration checks.
-- Extend the environment in Stage 10 with production assets, the selected server
+- Extend the environment in Stage 10 with isolated sibling instances and a
+  development forwarding fixture to verify prefixes, cookies, data and lifecycle
+  isolation. Keep the existing single-instance test entry point guarded and scoped.
+- Extend the environment in Stage 11 with production assets, the selected server
   and reverse proxy, and persistent test volumes for restart, migration, and
   agreed backup/restore checks. Never restore test backups into live storage.
 

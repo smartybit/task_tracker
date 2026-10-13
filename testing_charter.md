@@ -247,7 +247,7 @@ Execution evidence is recorded in the implementation tracker.
   screenshot pasting if implemented.
 - Restart the application and verify persisted records and attachments. Exercise
   failed multi-record operations and confirm rollback without data loss.
-- In Stage 10, follow the written restoration instructions on an isolated second
+- In Stage 11, follow the written restoration instructions on an isolated second
   machine or equivalent fresh environment using synthetic backups of the
   PostgreSQL cluster, attachment directory, and necessary configuration. Verify
   startup, accounts/permissions, recorded work and totals, and consistency between
@@ -315,6 +315,32 @@ Execution evidence is recorded in the implementation tracker.
   screens, failed-query recovery, repeated queries after revocation and clearing
   cached excerpts when access refreshes.
 
+## Stage 10 Multiple-Instance Acceptance
+
+These checks are planned; prefix support is not implemented or runtime-verified.
+Follow the [multiple-instance design](docs/multiple_instances.md#verification-and-completion)
+using only isolated PostgreSQL, uploads and synthetic accounts.
+
+- Preserve root-path behavior and verify two sibling prefixes at one origin, nested
+  paths, invalid configuration, mismatched frontend/backend prefixes, boundary
+  routing, query preservation and canonical trailing-slash redirects.
+- Exercise prefixed assets, health/API/auth/CSRF requests, stable references,
+  private image upload/download and actual CSV downloads. Missing API/assets must
+  retain appropriate errors rather than returning frontend HTML or another instance.
+- Use one browser context for both instances. Inspect cookie names/paths and
+  rotation/deletion; logout, password reset and deactivation in one must preserve
+  the other's session. Verify Secure flags through an isolated HTTPS fixture.
+- Verify distinct accounts/grants, tasks, sheets, remarks, search/report totals and
+  image bytes. Matching account emails confer no shared identity; IDs present only
+  in the other instance are unavailable, and matching IDs resolve only local data
+  under local permissions, without querying the other database or files.
+- Check targeted bootstrap/reset/migrate commands and independent instance
+  restart/replacement/update. Inspect scoped cleanup and original-resource
+  preservation; retain the current guarded test entry point and full regressions.
+- State the common-origin limitation accurately: scoped cookies and separate data
+  prevent accidental mixing, but different paths do not create browser trust
+  boundaries. Separate hostnames are required if that isolation is needed.
+
 ## Verification Approach
 
 The [reusable test setup](architecture.md#reusable-test-setup) describes
@@ -337,7 +363,8 @@ Stage 9 passed a full lifecycle on application source `1f79ff6`: 139 PostgreSQL
 tests, fresh migrations/system/drift, the production frontend build and all 43
 Chromium scenarios, exit 0, with inspected healthy-stack reset and cleanup.
 The administrator lifecycle and separate exploratory evidence are recorded above
-and in the tracker. Stage 10 deployment/restoration checks remain unstarted.
+and in the tracker. Stage 10 multiple-instance implementation/checks and Stage 11
+deployment/restoration checks remain pending.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real
@@ -363,13 +390,15 @@ clearly. Verify startup and persistence in the deployment configuration.
 
 Stage 9 covers development completion, administrator safeguards/recovery, and
 application regression and exploratory checks in the existing test environment.
-Stage 10 covers production server/proxy configuration, deployment and operational
-verification. Completing Stage 9 alone does not satisfy production readiness;
-deployment startup, persistence and full-system restoration remain Stage 10 checks.
+Stage 10 covers development and isolated verification of multiple instances at
+configurable prefixes. Stage 11 covers production server/proxy configuration,
+deployment and operational verification. Completing the development stages alone
+does not satisfy production readiness; deployment startup, persistence and
+full-system restoration remain Stage 11 checks.
 
 Native Android/desktop clients, offline synchronization, general file attachments,
 email delivery, approvals, immutable auditing, and daylight-saving behavior are
-outside the first-version charter. Stage 10 must verify full-system restoration
+outside the first-version charter. Stage 11 must verify full-system restoration
 under the [agreed backup policy](architecture.md#agreed-backup-and-restoration-policy);
 tooling, schedule, retention, and destination remain deployment-planning decisions.
 The shared working time zone is configurable through settings (UTC default).

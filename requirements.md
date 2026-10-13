@@ -55,6 +55,21 @@ The following requirements reflect agreed product behavior.
   invalidates existing sessions; reactivation does not restore them.
 - First-administrator setup and server recovery are described in the architecture.
 
+### Independent Instances
+
+- Support independent installations on the same hostname under different
+  configurable URL prefixes, for example `/time-tracker-test/` and
+  `/time-tracker-prod/` (agreed 2026-10-13). Preserve root-path hosting for existing
+  development use.
+- Each installation keeps its accounts, grants, application data, images and
+  sign-in sessions separate. Signing out, resetting accounts or changing data
+  in one instance must not change the other instance.
+- All application assets, API requests, private images, downloads and generated
+  links must work under the configured prefix. Prefixes do not create separate
+  browser origins; separate hostnames are needed for different browser trust
+  boundaries. Technical configuration and verification are described in the
+  [multiple-instance design](docs/multiple_instances.md).
+
 ### Tasks, Ownership, and Hierarchy
 
 - A task has a description, a status, and a history of status changes.

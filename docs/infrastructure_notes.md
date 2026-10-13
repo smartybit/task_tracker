@@ -593,4 +593,6 @@ Final project-label inspection found no test containers, networks or volumes.
 All five original unrelated container IDs and both original volumes were
 preserved. Development data/services were not migrated, reset or seeded.
 Stage 9 is complete; production server/proxy configuration, deployment and
-full-system backup/restoration remain Stage 10 work.
+full-system backup/restoration remain unimplemented. The later 2026-10-13 sequencing
+update moves that work to Stage 11 and inserts multiple-instance development at
+Stage 10; the earlier entries retain the numbering used at their milestones.
