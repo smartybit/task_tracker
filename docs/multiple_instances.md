@@ -25,9 +25,9 @@ The application uses one canonical path and one stable instance identifier:
   underscore and hyphen path segments, including nested prefixes. Reject URL
   origins, query strings, fragments, whitespace, percent escapes, backslashes,
   duplicate separators and `.`/`..` segments rather than guessing their meaning.
-- Validate the instance identifier as a bounded lowercase alphanumeric/hyphen
-  slug usable in cookie and Compose resource names. Use `task-tracker-dev` as the
-  proposed root-development default; require explicit unique identifiers for
+- Validate the instance identifier as a lowercase alphanumeric/hyphen slug starting
+  with an alphanumeric, at most 63 characters. Use `task-tracker-dev` as the
+  root-development default; require explicit unique identifiers for
   paired instances.
 - Supply the same canonical path to the frontend build/dev server and backend
   runtime. Derive API paths, script prefix and cookie paths from it; do not maintain
@@ -72,7 +72,7 @@ bundle at arbitrary mounts through runtime configuration is a future alternative
 
 In `backend/config/settings.py`, validate the application configuration and derive:
 
-| Django setting | Proposed value/behavior |
+| Django setting | Implemented value/behavior |
 | --- | --- |
 | `FORCE_SCRIPT_NAME` | External prefix without trailing slash; unset for `/` |
 | `SESSION_COOKIE_NAME` | `task_tracker_<instance_id>_session` |
@@ -80,6 +80,17 @@ In `backend/config/settings.py`, validate the application configuration and deri
 | `SESSION_COOKIE_PATH`, `CSRF_COOKIE_PATH` | Canonical application path with trailing slash |
 | Cookie domain | Host-only; do not widen it to the parent domain |
 | Cookie flags | Retain HttpOnly sessions and SameSite behavior; enable Secure for HTTPS hosting in Stage 11 |
+
+`DJANGO_COOKIE_SECURE=true` enables Secure session and CSRF cookies; the default
+is false for local HTTP development. The paired HTTPS fixture uses true without
+changing production hosting. Startup rejects invalid Boolean values.
+
+Frontend images contain `.instance-build.json`; Vite startup rejects a different
+runtime path/ID, then checks matching `X-Task-Tracker-Base-Path` and
+`X-Task-Tracker-Instance` headers on the backend health endpoint. This leaves the
+existing public health JSON contract unchanged. Builds also emit `dist/instance.json`
+for later deployment verification. Change a mount by rebuilding/recreating both
+application services, not by changing only the backend environment.
 
 Distinct names prevent accidental collisions with sibling instances and other
 applications on the host; paths scope normal browser delivery. Keep CSRF tokens
@@ -114,6 +125,11 @@ reference resolution and shared sign-in are not introduced.
 | `/time-tracker-test/api/v1/...` | Test backend `/api/v1/...` |
 | `/time-tracker-prod/` and its frontend assets | Production frontend bundle |
 | `/time-tracker-prod/api/v1/...` | Production backend `/api/v1/...` |
+
+Vite uses `appType: mpa`: this application navigates with fragments, so no SPA
+fallback is needed. The first paired run exposed a missing JavaScript asset
+returning HTML/200 under the default SPA behavior; disabling that fallback makes
+missing assets and unknown frontend paths return 404.
 
 Canonicalize the bare mount URL to its trailing-slash UI URL with the query
 preserved. Match API routes before any frontend fallback. Missing API routes and

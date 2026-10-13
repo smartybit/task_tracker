@@ -436,13 +436,35 @@ at configurable URL prefixes on one host. The
 [multiple-instance design](docs/multiple_instances.md) records the inspected gaps,
 proposed configuration contract, frontend/API/cookie/script-prefix changes,
 resource and image isolation, development tooling, routing contract and acceptance
-matrix. Design is documented; application changes and runtime checks are pending.
+matrix. Core application changes and focused configuration/WSGI checks are complete;
+paired-instance and full lifecycle acceptance are in progress.
 
 Use one canonical application path for Vite and Django, distinct instance/cookie
 names, separate database/upload resources, and correctly prefixed private-image
 and CSV URLs. Preserve the root-path workflow and backend permission/accounting
 rules. A development forwarding fixture verifies two mounts at one origin;
 selecting/configuring the actual production server/proxy remains Stage 11 work.
+
+The implementation derives settings from `APP_BASE_PATH` (root default) and
+`INSTANCE_ID` (`task-tracker-dev` default), and centralizes frontend URLs. A frontend
+image records its build identity; Vite startup compares that identity and the
+backend's public health response headers before serving. Internal Django routes
+remain unprefixed, with `FORCE_SCRIPT_NAME` restoring the external mount. The
+existing health JSON contract is unchanged. Builds emit `dist/instance.json`.
+
+Vite uses HTML middleware without SPA fallback because navigation uses document
+fragments: missing assets and unknown paths return 404. Paired HTTPS acceptance
+uses the temporary Node forwarding fixture, independent PostgreSQL/upload volumes
+and Secure cookies configured with `DJANGO_COOKIE_SECURE=true`. Default HTTP
+development keeps that flag false. Certificate trust is relaxed only in synthetic
+browser contexts for the disposable self-signed fixture.
+
+`compose.instances.dev.yaml` copies source into instance-specific images, has no
+shared writable source mounts and retains project-scoped data/upload volumes.
+`scripts/test-prefixes.sh` owns only `task-tracker-prefix-tests`; the separate
+development-configuration helper owns `task-tracker-instance-check-a` and `-b`.
+Existing guarded seed/test database restrictions and the original single-instance
+test project are unchanged. No schema or dependency changes are required.
 
 ## Proposed Deployment and Operations
 

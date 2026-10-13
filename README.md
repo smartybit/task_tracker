@@ -27,8 +27,8 @@ stable references, private images and multilingual search are complete. Final
 acceptance passed 126 PostgreSQL tests, the production build, 41 Chromium scenarios
 and synthetic image-container replacement. Stage 9 contains development completion
 and application verification, including administrator safeguards/recovery. Stage 10
-covers multiple-instance URL-prefix support; its design is documented and application
-implementation is pending. Stage 11 contains production server/proxy configuration,
+covers multiple-instance URL-prefix support; core configuration is implemented and
+paired-instance/full regression acceptance is in progress. Stage 11 contains production server/proxy configuration,
 deployment, backups and restoration.
 Stage 9 is complete: administrator safeguards/recovery and development acceptance
 passed 139 PostgreSQL tests, the production build and all 43 Chromium scenarios.
@@ -196,6 +196,56 @@ images as documented in [the content API](docs/content_api.md).
 Stop development containers with `docker compose down`, which retains that
 database and image volumes. Do not use `down --volumes` on the development project if you
 want to retain its data. This Compose setup is not a production deployment.
+
+## Independent Development Instances
+
+Stage 10 adds `compose.instances.dev.yaml` for independent development installations
+with different URL prefixes. This configuration uses development servers; production
+hosting remains Stage 11 work. Paired-instance acceptance is currently in progress.
+
+Copy `instances/test.env.example` to `instances/test.env` and
+`instances/prod.env.example` to `instances/prod.env`. Set different database
+passwords and Django secrets in the ignored copies. The second example is another
+development instance using the intended production prefix, not production settings.
+
+Start each instance from the repository root:
+
+```sh
+docker compose --env-file instances/test.env -f compose.instances.dev.yaml -p time-tracker-test up -d --build --wait
+docker compose --env-file instances/prod.env -f compose.instances.dev.yaml -p time-tracker-prod up -d --build --wait
+```
+
+The examples use `http://127.0.0.1:5174/time-tracker-test/` and
+`http://127.0.0.1:5175/time-tracker-prod/`. Each has separate database/uploads,
+images, configuration, accounts and grants. Code is copied into independently named
+images; rebuild/recreate an instance to apply source changes. `INSTANCE_VERSION`
+can select a distinct release tag within its image namespace. Changing its
+`APP_BASE_PATH` or `INSTANCE_ID` also requires rebuilding the frontend and signing
+in again; startup rejects mismatched image/runtime/backend configuration.
+
+Bootstrap and recover accounts against the intended instance explicitly:
+
+```sh
+docker compose --env-file instances/test.env -f compose.instances.dev.yaml -p time-tracker-test exec web python manage.py bootstrap_admin --email you@example.com
+docker compose --env-file instances/prod.env -f compose.instances.dev.yaml -p time-tracker-prod exec web python manage.py reset_password --email you@example.com --reactivate --grant-admin
+```
+
+Stop an instance with the same env/file/project arguments followed by `down`;
+its database and upload volumes are retained. The original `docker compose`
+root-path workflow remains available. The new cookie names require a fresh sign-in
+when upgrading an existing development installation.
+
+The [multiple-instance design](docs/multiple_instances.md) records the shared-host
+routing contract and common-origin limitation. The disposable verification commands
+are `sh scripts/test-prefixes.sh LABEL` (sibling mounts),
+`sh scripts/test-prefixes.sh LABEL nested` (nested second mount), and
+`sh scripts/check-instances-dev.sh LABEL` (the reusable development configuration).
+Use a fresh label per run; logs/status are retained in `.artifacts/verification/`.
+These helpers require host Python 3, OpenSSL, `flock`, GNU `timeout` and Docker
+lifecycle access, and remove only their reserved synthetic projects/volumes.
+Run them serially with other browser suites. The paired fixture exposes HTTPS
+only inside its isolated Docker network and uses a temporary self-signed certificate;
+it does not publish or configure the proposed production host.
 
 ## Reports and CSV Export
 
@@ -447,9 +497,9 @@ in [Timesheet API and Configuration](#timesheet-api-and-configuration).
 
 ## Design and Verification References
 
-- [Multiple-instance design](docs/multiple_instances.md) for planned Stage 10 path,
-  session/data isolation and development verification changes; support is not yet
-  implemented. Actual deployment remains Stage 11 work.
+- [Multiple-instance design](docs/multiple_instances.md) for Stage 10 configuration,
+  session/data isolation and development verification. Acceptance is in progress;
+  actual deployment remains Stage 11 work.
 - [Architecture](architecture.md), including test isolation and search direction.
 - [Domain/API design](docs/domain_design.md), including delegated initial defaults.
 - [Testing charter](testing_charter.md) for risk-based scenarios and release criteria.

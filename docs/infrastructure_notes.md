@@ -596,3 +596,25 @@ Stage 9 is complete; production server/proxy configuration, deployment and
 full-system backup/restoration remain unimplemented. The later 2026-10-13 sequencing
 update moves that work to Stage 11 and inserts multiple-instance development at
 Stage 10; the earlier entries retain the numbering used at their milestones.
+
+## Stage 10 Verification Findings: 2026-10-13
+
+Core prefix configuration passed three focused PostgreSQL/WSGI checks and two
+frontend configuration checks. The root frontend build passed. The first paired
+attempt was denied daemon access before application checks; approved retries use
+only the reserved synthetic project, without host/socket permission changes.
+
+The paired image workflows passed but revealed that Vite's default SPA fallback
+returns HTML/200 for a missing JavaScript asset. The application navigates through
+document fragments, so `appType: mpa` retains HTML handling without that fallback.
+The missing-asset/error/redirect/CSRF check passed after the change. The literal
+needs an explicit `as const` for the async configuration's TypeScript inference.
+
+`stage10-pair4` passed nine prefixed workflows and the post-replacement browser
+check, preserving all captured domain rows, database identities and image bytes.
+It still exited 127 because the shell runner was edited while running and read
+a shifted trailing fragment. Keep this component result distinct from lifecycle
+acceptance. The new wrappers execute a temporary snapshot of themselves; other
+test inputs must still remain stable during a run. Failure logs/artifacts are
+retained under ignored `.artifacts/verification/stage10-*` paths. Final acceptance
+and resource-preservation results remain pending in the implementation tracker.

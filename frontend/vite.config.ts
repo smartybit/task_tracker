@@ -23,6 +23,8 @@ export default defineConfig(async ({ command }) => {
     }
   }
   return {
+  // Navigation uses document fragments; unknown paths/assets must remain 404s.
+  appType: "mpa" as const,
   base: config.basePath,
   define: { __INSTANCE_ID__: JSON.stringify(config.instanceId) },
   plugins: [react(), {

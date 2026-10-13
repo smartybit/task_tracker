@@ -1,6 +1,7 @@
 .git
 .env
 **/.env
+**/.env.*
 **/*.env
 **/.artifacts
 **/.instance-build.json

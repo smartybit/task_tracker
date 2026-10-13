@@ -1151,6 +1151,34 @@ successful build. No schema/dependency changes. Paired-instance and full lifecyc
 acceptance remain pending; Stage 10 stays In progress. Commit:
 `feat: support configurable instance prefixes and scoped sessions`.
 
+Paired verification tooling milestone (2026-10-13): added isolated HTTPS forwarding,
+separate databases/uploads, sibling and nested test modes, instance-aware browser
+checks, private-image/domain snapshots and targeted server-reset/replacement checks.
+The reusable development configuration has a separate disposable smoke helper.
+The forwarding fixture also validates duplicate/overlapping mounts and identities;
+frontend images reject runtime/backend mismatches. Scripts snapshot themselves
+before execution and preserve bounded logs/status plus scoped cleanup.
+
+- `stage10-pair1` was denied Docker access before application checks; the approved
+  retry proceeded without host permission changes.
+- `stage10-pair2` passed both prefixed image workflows but exposed Vite's default
+  HTML/200 fallback for missing assets. `appType: mpa` fixes that behavior for this
+  fragment-navigation application. `stage10-pair3` caught the new literal's
+  TypeScript inference; an explicit literal type corrected it and the build passed.
+- `stage10-pair4` passed all nine prefixed Chromium workflows (6.2m), preserved
+  domain records/database identities/private image bytes across replacement,
+  and passed the subsequent live-session/server-reset browser check (21.6s).
+  Editing the runner during execution caused a trailing shell failure (127), so
+  this is component evidence, not successful lifecycle acceptance. Cleanup ran.
+  Runner snapshots prevent that observed failure; continuous sibling availability
+  observation was added for the final lifecycle checks.
+- `stage10-pair5` is running the stable sibling lifecycle. Nested mounts, reusable
+  development configuration, full root regression and final cleanup inspection
+  remain pending. No production deployment or original development data changed.
+  Shell syntax, development Compose example configuration, local links and
+  whitespace checks passed. Commit:
+  `feat: add isolated instance verification and strict asset routing`.
+
 ## Stage 11: Production Deployment and Operational Verification
 
 Use the Stage 10 prefix/resource contract when configuring the actual production
