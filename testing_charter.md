@@ -78,6 +78,10 @@ Stage 9 administrator lifecycle checks, following the agreed policy:
 Stage 9 implements self-protection and server-side reset/recovery. These cases
 were not part of the successful Stage 3 suite; Stage 9 verification results are
 recorded in the implementation tracker using the existing isolated test setup.
+All 13 focused PostgreSQL checks and both new Chromium scenarios passed, then
+passed again in the full 139-test/43-scenario lifecycle. A separate script-driven
+exploratory Chromium session verified keyboard profile saves and simultaneous
+opposing administrator changes; desktop/narrow screenshots were inspected.
 
 ### 2. Preserve Timesheet Integrity
 
@@ -329,6 +333,11 @@ including reporting and CSV acceptance. Stage 8 passed a full lifecycle with
 plus synthetic image-container replacement. Reference/image/search workflows,
 permission changes, storage rollback and multilingual indexes are covered.
 Earlier attempts and detailed evidence are preserved in the implementation plan.
+Stage 9 passed a full lifecycle on application source `1f79ff6`: 139 PostgreSQL
+tests, fresh migrations/system/drift, the production frontend build and all 43
+Chromium scenarios, exit 0, with inspected healthy-stack reset and cleanup.
+The administrator lifecycle and separate exploratory evidence are recorded above
+and in the tracker. Stage 10 deployment/restoration checks remain unstarted.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

@@ -561,3 +561,36 @@ inspected on the same application source. Development data/services were untouch
 Production deployment and full backup/restoration remain unimplemented. The
 2026-10-13 stage split schedules this operational work in Stage 10; Stage 9 now
 contains development activities only.
+
+## Stage 9 Development Verification: 2026-10-13
+
+Application source `1f79ff6` passed
+`sh scripts/test-runner.sh stage9-verified1 full`, exit 0: healthy-stack reset,
+fresh migrations, system/drift checks, all 139 PostgreSQL tests (594.845 seconds),
+TypeScript/Vite build and all 43 Chromium scenarios (13.6 minutes). Log creation
+to status write measured 25 minutes 9 seconds, within the existing 30-minute bound.
+The repository foreground runner and closed input worked without modification.
+Logs/status remain under ignored `.artifacts/verification/stage9-verified1.*`.
+
+The first focused browser attempt created accounts through an API context that
+shared the page's cookies, then attempted UI sign-in while still authenticated as
+the fixture administrator. The form disappeared during filling. Clearing that
+fixture session before UI sign-in corrected the setup; both Stage 9 scenarios
+passed focused and full runs. The failed focused artifacts remain under
+`.artifacts/verification/stage9-focused1-browser`.
+
+A script-driven exploratory session exercised keyboard saves and concurrent
+opposing administrator-demotion requests. One update saved and the other was
+denied after privilege rechecking. Its initial assertion incorrectly expected
+administrators to see no project catalogs; catalog administration is separate
+from data access. Checking effective data flags instead passed and strengthened
+the focused recovery fixtures. Outcomes and desktop/narrow inspection are retained
+in `.artifacts/verification/stage9-exploration.md` and `stage9-focused2-browser/`.
+
+Focused Docker commands required session-specific escalation after socket denials;
+approved retries succeeded. No host/socket/group/daemon configuration changed.
+Final project-label inspection found no test containers, networks or volumes.
+All five original unrelated container IDs and both original volumes were
+preserved. Development data/services were not migrated, reset or seeded.
+Stage 9 is complete; production server/proxy configuration, deployment and
+full-system backup/restoration remain Stage 10 work.

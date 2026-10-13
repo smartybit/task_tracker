@@ -9,14 +9,20 @@ actual progress; it does not turn proposals into confirmed requirements.
 ## Current Position
 
 - Last updated: 2026-10-13.
-- Stages 1–8 are complete: 8 of 10 implementation stages complete.
+- Stages 1–9 are complete: 9 of 10 implementation stages complete.
 - By agreement on 2026-10-13, Stage 9 contains development activities only:
   administrator safeguards/recovery and application verification. Production
   server/proxy configuration, deployment, backups and restoration move to Stage 10.
-  Stage 9 is In progress from `7f838a4`; Stage 10 remains Not started.
-  Administrator self-protection and server recovery are implemented. All 13 focused
-  PostgreSQL checks, two new Chromium workflows, build and exploratory verification
-  passed; full application lifecycle acceptance remains pending.
+  Stage 9 is Done; Stage 10 remains Not started and is next.
+- Stage 9 final application source `1f79ff6` passed `stage9-verified1`, exit 0:
+  139 PostgreSQL tests (594.845 seconds), fresh migrations/system/drift checks,
+  TypeScript/Vite production build and all 43 Chromium scenarios (13.6 minutes).
+  Total lifecycle time was 25 minutes 9 seconds. Healthy-stack reset, scoped
+  cleanup and preservation of all five original unrelated container IDs and both
+  original volumes were inspected. Development data/services were untouched.
+  Thirteen focused account/recovery checks, two new browser workflows and a
+  separate exploratory Chromium session also passed; desktop/narrow screenshots
+  were inspected. Administrator safeguards and server recovery are complete.
 - Stage 8 delivers remarks/shared stars, stable references, private inline images
   with screenshot paste, and English/Russian search. Final source `142611f`
   passed `stage8-final-verified2`: 126 PostgreSQL checks (571.625 seconds), fresh
@@ -27,7 +33,7 @@ actual progress; it does not turn proposals into confirmed requirements.
   Synthetic image bytes, metadata and download permissions also survived forced
   application-container replacement. Development services/data were untouched.
   Earlier failed/timed-out attempts and focused milestone evidence are retained
-  in Stage 8 below. Stage 9 development is In progress; Stage 10 deployment and
+  in Stage 8 below. Stage 9 development is Done; Stage 10 deployment and
   restoration remain Not started.
 - Stage 7 started from `0fd2774`. Backend milestone `020cd88` passed 12 focused
   PostgreSQL tests, including a 64-combination access matrix and a concurrent
@@ -55,7 +61,7 @@ actual progress; it does not turn proposals into confirmed requirements.
   follow-up `daf9299`. Both runs preserved the five original unrelated container
   IDs and both original volumes; no test containers, networks or volumes remain.
   Development data was not migrated/reset/seeded. Stage 7 reporting and CSV export
-  are also complete; Stage 8 is Done and Stage 9 is In progress.
+  are also complete; Stages 8 and 9 are Done and Stage 10 is next.
 - Stage 5 source `2c12aa6` passed two sequential complete test-script runs,
   `stage5-verified2` and `stage5-verified3`: each exited 0 with 82 PostgreSQL
   tests, the TypeScript/production build, and 16 Chromium checks. The first
@@ -122,7 +128,7 @@ actual progress; it does not turn proposals into confirmed requirements.
   self-deactivation/demotion, permit changes to other administrators, and provide
   server-side password reset for any existing user with explicit reactivation and
   administrator-grant options. Stage 9 implements self-protection and the
-  `reset_password` command; full acceptance remains pending. Stage 3's existing
+  `reset_password` command; full acceptance passed. Stage 3's existing
   completion evidence predates this account-lifecycle follow-up.
 - Backup ownership and scope are agreed: the server administrator backs up the
   PostgreSQL cluster, attachment directory, and necessary configuration, with
@@ -142,7 +148,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 6 | Timesheet interface | Done | Two full lifecycle runs: 85 PostgreSQL tests, build, 25 Chromium scenarios each; discovery permissions, drafts, revocation/reload recovery, running-stack reset and cleanup verified |
 | 7 | Reporting and CSV export | Done | Two sequential full lifecycles: 97 PostgreSQL tests, build, 30 Chromium scenarios each; reporting access, CSV, running-stack reset and cleanup verified |
 | 8 | Remarks, references, images, and search | Done | `142611f`: full lifecycle exit 0; 126 PostgreSQL tests, build, 41 Chromium scenarios; image replacement and scoped cleanup verified |
-| 9 | Development completion and application verification | In progress | 13 focused PostgreSQL checks, two new Chromium workflows, build and exploratory checks passed; full lifecycle pending |
+| 9 | Development completion and application verification | Done | `1f79ff6`: full lifecycle exit 0; 139 PostgreSQL tests, build, 43 Chromium scenarios; exploratory account checks and scoped cleanup verified |
 | 10 | Production deployment and operational verification | Not started | — |
 
 Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
@@ -979,6 +985,7 @@ serialized updates and rechecked administrator access; Stage 9 adds self-protect
 The interactive `reset_password` command reuses password validation/hashing,
 session invalidation and the domain lock with explicit recovery flags. Verification
 uses only the existing synthetic test project; Stage 10 remains unstarted.
+Completed on 2026-10-13; final acceptance evidence is recorded below.
 
 - [x] Implement the agreed administrator self-protection in the account service
   and interface: reject self-deactivation/demotion, permit changes to other
@@ -988,7 +995,7 @@ uses only the existing synthetic test project; Stage 10 remains unstarted.
   validate passwords, invalidate existing sessions, and apply changes atomically.
 - [x] Add focused PostgreSQL/API, concurrency, command and browser checks for
   self-protection and recovery, following the testing charter.
-- [ ] Run the application regression lifecycle, including migrations/system/drift
+- [x] Run the application regression lifecycle, including migrations/system/drift
   checks, the frontend build, and critical API/database and Chromium workflows.
   Complete exploratory sessions for permissions and competing edits; resolve
   defects and record remaining application limitations.
@@ -1038,8 +1045,39 @@ and the full first-version completion criteria remain Stage 10 checks.
 - TypeScript/Vite production build, migration-drift check, 89 local Markdown
   links/anchors and whitespace checks passed. README, architecture, API/design and
   testing charter reflect implemented behavior. No schema/dependency changes.
-  Full lifecycle acceptance remains pending; Stage 9 is In progress.
+  At this milestone full lifecycle acceptance was pending and Stage 9 was In
+  progress; final acceptance follows below.
   Commit: `feat: protect administrator accounts and add server recovery`.
+
+### Completion Evidence: 2026-10-13
+
+- `sh scripts/test-runner.sh stage9-verified1 full` exited 0 on final application
+  source `1f79ff6`. It reset healthy running test services, rebuilt images, applied
+  fresh migrations, passed Django system/migration-drift checks and all 139
+  PostgreSQL tests (594.845 seconds), reset synthetic fixtures, built TypeScript/Vite
+  assets and passed all 43 Chromium scenarios (13.6 minutes). No scenarios were
+  skipped or retried. Log creation to status write took 25 minutes 9 seconds,
+  within the existing 30-minute bound.
+- Full acceptance includes all 13 new account/recovery checks and both new browser
+  scenarios, plus all existing task, timesheet, remarks/reference/image/search,
+  reporting and CSV regressions. Competing-tab drafts, access changes, rollback
+  and exact accounting passed. The separate script-driven exploratory browser
+  session covered keyboard saves and simultaneous opposing administrator updates;
+  its outcomes and visually inspected desktop/narrow screenshots are recorded in
+  the milestone above and retained under ignored `.artifacts/verification/`.
+- Final label-filtered inspection found no test containers, networks or volumes.
+  Original container IDs `5362f5db3c1c`, `4be32c2c4bf7`, `fd646cd028b8`,
+  `bcd4c9629eee` and `6cf3f68761fc` and both original volumes
+  (`task-tracker-dev_development-db`, `youtube-downloader_downloads`) were preserved.
+  Development data/services were not migrated, reset or seeded.
+- README, architecture, API/design and testing charter match the agreed requirements
+  and implemented behavior. Documentation consistency, 89 local links/anchors and
+  whitespace checks passed. No schema or dependency changes were required.
+  Full log/status remain in `.artifacts/verification/stage9-verified1.*`.
+- Stage 9 is Done. Stage 10 production server/proxy configuration, deployment and
+  full-system backup/restoration remain Not started. Chromium is the accepted
+  browser; existing first-version exclusions remain unchanged. Completion commit:
+  `docs: record Stage 9 completion and verification`.
 
 ## Stage 10: Production Deployment and Operational Verification
 
@@ -1069,12 +1107,12 @@ data, loses records, corrupts timelines, or produces incorrect totals.
 
 ## Decisions and Dependencies to Track
 
-- Implement the [agreed administrator policy](requirements.md#users-and-authentication)
-  in Stage 9 before production use: reject self-deactivation/demotion, allow changes
-  to other administrators, and provide server-side password reset with explicit
-  reactivation and administrator-grant options. Include serialized competing-update
-  and recovery checks from the testing charter. Self-protection and the recovery
-  command are planned work, not part of Stage 3's existing completion evidence.
+- The [agreed administrator policy](requirements.md#users-and-authentication)
+  is implemented and verified in Stage 9: self-deactivation/demotion is rejected,
+  changes to other administrators are permitted, and server-side password reset
+  offers explicit reactivation and administrator-grant options. Serialized
+  competing-update and recovery checks passed. Stage 3's existing completion
+  evidence predates these safeguards and the recovery command.
 - Shared zone is configurable in `.env`/backend settings by agreement on
   2026-10-09; verify UTC and Europe/Berlin with controlled clocks in Stage 5.
 - Implement and verify the [agreed backup policy](architecture.md#agreed-backup-and-restoration-policy)
@@ -1146,3 +1184,4 @@ split moves deployment/restoration from Stage 9 to Stage 10.
 | 2026-10-12 | Stage 8 completed | Final source `142611f` passed `stage8-final-verified2`, exit 0: 126 PostgreSQL tests, production build and all 41 Chromium scenarios, with healthy-stack reset and inspected cleanup. Total lifecycle 25m31s; image persistence also passed across forced container replacement. Original unrelated containers/volumes preserved; development untouched. Corrected stale-task expectation passed focused and full checks. Documentation, local links/anchors and whitespace checked. Stage 8 Done; Stage 9 deployment/restoration and administrator safeguards/recovery are next. |
 | 2026-10-13 | Development and deployment stages separated | By user decision, Stage 9 contains development only: agreed administrator safeguards/recovery, application regression and exploratory checks, and development documentation. Production server/proxy configuration, deployment, backups/restoration and operational verification move to new Stage 10. Both remain Not started; 8 of 10 stages complete. Tracker, architecture, testing charter, README and operational references aligned; historical milestones preserved. Documentation consistency, 89 local links/anchors and whitespace checked. No application code changed or application tests run. Commit: `docs: separate development completion from production deployment`. |
 | 2026-10-13 | Stage 9 administrator lifecycle implemented | Self-protection in API/UI and interactive server password reset/recovery implemented without schema/dependency changes. Thirteen focused PostgreSQL checks (76.019s), both new Chromium workflows (37.9s), build/drift and independent exploratory competing-update session passed; desktop/narrow screenshots inspected. Fixture sign-in and exploratory catalog-visibility expectations corrected, with failed attempts preserved. Documentation aligned; 89 local links/anchors and whitespace passed. Full lifecycle acceptance pending; Stage 9 In progress, Stage 10 Not started. Commit: `feat: protect administrator accounts and add server recovery`. |
+| 2026-10-13 | Stage 9 completed | Final application source `1f79ff6` passed `stage9-verified1`, exit 0: 139 PostgreSQL tests (594.845s), fresh migrations/system/drift, TypeScript/Vite build and all 43 Chromium scenarios (13.6m). Total lifecycle 25m09s; healthy-stack reset and scoped cleanup inspected. Separate exploratory keyboard/competing-administrator checks and desktop/narrow inspection passed. Original five unrelated container IDs and both volumes preserved; development untouched. Documentation aligned; 89 local links/anchors and whitespace checked. Stage 9 Done; Stage 10 production deployment/restoration remains Not started. Commit: `docs: record Stage 9 completion and verification`. |

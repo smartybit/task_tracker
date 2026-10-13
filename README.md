@@ -28,8 +28,10 @@ acceptance passed 126 PostgreSQL tests, the production build, 41 Chromium scenar
 and synthetic image-container replacement. Stage 9 contains development completion
 and application verification, including administrator safeguards/recovery. Stage 10
 contains production server/proxy configuration, deployment, backups and restoration.
-Stage 9 is In progress; Stage 10 remains Not started. Detailed evidence is recorded
-in the implementation tracker.
+Stage 9 is complete: administrator safeguards/recovery and development acceptance
+passed 139 PostgreSQL tests, the production build and all 43 Chromium scenarios.
+Stage 10 remains Not started. Detailed evidence is recorded in the implementation
+tracker.
 No personal account is created automatically, and public registration is unavailable.
 
 ## Task Management
@@ -325,6 +327,9 @@ acceptance. Stage 7 adds report fixtures with independently known totals, a repo
 access matrix, snapshot consistency, and actual CSV downloads. Stage 8 adds
 reference lifecycle, private-image validation/rollback, screenshot fixtures,
 English/Russian search, index upgrades and a search/revocation race.
+Stage 9 adds administrator self-protection, server recovery/status preservation,
+session invalidation, account rollback and waiting-update checks, plus browser
+workflows for own-account editing and denied stale administrator forms.
 See the tracker for component versus full-run results.
 Browser mutation scenarios create separate synthetic accounts so password/grant changes
 do not alter another scenario’s credentials. The guarded `seed_test_data` command
