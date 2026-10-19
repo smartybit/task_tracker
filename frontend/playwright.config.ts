@@ -8,7 +8,9 @@ export default defineConfig({
   retries: 0,
   reporter: "list",
   // Account setup and complete task trees span many real API operations.
-  timeout: 90_000,
+  timeout: process.env.PREFIX_TESTS === "true" ? 180_000 : 90_000,
+  // Two live stacks add request/render latency; root acceptance keeps 5-second assertions.
+  expect: { timeout: process.env.PREFIX_TESTS === "true" ? 15_000 : 5_000 },
   use: {
     baseURL: process.env.BASE_URL ?? "http://frontend:5173",
     ignoreHTTPSErrors: process.env.PREFIX_TESTS === "true",

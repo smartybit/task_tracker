@@ -317,7 +317,8 @@ Execution evidence is recorded in the implementation tracker.
 
 ## Stage 10 Multiple-Instance Acceptance
 
-These checks are planned; prefix support is not implemented or runtime-verified.
+Core prefix support is implemented and focused checks have passed; final paired,
+nested, reusable-development and full regression acceptance are in progress.
 Follow the [multiple-instance design](docs/multiple_instances.md#verification-and-completion)
 using only isolated PostgreSQL, uploads and synthetic accounts.
 

@@ -618,3 +618,26 @@ acceptance. The new wrappers execute a temporary snapshot of themselves; other
 test inputs must still remain stable during a run. Failure logs/artifacts are
 retained under ignored `.artifacts/verification/stage10-*` paths. Final acceptance
 and resource-preservation results remain pending in the implementation tracker.
+
+## Stage 10 Acceptance Resumed: 2026-10-19
+
+The retained `stage10-pair5` and `6` attempts exited 1 on lazy-image visibility
+assertions. Image checks now scroll the refresh control into view and await actual
+decoded image width before asserting visibility. `stage10-pair7` exited 1 on the
+reference-label assertion deadline; paired verification now has explicit
+15-second assertions and 180-second workflow budgets, retaining the original
+root-suite budgets. The forwarding fixture retries unavailable upstreams for a
+bounded readiness interval while still rejecting a successful mismatched response.
+Failed paired runs also retain service diagnostics before scoped cleanup.
+
+`stage10-pair8` exited 0: nine prefixed Chromium workflows (5.1 minutes), followed
+by the post-replacement live-session check (20.3 seconds). Database identities,
+domain rows and image bytes were preserved; the sibling remained healthy during
+53 observations. Scoped cleanup completed. This result supersedes the earlier
+pending sibling result, without making the nested/development/root checks complete.
+
+Before resumed verification, the five original unrelated container IDs and both
+persistent volumes recorded in Stage 9 were present. Only the two downloader
+containers were running. The otherwise empty `task-tracker-tests_default` network
+was present and is owned by the disposable root test project. Keep runtime suites
+serial and inspect final cleanup against this current baseline.

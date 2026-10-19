@@ -21,8 +21,9 @@ test('description images save inline, survive reload, and require current task r
     await page.getByRole('dialog', { name: 'Confirm task change', exact: true }).getByRole('button', { name: 'Confirm change', exact: true }).click();
     const detail = page.getByRole('dialog', { name: 'Task description', exact: true });
     const image = detail.getByRole('img', { name: 'Attached image', exact: true });
+    await detail.getByRole('button', { name: 'Refresh images', exact: true }).first().scrollIntoViewIfNeeded();
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth), { timeout: 15000 }).toBe(128);
     await expect(image).toBeVisible();
-    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBe(128);
     const url = await image.getAttribute('src');
     const edit = page.getByRole('form', { name: 'Edit task', exact: true });
     const body = edit.getByRole('textbox', { name: 'Description', exact: true });
@@ -30,6 +31,8 @@ test('description images save inline, survive reload, and require current task r
     await edit.getByRole('button', { name: 'Save task', exact: true }).click();
     await expect(detail).toContainText('Caption after an ordinary text edit');
     await page.reload(); await list.getByRole('button', { name: title, exact: true }).click();
+    await detail.getByRole('button', { name: 'Refresh images', exact: true }).first().scrollIntoViewIfNeeded();
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth), { timeout: 15000 }).toBe(128);
     await expect(image).toBeVisible();
     await page.setViewportSize({ width: 390, height: 844 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
@@ -40,6 +43,7 @@ test('description images save inline, survive reload, and require current task r
     await expect(detail.getByText('Unavailable image', { exact: true })).toBeVisible();
     await f.write(`users/${f.alice.id}/grants/projects/${f.project.id}/`, flags, 'PUT');
     await detail.getByRole('button', { name: 'Refresh images', exact: true }).click();
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth), { timeout: 15000 }).toBe(128);
     await expect(image).toBeVisible();
     await detail.getByRole('button', { name: 'Preview deletion', exact: true }).click();
     const preview = page.getByRole('dialog', { name: 'Confirm task change', exact: true });

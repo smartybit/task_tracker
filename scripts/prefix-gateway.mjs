@@ -28,9 +28,22 @@ export function validateRoutes(values) {
 const routes = validateRoutes(JSON.parse(process.env.PREFIX_ROUTES));
 // Fail startup if any route points at an instance with a different mount/identity.
 for (const route of routes) {
-  const response = await fetch(new URL(`${route.prefix}api/v1/health/`, route.target), { signal: AbortSignal.timeout(5000) });
-  if (!response.ok || response.headers.get('X-Task-Tracker-Base-Path') !== route.prefix
-      || response.headers.get('X-Task-Tracker-Instance') !== route.instanceId) throw new Error('Gateway route/instance configuration mismatch.');
+  const deadline = Date.now() + 30000;
+  while (true) {
+    let response;
+    try {
+      response = await fetch(new URL(`${route.prefix}api/v1/health/`, route.target), { signal: AbortSignal.timeout(5000) });
+    } catch (error) {
+      if (Date.now() >= deadline) throw error;
+    }
+    if (response?.ok) {
+      if (response.headers.get('X-Task-Tracker-Base-Path') !== route.prefix
+          || response.headers.get('X-Task-Tracker-Instance') !== route.instanceId) throw new Error('Gateway route/instance configuration mismatch.');
+      break;
+    }
+    if (Date.now() >= deadline) throw new Error('Gateway backend readiness deadline exceeded.');
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
 }
 
 function match(rawUrl) {

@@ -1,6 +1,8 @@
 # Content API
 
-All routes are under `/api/v1/` and require an active signed-in session. POSTs
+Internal routes are under `/api/v1/`; externally they are beneath `APP_BASE_PATH`,
+for example `/time-tracker-test/api/v1/`. See the
+[instance configuration](multiple_instances.md). All routes require an active signed-in session. POSTs
 require CSRF. Task and remark write routes retain their existing revision and
 confirmation contracts; references do not create another write route.
 

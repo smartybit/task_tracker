@@ -8,19 +8,22 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 ## Current Position
 
-- Last updated: 2026-10-13.
+- Last updated: 2026-10-19.
 - Stages 1–9 are complete: 9 of 11 implementation stages complete.
 - By the revised agreement on 2026-10-13, Stage 10 develops independent instances
   at configurable URL prefixes; production server/proxy configuration, deployment,
   backups and restoration move to Stage 11. Stage 9 is Done; Stage 10 is In progress
-  with its design documented, while implementation/runtime verification are pending.
-  Stage 11 remains Not started. Next is implementing the
+  with prefix support and isolated instance tooling implemented. The sibling
+  lifecycle passed; nested-prefix, reusable-development and full root regression
+  acceptance are next. Stage 11 remains Not started. Follow the
   [multiple-instance design](docs/multiple_instances.md).
 - Stage 10 implementation started from clean source `0b7389a`: canonical path/ID
   validation, prefixed frontend URLs, scoped cookies and frontend/backend startup
   matching are implemented. Three focused PostgreSQL/WSGI checks, two frontend
-  configuration checks and the production build passed. Paired-instance tooling and runtime acceptance
-  remain pending; Stage 9's completed evidence is preserved.
+  configuration checks and the production build passed. `stage10-pair8` subsequently
+  exited 0 with nine prefixed browser workflows, targeted recovery/replacement,
+  sibling availability and data/image preservation. Work resumed on 2026-10-19
+  to complete the remaining acceptance checks; Stage 9's evidence is preserved.
 - Stage 9 final application source `1f79ff6` passed `stage9-verified1`, exit 0:
   139 PostgreSQL tests (594.845 seconds), fresh migrations/system/drift checks,
   TypeScript/Vite production build and all 43 Chromium scenarios (13.6 minutes).
@@ -156,7 +159,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 7 | Reporting and CSV export | Done | Two sequential full lifecycles: 97 PostgreSQL tests, build, 30 Chromium scenarios each; reporting access, CSV, running-stack reset and cleanup verified |
 | 8 | Remarks, references, images, and search | Done | `142611f`: full lifecycle exit 0; 126 PostgreSQL tests, build, 41 Chromium scenarios; image replacement and scoped cleanup verified |
 | 9 | Development completion and application verification | Done | `1f79ff6`: full lifecycle exit 0; 139 PostgreSQL tests, build, 43 Chromium scenarios; exploratory account checks and scoped cleanup verified |
-| 10 | Multiple-instance prefix support | In progress | Design documented; implementation and runtime verification pending |
+| 10 | Multiple-instance prefix support | In progress | Implemented; sibling lifecycle passed; nested/development/root acceptance next |
 | 11 | Production deployment and operational verification | Not started | — |
 
 Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
@@ -1107,7 +1110,7 @@ new services or runtime checks have been implemented/run at this milestone.
   cover health, JSON requests, private images, CSV and existing fragment navigation.
 - [x] Configure Django script prefix, distinct session/CSRF names and cookie paths;
   verify redirects, CSRF, login rotation/logout deletion and current authorization.
-- [ ] Add isolated development-instance configuration, separate PostgreSQL/uploads,
+- [x] Add isolated development-instance configuration, separate PostgreSQL/uploads,
   project/port/env targeting, independent image/artifact references and health checks.
   Preserve the existing single-instance development and guarded test workflows.
 - [ ] Add a disposable paired-instance development forwarding fixture and runner;
@@ -1178,6 +1181,28 @@ before execution and preserve bounded logs/status plus scoped cleanup.
   Shell syntax, development Compose example configuration, local links and
   whitespace checks passed. Commit:
   `feat: add isolated instance verification and strict asset routing`.
+
+### Acceptance Resumed: 2026-10-19
+
+Reviewed the existing Stage 10 local changes and retained them: prefix-aware API
+documentation, bounded gateway readiness retries and failure diagnostics,
+lazy-image loading waits, and separate paired-suite timeout budgets. Earlier
+`stage10-pair5`/`6` exposed lazy-image visibility waits, and `stage10-pair7` exceeded
+the reference assertion deadline. Those attempts exited 1 and remain retained;
+they are not acceptance results. The corrected `stage10-pair8` exited 0: all nine
+prefixed Chromium workflows passed (5.1 minutes), followed by the live-session
+recovery/replacement check (20.3 seconds). Database identities, captured domain
+records and image bytes were preserved, and the sibling remained healthy across
+53 observations during replacement. Its scoped cleanup completed.
+
+Stage 10 remains In progress. Next run the nested-prefix lifecycle, the reusable
+development-instance check and the full root PostgreSQL/build/Chromium regression
+serially, inspect cleanup/resource preservation, and reconcile the final docs.
+The current baseline contains the same five original unrelated container IDs and
+two persistent volumes recorded in Stage 9; only the two downloader containers
+are running. A leftover `task-tracker-tests_default` network has no running test
+containers and belongs to the disposable root regression project. No development
+data or production services will be migrated, reset or seeded.
 
 ## Stage 11: Production Deployment and Operational Verification
 

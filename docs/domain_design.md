@@ -15,6 +15,9 @@ interface, Stage 7 delivers reports/CSV, and Stage 8 delivers
 Search uses the [shared PostgreSQL configuration](../architecture.md#search-approach).
 Remaining feature operations are a
 design contract; verification status belongs in the implementation tracker.
+Stage 10 adds [instance mount configuration](multiple_instances.md): external URLs
+prepend the configured prefix, while internal `/api/v1/` routes, domain models,
+permissions and accounting contracts remain unchanged.
 
 The timesheet sections were revised on 2026-10-09 for the agreed
 [Edit day](../requirements.md#timesheet-editing) and

@@ -47,7 +47,11 @@ compose_prefix() {
     docker compose --project-directory "$task_tracker_root" -f "$task_tracker_root/compose.prefix-test.yaml" -p task-tracker-prefix-tests "$@"
 }
 cleanup() {
+    prefix_run_result=$?
     prefix_cleanup_result=0
+    if [ "$prefix_run_result" -ne 0 ]; then
+        compose_prefix logs --no-color --tail 80 gateway frontend-a frontend-b observer || true
+    fi
     compose_prefix down --volumes --remove-orphans < /dev/null || prefix_cleanup_result=$?
     rm -f -- "$PREFIX_TLS_DIRECTORY/key.pem" "$PREFIX_TLS_DIRECTORY/cert.pem"
     rmdir -- "$PREFIX_TLS_DIRECTORY"

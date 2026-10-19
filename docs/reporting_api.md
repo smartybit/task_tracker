@@ -2,6 +2,8 @@
 
 Stage 7 implements the reporting rules in [requirements](../requirements.md#search-and-reporting).
 Execution evidence and completion status are in the [tracker](../implementation_plan.md#stage-7-reporting-and-csv-export).
+Route examples use internal `/api/v1/` paths. External report and CSV requests
+prepend the configured application mount; see [instance configuration](multiple_instances.md).
 
 ## Access and Consistency
 

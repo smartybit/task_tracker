@@ -6,6 +6,8 @@ Product rules remain in [requirements](../requirements.md#timesheets);
 Actual verification is recorded in the [tracker](../implementation_plan.md#stage-6-timesheet-interface).
 
 All endpoints use the existing session authentication and CSRF protection.
+Route examples use the internal `/api/v1/` path; external requests prepend the
+configured application mount. See [instance configuration](multiple_instances.md).
 `{user}` is the timesheet owner's UUID, including for your own sheet. Own access
 is implicit; other sheets require the independent global read/write flags.
 Administrator status grants no data access. Task read is sufficient for a new
