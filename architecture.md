@@ -434,10 +434,12 @@ remain Stage 11 work; no completed backup or restoration is claimed here.
 By agreement on 2026-10-13, Stage 10 covers development of independent instances
 at configurable URL prefixes on one host. The
 [multiple-instance design](docs/multiple_instances.md) records the inspected gaps,
-proposed configuration contract, frontend/API/cookie/script-prefix changes,
+selected configuration contract, frontend/API/cookie/script-prefix changes,
 resource and image isolation, development tooling, routing contract and acceptance
-matrix. Core application changes and focused configuration/WSGI checks are complete;
-paired-instance and full lifecycle acceptance are in progress.
+matrix. Core application changes, development tooling and focused
+configuration/WSGI checks are complete. Sibling/nested prefix, reusable development
+instances and full root regression passed acceptance; see the implementation
+tracker for commands, source versions, results and cleanup evidence.
 
 Use one canonical application path for Vite and Django, distinct instance/cookie
 names, separate database/upload resources, and correctly prefixed private-image
@@ -470,7 +472,8 @@ test project are unchanged. No schema or dependency changes are required.
 
 By the revised 2026-10-13 sequencing, production configuration and deployment
 belong to Stage 11. Stage 9 administrator lifecycle/application verification is
-complete; Stage 10 develops multiple-instance prefix support before deployment.
+complete; Stage 10 prefix support and isolated-instance acceptance are also
+complete. Stage 11 production deployment is next.
 
 - Use Docker Compose for reproducible development and VDS deployment.
 - Keep runtime services to the backend, PostgreSQL, and a reverse proxy serving

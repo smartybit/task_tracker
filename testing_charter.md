@@ -317,8 +317,8 @@ Execution evidence is recorded in the implementation tracker.
 
 ## Stage 10 Multiple-Instance Acceptance
 
-Core prefix support is implemented and focused checks have passed; final paired,
-nested, reusable-development and full regression acceptance are in progress.
+Core prefix support is implemented. Focused configuration, sibling/nested prefix,
+reusable-development acceptance and full root regression passed; Stage 10 is Done.
 Follow the [multiple-instance design](docs/multiple_instances.md#verification-and-completion)
 using only isolated PostgreSQL, uploads and synthetic accounts.
 
@@ -364,8 +364,11 @@ Stage 9 passed a full lifecycle on application source `1f79ff6`: 139 PostgreSQL
 tests, fresh migrations/system/drift, the production frontend build and all 43
 Chromium scenarios, exit 0, with inspected healthy-stack reset and cleanup.
 The administrator lifecycle and separate exploratory evidence are recorded above
-and in the tracker. Stage 10 multiple-instance implementation/checks and Stage 11
-deployment/restoration checks remain pending.
+and in the tracker. Stage 10 passed sibling/nested prefix and reusable-development
+lifecycles, plus full root regression with 142 PostgreSQL tests, both frontend
+configuration checks, the production build and all 43 Chromium scenarios.
+Scoped cleanup and preservation of the five original container IDs and both
+persistent volumes were inspected. Stage 11 deployment/restoration remains pending.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real

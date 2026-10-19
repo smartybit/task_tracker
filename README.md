@@ -27,8 +27,10 @@ stable references, private images and multilingual search are complete. Final
 acceptance passed 126 PostgreSQL tests, the production build, 41 Chromium scenarios
 and synthetic image-container replacement. Stage 9 contains development completion
 and application verification, including administrator safeguards/recovery. Stage 10
-covers multiple-instance URL-prefix support; core configuration is implemented and
-paired-instance/full regression acceptance is in progress. Stage 11 contains production server/proxy configuration,
+covers multiple-instance URL-prefix support and is complete: sibling/nested mounts
+and reusable development instances passed acceptance. Full root regression passed
+142 PostgreSQL tests, frontend configuration checks, the production build and all
+43 Chromium scenarios. Stage 11 contains production server/proxy configuration,
 deployment, backups and restoration.
 Stage 9 is complete: administrator safeguards/recovery and development acceptance
 passed 139 PostgreSQL tests, the production build and all 43 Chromium scenarios.
@@ -201,7 +203,9 @@ want to retain its data. This Compose setup is not a production deployment.
 
 Stage 10 adds `compose.instances.dev.yaml` for independent development installations
 with different URL prefixes. This configuration uses development servers; production
-hosting remains Stage 11 work. Paired-instance acceptance is currently in progress.
+hosting remains Stage 11 work. Sibling-prefix, nested-prefix and reusable
+development-instance lifecycles passed, including scoped cleanup and independent
+sessions, data, images and replacement. Root-path regression also passed.
 
 Copy `instances/test.env.example` to `instances/test.env` and
 `instances/prod.env.example` to `instances/prod.env`. Set different database

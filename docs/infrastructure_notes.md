@@ -663,3 +663,22 @@ and recovery, database/upload identity persistence and sibling container/credent
 preservation across first-instance backend/frontend replacement. Automatic cleanup
 removed both synthetic projects and their storage. Full root acceptance is next;
 runtime suites remain serial.
+
+`sh scripts/test-runner.sh stage10-root-20261019 full` exited 0 on documentation
+milestone `ca52bf2` and application/tooling source `11c45ec`: fresh migrations,
+Django system/drift checks, all 142 PostgreSQL tests (579.216 seconds), both frontend
+configuration checks, TypeScript/Vite build and all 43 Chromium scenarios
+(13.0 minutes). No browser scenarios were skipped or retried. Log creation to
+status write took 24 minutes 13 seconds, within the unchanged 30-minute budget.
+Application/test inputs stayed stable; only documentation changed during the run.
+
+Final Docker inventory found no test containers/networks/volumes for the prefix,
+two reusable-development or root test projects. All five original container IDs
+and both persistent volumes were preserved; the two downloader containers remained
+running. Root cleanup removed the previously empty disposable test network.
+The interrupted attempt's orphaned temporary runner snapshot was identified by
+its matching script content and removed. Desktop/narrow root timesheet/image
+screenshots were inspected and preserved under
+`.artifacts/verification/stage10-root-20261019-browser/`. Stage 10 is complete;
+production hosting/settings, deployment and full-system backup/restoration remain
+unimplemented Stage 11 work. No development data/services were changed.

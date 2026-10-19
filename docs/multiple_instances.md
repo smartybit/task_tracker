@@ -5,10 +5,11 @@ independent installations under different paths on one host, for example
 `https://projects.example.com/time-tracker-test/` and
 `https://projects.example.com/time-tracker-prod/`. Product scope is recorded in
 [requirements](../requirements.md#independent-instances); technical defaults below
-describe the selected implementation. Core prefix configuration, URL construction,
-cookies and development configuration are implemented; paired-instance and full
-regression acceptance remain pending. Actual production server/proxy configuration, deployment and operational
-backup/restoration are deferred to Stage 11.
+describe the selected implementation. Prefix configuration, URL construction,
+cookies and isolated development tooling are implemented. Sibling-prefix,
+nested-prefix, reusable development-instance and full root regression acceptance
+passed. Stage 10 is complete. Actual production server/proxy configuration,
+deployment and operational backup/restoration are deferred to Stage 11.
 
 ## Configuration Contract
 
@@ -46,9 +47,9 @@ prefix. Use `import.meta.env.BASE_URL` as the frontend's single path source and
 introduce a shared API URL builder that appends `api/v1/` and a relative endpoint.
 Keep authentication, CSRF bootstrap and `credentials: same-origin` behavior.
 
-Replace every current root-absolute API URL:
+All application API URL producers use the configured mount:
 
-| File | Required change |
+| File | Implementation |
 | --- | --- |
 | `frontend/vite.config.ts` | Read/validate base configuration; prefix dev proxy matching and strip only the application prefix before forwarding API requests |
 | `frontend/src/api.ts` | Shared API URL builder used by health checks and JSON requests, preserving query strings and slash rules |
@@ -63,8 +64,8 @@ through the shared builder. There is no client-side path router, localStorage,
 sessionStorage or service worker in the current application; if introduced later,
 its base path or storage/cache namespace must follow the instance configuration.
 
-The initial proposal builds a frontend bundle for each prefix from the same
-source/release. The path is a build-time value: changing it requires rebuilding
+Each prefix has a frontend bundle built from the same source/release.
+The path is a build-time value: changing it requires rebuilding
 the bundle, not only changing backend environment variables. Serving one identical
 bundle at arbitrary mounts through runtime configuration is a future alternative.
 
@@ -150,36 +151,38 @@ static frontend assets and the selected production server/proxy.
 
 ## Instance Resources and Tooling
 
-- Add a separate reusable development-instance Compose configuration and example
-  environment files, or equivalent scoped overrides. Parameterize instance path,
-  identifier, per-instance loopback frontend port and configuration explicitly.
-  Preserve `compose.yaml` and the fixed isolated `compose.test.yaml` defaults.
+- `compose.instances.dev.yaml` and `instances/*.env.example` provide the reusable
+  development-instance setup. Instance path, identifier, per-instance loopback
+  frontend port and configuration are explicit. `compose.yaml` and the fixed
+  isolated `compose.test.yaml` retain their root-path defaults.
 - Launch instances with distinct Compose project names and env files. Keep
   project-scoped networks and database/upload volumes; avoid fixed container names
   or shared external volume names. Give each installation independent database
-  credentials, Django secret, accounts and grants. Separate PostgreSQL containers
-  are the initial development proposal; sharing a server with separate database
+  credentials, Django secret, accounts and grants. Development instances use
+  separate PostgreSQL containers; sharing a server with separate database
   roles/databases is a later operational choice requiring equivalent isolation.
-- Current `task-tracker-web:dev` is a shared mutable image name. Paired instances
-  need distinct or immutable versioned image references and separately built
-  frontend artifacts so rebuilding one does not change the other's next restart.
-  Avoid shared writable source mounts when testing independent application updates.
+- The root development workflow retains its shared `task-tracker-web:dev` image
+  name. Independent instances instead use distinct image namespaces and optional
+  `INSTANCE_VERSION` tags, with separately built frontend artifacts. Rebuilding
+  one does not change the other's next restart. Their Compose setup copies source
+  into images and has no shared writable source mounts.
 - Keep database and upload storage together under the same instance ownership.
   Stopping/recreating one instance must retain its storage and leave the other's
   service IDs, data and availability unchanged. Production backup destinations,
   restoration and update procedures remain Stage 11 work, scoped by instance.
-- Document explicitly targeted bootstrap/reset/migrate commands, for example
+- Use explicitly targeted bootstrap/reset/migrate commands, for example
   `docker compose --env-file <instance.env> -f <instance-compose.yaml> -p <instance-id> exec web ...`.
-  These are command shapes, not runnable instructions until the planned files exist.
+  Runnable examples are in [README](../README.md#independent-development-instances).
   Administrator accounts are bootstrapped/recovered separately for each database.
 - Keep `scripts/test.sh` and `scripts/check-image-persistence.sh` limited to their
-  existing disposable test project. Introduce a separate paired-instance runner
-  with explicit test-owned project labels, isolated PostgreSQL/uploads and cleanup.
-  Reuse the current guarded test database/user names inside separate isolated
-  database containers rather than weakening the seed/test safety checks.
-- Update relevant Compose health checks: a prefixed Vite frontend is probed at
-  its mounted UI path; internal Django health remains unprefixed. Exclude new env
-  files, secrets and verification artifacts from Git and Docker build contexts.
+  existing disposable test project. `scripts/test-prefixes.sh` owns the separate
+  `task-tracker-prefix-tests` project with isolated PostgreSQL/uploads and scoped
+  cleanup. It reuses the guarded test database/user names inside separate database
+  containers; seed/test safety checks remain in effect. The reusable development
+  check owns only `task-tracker-instance-check-a` and `-b`.
+- Prefixed Vite frontend health checks probe the mounted UI path; internal Django
+  health remains unprefixed. Instance env files, secrets and verification artifacts
+  are excluded from Git and Docker build contexts.
 
 ## Verification and Completion
 
@@ -217,9 +220,14 @@ applications. If their code requires different trust boundaries, use different
 hostnames. This design supports the requested common-host layout without claiming
 protection from arbitrary same-origin script execution.
 
-Stage 10 completes only after the code/tooling and these checks are implemented
-and pass. Current focused evidence is recorded in the tracker; production readiness still
-requires Stage 11 deployment and full-system restoration verification.
+Stage 10 completed on 2026-10-19 after the sibling/nested/development lifecycles
+and full root regression passed with scoped cleanup and original-resource
+preservation. The root lifecycle passed 142 PostgreSQL tests, both frontend
+configuration checks, the production build and all 43 Chromium scenarios. Commands,
+source versions, interrupted attempts and results are recorded in the
+[tracker](../implementation_plan.md#stage-10-multiple-instance-prefix-support).
+Production readiness still requires Stage 11 deployment and full-system
+restoration verification. Paths on one origin retain the trust limitation above.
 
 ## Technical References
 
