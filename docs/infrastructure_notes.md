@@ -641,3 +641,25 @@ persistent volumes recorded in Stage 9 were present. Only the two downloader
 containers were running. The otherwise empty `task-tracker-tests_default` network
 was present and is owned by the disposable root test project. Keep runtime suites
 serial and inspect final cleanup against this current baseline.
+
+On source `11c45ec`, `stage10-nested-20261019` exited 0: two nested-prefix browser
+workflows (1.3 minutes), the after-replacement session/recovery check (17.3 seconds),
+both builds/configuration checks and Django system/drift checks passed. Database
+identities, domain rows and image bytes were preserved; the sibling stayed healthy
+across 54 observations. Screenshots showed the independent 1.00/2.00 report totals.
+Scoped cleanup and separate label-filtered inspection found no prefix resources.
+
+`stage10-dev-20261019` was interrupted during second-stack startup: the tool
+session exited 143 without a runner status file. There was no application
+assertion failure and host process inspection found no remaining runner. Both
+reserved development-instance projects/storage were explicitly removed with
+scoped Compose commands before retry; temporary env files were removed. Preserve
+the log/interruption note as an interrupted attempt, not successful verification.
+The cause was not established and no daemon/host permission settings changed.
+
+The foreground-terminal retry, `stage10-dev-20261019-retry`, exited 0. Both
+development configurations passed prefixed HTTP/CSRF login, targeted bootstrap
+and recovery, database/upload identity persistence and sibling container/credential
+preservation across first-instance backend/frontend replacement. Automatic cleanup
+removed both synthetic projects and their storage. Full root acceptance is next;
+runtime suites remain serial.

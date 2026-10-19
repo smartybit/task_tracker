@@ -14,8 +14,8 @@ actual progress; it does not turn proposals into confirmed requirements.
   at configurable URL prefixes; production server/proxy configuration, deployment,
   backups and restoration move to Stage 11. Stage 9 is Done; Stage 10 is In progress
   with prefix support and isolated instance tooling implemented. The sibling
-  lifecycle passed; nested-prefix, reusable-development and full root regression
-  acceptance are next. Stage 11 remains Not started. Follow the
+  and nested-prefix lifecycles plus reusable development-instance acceptance
+  passed; the full root regression is next. Stage 11 remains Not started. Follow the
   [multiple-instance design](docs/multiple_instances.md).
 - Stage 10 implementation started from clean source `0b7389a`: canonical path/ID
   validation, prefixed frontend URLs, scoped cookies and frontend/backend startup
@@ -23,7 +23,9 @@ actual progress; it does not turn proposals into confirmed requirements.
   configuration checks and the production build passed. `stage10-pair8` subsequently
   exited 0 with nine prefixed browser workflows, targeted recovery/replacement,
   sibling availability and data/image preservation. Work resumed on 2026-10-19
-  to complete the remaining acceptance checks; Stage 9's evidence is preserved.
+  to complete acceptance: nested-prefix and reusable development-instance checks
+  now also passed. The full root regression remains pending; Stage 9's evidence
+  is preserved.
 - Stage 9 final application source `1f79ff6` passed `stage9-verified1`, exit 0:
   139 PostgreSQL tests (594.845 seconds), fresh migrations/system/drift checks,
   TypeScript/Vite production build and all 43 Chromium scenarios (13.6 minutes).
@@ -159,7 +161,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 7 | Reporting and CSV export | Done | Two sequential full lifecycles: 97 PostgreSQL tests, build, 30 Chromium scenarios each; reporting access, CSV, running-stack reset and cleanup verified |
 | 8 | Remarks, references, images, and search | Done | `142611f`: full lifecycle exit 0; 126 PostgreSQL tests, build, 41 Chromium scenarios; image replacement and scoped cleanup verified |
 | 9 | Development completion and application verification | Done | `1f79ff6`: full lifecycle exit 0; 139 PostgreSQL tests, build, 43 Chromium scenarios; exploratory account checks and scoped cleanup verified |
-| 10 | Multiple-instance prefix support | In progress | Implemented; sibling lifecycle passed; nested/development/root acceptance next |
+| 10 | Multiple-instance prefix support | In progress | Sibling/nested/development acceptance passed; full root regression next |
 | 11 | Production deployment and operational verification | Not started | — |
 
 Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
@@ -1113,7 +1115,7 @@ new services or runtime checks have been implemented/run at this milestone.
 - [x] Add isolated development-instance configuration, separate PostgreSQL/uploads,
   project/port/env targeting, independent image/artifact references and health checks.
   Preserve the existing single-instance development and guarded test workflows.
-- [ ] Add a disposable paired-instance development forwarding fixture and runner;
+- [x] Add a disposable paired-instance development forwarding fixture and runner;
   make browser helpers prefix-aware. Verify root, sibling and nested mounts,
   same-browser session isolation, separate data/uploads, errors and boundary routing,
   targeted management commands and independent restart/update/cleanup.
@@ -1203,6 +1205,39 @@ two persistent volumes recorded in Stage 9; only the two downloader containers
 are running. A leftover `task-tracker-tests_default` network has no running test
 containers and belongs to the disposable root regression project. No development
 data or production services will be migrated, reset or seeded.
+
+### Prefix and Development Acceptance: 2026-10-19
+
+Application/tooling source `11c45ec` passed:
+
+- `sh scripts/test-prefixes.sh stage10-nested-20261019 nested`, exit 0. Both
+  PostgreSQL stacks passed system/drift checks, frontend configuration checks and
+  production builds. Both nested-prefix Chromium workflows passed (1.3 minutes),
+  followed by the post-replacement session/recovery check (17.3 seconds). Invalid
+  configuration was rejected; database identities, domain records and private
+  image bytes were preserved. The sibling stayed healthy across 54 observations.
+  Both report screenshots were inspected and show independent 1.00/2.00 totals.
+  Scoped cleanup completed; separate label-filtered inspection found no remaining
+  prefix-test containers, networks or volumes.
+- `sh scripts/check-instances-dev.sh stage10-dev-20261019-retry`, exit 0. Two
+  independently built development instances passed prefixed HTTP/CSRF login,
+  scoped bootstrap/recovery and persistence checks. Recreating the first backend
+  and frontend preserved database/user/timesheet identities and upload snapshots;
+  the sibling retained its container IDs and original credentials. Both projects
+  and disposable storage were removed by the runner.
+
+The first development-instance attempt (`stage10-dev-20261019`) was interrupted:
+the tool session returned 143 during second-stack startup, with no runner status
+file and no application assertion failure. Process inspection confirmed no runner
+remained. Explicit cleanup of only the two reserved projects completed with exit
+0 before the fresh-label retry in a foreground terminal. Its log and interruption
+note are retained; it is not a successful lifecycle result. The cause of that
+termination was not established.
+
+Shell syntax, all four Compose configurations/examples, 102 local Markdown
+links/anchors and whitespace checks passed. Stage 10 remains In progress pending
+the normal root PostgreSQL/build/Chromium lifecycle and final documentation/resource
+inspection. Stage 11 remains Not started; original development data was untouched.
 
 ## Stage 11: Production Deployment and Operational Verification
 
