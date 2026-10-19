@@ -470,6 +470,12 @@ test project are unchanged. No schema or dependency changes are required.
 
 ## Proposed Deployment and Operations
 
+On 2026-10-19 the user requested separate production, persistent user-evaluation
+and agent environments, extensible to additional agent instances. Stage 11 begins
+by preparing evaluation and agent deployments. Selected defaults and operational
+commands are in [environment operations](docs/environments.md). Gunicorn and Nginx
+are selected for the deployment runtime; development servers remain separate.
+
 By the revised 2026-10-13 sequencing, production configuration and deployment
 belong to Stage 11. Stage 9 administrator lifecycle/application verification is
 complete; Stage 10 prefix support and isolated-instance acceptance are also

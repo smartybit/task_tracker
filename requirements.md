@@ -57,6 +57,12 @@ The following requirements reflect agreed product behavior.
 
 ### Independent Instances
 
+- Provide at least three environment roles (agreed 2026-10-19): production,
+  persistent user evaluation/testing, and agent development/verification. Support
+  additional agent environments when needed. Evaluation data and the selected
+  evaluation release must survive work, test resets and updates in agent environments.
+  Current deployment preparation targets evaluation and agent work; production
+  remains a separate target.
 - Support independent installations on the same hostname under different
   configurable URL prefixes, for example `/time-tracker-test/` and
   `/time-tracker-prod/` (agreed 2026-10-13). Preserve root-path hosting for existing

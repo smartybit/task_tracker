@@ -15,7 +15,9 @@ actual progress; it does not turn proposals into confirmed requirements.
   backups and restoration move to Stage 11. Stage 10 is Done: sibling/nested
   prefix lifecycles, reusable development instances and full root regression
   passed, with inspected cleanup and original-resource preservation. Stage 11
-  remains Not started and is next. Follow the
+  is In progress: prepare persistent user-evaluation and agent environments, with
+  production reserved separately and additional agent environments supported.
+  Follow the
   [multiple-instance design](docs/multiple_instances.md).
 - Stage 10 implementation started from clean source `0b7389a`: canonical path/ID
   validation, prefixed frontend URLs, scoped cookies and frontend/backend startup
@@ -166,7 +168,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 8 | Remarks, references, images, and search | Done | `142611f`: full lifecycle exit 0; 126 PostgreSQL tests, build, 41 Chromium scenarios; image replacement and scoped cleanup verified |
 | 9 | Development completion and application verification | Done | `1f79ff6`: full lifecycle exit 0; 139 PostgreSQL tests, build, 43 Chromium scenarios; exploratory account checks and scoped cleanup verified |
 | 10 | Multiple-instance prefix support | Done | Sibling/nested/development lifecycles and full root acceptance: 142 PostgreSQL tests, build, 43 Chromium scenarios; isolation/persistence/cleanup verified |
-| 11 | Production deployment and operational verification | Not started | — |
+| 11 | Production deployment and operational verification | In progress | Prepare isolated evaluation/agent deployments; production activation and full operational acceptance remain pending |
 
 Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
 when its work and completion checks are satisfied. Record any blocker and the
@@ -1278,6 +1280,13 @@ inspection. Stage 11 remains Not started; original development data was untouche
   backups and full-system restoration remain Stage 11 work, which is Not started.
 
 ## Stage 11: Production Deployment and Operational Verification
+
+Started 2026-10-19 from clean source `0c8637d`. The user requested production,
+user-evaluation and agent environment roles, with more agent environments when
+needed. This milestone prepares evaluation and agent deployment, without activating
+production. Record defaults separately from agreed scope in
+[environment operations](docs/environments.md). Public evaluation access is an open
+preference; initial preparation uses loopback ports and SSH tunneling.
 
 Use the Stage 10 prefix/resource contract when configuring the actual production
 server/proxy and independent deployments. Verify both configured mounts together;
