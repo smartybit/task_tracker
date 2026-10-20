@@ -34,8 +34,8 @@ and reusable development instances passed acceptance. Full root regression passe
 deployment, backups and restoration.
 Stage 9 is complete: administrator safeguards/recovery and development acceptance
 passed 139 PostgreSQL tests, the production build and all 43 Chromium scenarios.
-Stage 11 is In progress. Evaluation is healthy with HTTPS settings prepared for
-host Nginx activation; agent access remains private. Production activation and
+Stage 11 is In progress. Evaluation is healthy with verified public HTTPS;
+agent access remains private. Production activation and
 backup/restoration acceptance remain pending.
 Detailed evidence is recorded in the implementation
 tracker.
@@ -263,10 +263,11 @@ environments have independent releases, secrets and storage; existing developmen
 and disposable test commands retain their original scope. Evaluation account
 bootstrap asks for an email and prints a generated password on the terminal.
 
-On this server, evaluation is configured for
-`https://evaluation.example.com/time-tracker-eval/`, pending the administrator's
-[host Nginx installation and reload](docs/environments.md#activate-evaluation-https-administrator-handoff).
-Its frontend stays on loopback port 8181. Agent remains at
+On this server, evaluation is available at
+`https://evaluation.example.com/time-tracker-eval/`, with working time zone `Asia/Tbilisi`
+(UTC+4). Its frontend stays on loopback port 8181 behind host Nginx; see the
+[installation and rollback instructions](docs/environments.md#activate-evaluation-https-administrator-handoff).
+Agent remains at
 `http://127.0.0.1:8182/time-tracker-agent/`, accessible through an SSH tunnel.
 From the server repository, run `python3 scripts/environments.py bootstrap evaluation`
 to create your administrator. No account was created automatically. Production

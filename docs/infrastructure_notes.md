@@ -825,3 +825,25 @@ remain operator handoff steps; local fixture results must not be presented as
 public HTTPS acceptance. Docker access and the temporary listeners needed sandbox
 escalation; no host permission settings were changed. See the operations guide
 for activation, first-account bootstrap, browser URL and rollback commands.
+
+## Evaluation Public Activation and Working Zone: 2026-10-20
+
+After the user installed host Nginx configuration and loaded the interface,
+`verify evaluation` passed against the actual public HTTPS origin. The initial
+organization/project were confirmed using list/detail API handlers with in-memory
+authentication and a PostgreSQL read-only transaction, as explicitly approved by
+the user. This did not automate password login or change records.
+
+The user then requested Tbilisi/Yerevan working time. Updated only evaluation's
+private `WORKING_TIME_ZONE` from UTC to `Asia/Tbilisi`, backed up its original
+configuration with mode 600, and recreated its backend at unchanged release
+`https-health-20261020`. Gracefully reloaded the existing frontend Nginx to refresh
+backend DNS. No image build, migration, seed or application-record write ran.
+Runtime Django `TIME_ZONE=Asia/Tbilisi` and offset +14,400 seconds were confirmed.
+The standard evaluation verifier passed local and actual public HTTPS checks;
+the agent verifier also passed. Only evaluation's backend container ID changed;
+database, frontend, agent and unrelated container IDs were preserved.
+Safe result metadata and private rollback configuration are under
+`.artifacts/verification/evaluation-tbilisi-20261020/`. Existing browser pages
+should be refreshed to fetch the new shared working zone. Documentation checks
+cover this configuration-only update; no new regression suite was needed.

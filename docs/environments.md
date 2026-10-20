@@ -30,23 +30,26 @@ activation and full Stage 11 operational acceptance remain separate work.
   not change evaluation images or its next restart. Updates target an explicit
   environment name. Existing disposable test projects stay separate.
 
-Public HTTPS activation awaits the administrator's installation below. Full
-backup/restoration and production acceptance remain separate Stage 11 work.
+Evaluation public HTTPS is active and verified after the administrator's
+installation. Full backup/restoration and production acceptance remain separate
+Stage 11 work.
 
 ## Deployed State: 2026-10-20
 
 | Environment | State | Access URL | Release |
 | --- | --- | --- | --- |
-| `evaluation` | All services healthy; host HTTPS activation pending | `https://evaluation.example.com/time-tracker-eval/` | `https-health-20261020` |
+| `evaluation` | All services healthy; public HTTPS verified | `https://evaluation.example.com/time-tracker-eval/` | `https-health-20261020` |
 | `agent` | All three services healthy | `http://127.0.0.1:8182/time-tracker-agent/` | `7850df8-20261020` |
 | Production | Not initialized or activated | Reserved for later setup | None |
 
 At initial deployment both environments had fresh migrated databases and empty
 account, task and image tables; this is historical evidence, not an assumption
 for future checks. Initial statuses are installed by migrations. Run the bootstrap
-command below if you have not yet created your evaluation administrator. The
-working time zone is the documented default, UTC; `init --zone` selects another IANA zone for a new
-environment. Existing configurations store `WORKING_TIME_ZONE` explicitly.
+command below if you have not yet created your evaluation administrator.
+Evaluation's working time zone is `Asia/Tbilisi` (UTC+4), selected for Tbilisi/Yerevan
+on 2026-10-20; agent remains UTC. `init --zone` selects an IANA zone for a new
+environment, defaulting to UTC. Existing configurations store `WORKING_TIME_ZONE`
+explicitly. Refresh open browser pages after a working-zone change.
 
 The six intended services use restart policies and separate persistent volumes.
 Final read-only checks confirmed loopback-only frontend bindings, no published
@@ -67,11 +70,20 @@ the operator. All other container IDs and host Nginx file hashes were preserved;
 `verify agent` passed. Safe results and the inspected screenshot are under
 `.artifacts/verification/evaluation-https-20261020/`.
 
-The actual public `verify evaluation` currently fails at HTTP 404 after passing
-runtime/settings and direct-loopback checks. This is expected until the staged
-host configuration is installed; fixture TLS validation does not establish live
-certificate or host-configuration acceptance. Run the full verifier again after
-administrator activation.
+The first public verification reached the old host's 404 before installation.
+After the user installed the host configuration and loaded the interface, the
+standard public `verify evaluation` passed, including trusted HTTPS and real
+frontend/API/PostgreSQL checks. The user created an administrator and initial
+organization/project; list/detail API handlers confirmed their relationship in a
+read-only transaction. Password login was not automated by the agent.
+
+The 2026-10-20 time-zone update changed only evaluation's `WORKING_TIME_ZONE` from
+UTC to `Asia/Tbilisi`. Its backend was recreated using the same release and its
+existing frontend Nginx was gracefully reloaded to refresh upstream DNS. Runtime
+`TIME_ZONE` and the +14,400-second offset were confirmed; both standard environment
+verifiers passed. No build, migration or application-record write was performed.
+Only evaluation's backend container ID changed. Private rollback configuration
+and safe results are under `.artifacts/verification/evaluation-tbilisi-20261020/`.
 
 ## Targeted Commands
 
@@ -178,7 +190,8 @@ The evaluation runtime is configured for HTTPS at
 `https://evaluation.example.com/time-tracker-eval/`, with persistent storage and corrected
 release `https-health-20261020`. The fix makes the internal HTTP health-check
 exemption account for the URL prefix under HTTPS; the original release remains
-available for rollback. Until host Nginx is updated, the public URL will not reach the app.
+available for rollback. Host Nginx has now been activated by the user and public
+verification passes; the installation steps below are retained for redeployment.
 The old HTTP SSH-tunnel URL no longer supports normal sign-in with these settings.
 
 The reviewed replacement is `/tmp/sites-available/evaluation.example.com`; the maintained

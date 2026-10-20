@@ -9,6 +9,11 @@ actual progress; it does not turn proposals into confirmed requirements.
 ## Current Position
 
 - Last updated: 2026-10-20.
+- Evaluation time-zone update verified (2026-10-20): shared working zone changed
+  from UTC to `Asia/Tbilisi` (UTC+4), as requested for Tbilisi/Yerevan. Runtime zone
+  and offset confirmed; standard evaluation/public HTTPS and agent verification
+  passed. Only evaluation's backend was replaced; frontend Nginx was reloaded.
+  No application data, release or schema changes were needed.
 - Stages 1–10 are complete: 10 of 11 implementation stages complete.
 - By the revised agreement on 2026-10-13, Stage 10 develops independent instances
   at configurable URL prefixes; production server/proxy configuration, deployment,
@@ -20,12 +25,12 @@ actual progress; it does not turn proposals into confirmed requirements.
   production activation and backup/restoration acceptance remain pending.
   Follow the [environment operations guide](docs/environments.md) and
   [multiple-instance design](docs/multiple_instances.md).
-- Evaluation HTTPS handoff prepared 2026-10-20: all services are healthy at release
-  `https-health-20261020`, retaining application login. The Nginx replacement is
-  `/tmp/sites-available/evaluation.example.com`; `/etc/nginx` is unchanged. Four deployment
-  regression tests and staged HTTPS/Chromium checks passed. Public verification
-  currently reaches the old host's 404; the next action is administrator installation,
-  `nginx -t`, reload, bootstrap if needed and `verify evaluation`. Agent access stays private.
+- Evaluation HTTPS activated by the user on 2026-10-20: all services are healthy
+  at release `https-health-20261020`, retaining application login. Four deployment
+  regression tests and staged HTTPS/Chromium checks passed before handoff; public
+  verification now also passes. The user created the first administrator and
+  organization/project; read-only Django API-handler checks confirmed their
+  relationship. Agent access stays private. The agent did not edit `/etc/nginx`.
 - Stage 10 implementation started from clean source `0b7389a`: canonical path/ID
   validation, prefixed frontend URLs, scoped cookies and frontend/backend startup
   matching are implemented. Three focused PostgreSQL/WSGI checks, two frontend

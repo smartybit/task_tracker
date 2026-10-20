@@ -249,6 +249,8 @@ design. Stage 5 owns backend implementation; Stage 6 owns the interface.
 
 - The shared zone is configured through `WORKING_TIME_ZONE` in `.env`/the
   backend environment; UTC is the default. Restart the backend after changing it.
+  Evaluation uses `Asia/Tbilisi` (UTC+4) by user decision on 2026-10-20 for
+  Tbilisi/Yerevan working time; agent remains UTC. Stored timestamps are retained.
   Known spans are normalized for reads as well as writes, so a configuration
   change or an older unsplit span still produces correct daily allocation.
   Virtual split IDs are deterministic for stable drafts; GET never writes them.
