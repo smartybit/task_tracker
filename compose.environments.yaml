@@ -1,0 +1,91 @@
+name: ${INSTANCE_ID:?Use scripts/environments.py with an explicit environment name}
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: task_tracker_instance
+      POSTGRES_USER: task_tracker_instance
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Generate environment secrets first}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U task_tracker_instance -d task_tracker_instance]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+    logging: *logging
+  web:
+    image: ${INSTANCE_ID}-web:${RELEASE:?Select an environment release}
+    build:
+      context: .
+      dockerfile: docker/backend.deploy.Dockerfile
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=64m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      APP_ENV: ${ENVIRONMENT_ROLE:?Set the environment role}
+      APP_BASE_PATH: ${APP_BASE_PATH:?Set the application mount}
+      INSTANCE_ID: ${INSTANCE_ID}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Set the browser origin}
+      PUBLIC_SCHEME: ${PUBLIC_SCHEME:?Set the origin scheme}
+      DJANGO_COOKIE_SECURE: ${COOKIE_SECURE:?Set cookie security for the origin}
+      DJANGO_DEBUG: "false"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Generate environment secrets first}
+      POSTGRES_DB: task_tracker_instance
+      POSTGRES_USER: task_tracker_instance
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: db
+      UPLOAD_ROOT: /var/lib/task-tracker/uploads
+      WORKING_TIME_ZONE: ${WORKING_TIME_ZONE:-UTC}
+      WEB_WORKERS: ${WEB_WORKERS:-2}
+    volumes:
+      - uploads:/var/lib/task-tracker/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+    logging: *logging
+  frontend:
+    image: ${INSTANCE_ID}-frontend:${RELEASE}
+    build:
+      context: .
+      dockerfile: docker/frontend.deploy.Dockerfile
+      args:
+        APP_BASE_PATH: ${APP_BASE_PATH}
+        INSTANCE_ID: ${INSTANCE_ID}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=64m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      APP_BASE_PATH: ${APP_BASE_PATH}
+      INSTANCE_ID: ${INSTANCE_ID}
+      PUBLIC_SCHEME: ${PUBLIC_SCHEME}
+      PUBLIC_HOST: ${PUBLIC_HOST:?Set the browser hostname}
+    ports:
+      - "127.0.0.1:${HTTP_PORT:?Choose a distinct loopback port}:8080"
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q --header "Host: $${PUBLIC_HOST}" -O /dev/null "http://127.0.0.1:8080$${APP_BASE_PATH}"']
+      interval: 3s
+      timeout: 5s
+      retries: 40
+    logging: *logging
+volumes:
+  database:
+  uploads:

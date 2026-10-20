@@ -8,7 +8,7 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 ## Current Position
 
-- Last updated: 2026-10-19.
+- Last updated: 2026-10-20.
 - Stages 1–10 are complete: 10 of 11 implementation stages complete.
 - By the revised agreement on 2026-10-13, Stage 10 develops independent instances
   at configurable URL prefixes; production server/proxy configuration, deployment,
@@ -1287,6 +1287,17 @@ needed. This milestone prepares evaluation and agent deployment, without activat
 production. Record defaults separately from agreed scope in
 [environment operations](docs/environments.md). Public evaluation access is an open
 preference; initial preparation uses loopback ports and SSH tunneling.
+
+On 2026-10-19 the user selected SSH-tunnel access and requested an interactive
+email prompt with a generated password printed by the bootstrap command. The
+implementation now includes private named configurations, explicit environment
+commands, hashed deployment dependencies, Gunicorn and built Nginx frontend
+images, deployment security validation, persistent volumes, bounded logs and
+restart policies. A disposable prototype passed migrations and all three service
+health checks on 2026-10-20. Four host-tool checks and three deployment-setting
+checks passed; the three-environment browser/replacement lifecycle is next.
+Production remains inactive, evaluation has no automatic account, and Stage 11
+stays In progress until its full deployment/backup/restoration criteria are met.
 
 Use the Stage 10 prefix/resource contract when configuring the actual production
 server/proxy and independent deployments. Verify both configured mounts together;

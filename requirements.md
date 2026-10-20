@@ -63,6 +63,10 @@ The following requirements reflect agreed product behavior.
   evaluation release must survive work, test resets and updates in agent environments.
   Current deployment preparation targets evaluation and agent work; production
   remains a separate target.
+- The environment bootstrap command asks for an administrator email interactively,
+  generates a strong password, and prints it on the terminal after successful
+  account creation (agreed 2026-10-19). Do not create an evaluation account
+  automatically during deployment preparation.
 - Support independent installations on the same hostname under different
   configurable URL prefixes, for example `/time-tracker-test/` and
   `/time-tracker-prod/` (agreed 2026-10-13). Preserve root-path hosting for existing

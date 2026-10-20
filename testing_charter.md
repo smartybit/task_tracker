@@ -344,6 +344,15 @@ using only isolated PostgreSQL, uploads and synthetic accounts.
 
 ## Verification Approach
 
+Stage 11 environment preparation must exercise the actual Gunicorn/static-Nginx
+stack rather than Vite: three independent installations, private image/CSV routes,
+host and CSRF rejection, interactive bootstrap and duplicate refusal, same-browser
+session/data isolation, and persisted database/domain/image bytes across an agent
+update/restart while evaluation stays available. Use only the three reserved
+synthetic deployment-check names; inspect cleanup before creating persistent
+evaluation/agent environments. Production activation and full-system restoration
+acceptance remain separate Stage 11 work.
+
 The [reusable test setup](architecture.md#reusable-test-setup) describes
 shared services, isolation, fixture/reset handling, and result capture. The
 [implementation plan](implementation_plan.md#shared-test-environment) maps that

@@ -682,3 +682,37 @@ screenshots were inspected and preserved under
 `.artifacts/verification/stage10-root-20261019-browser/`. Stage 10 is complete;
 production hosting/settings, deployment and full-system backup/restoration remain
 unimplemented Stage 11 work. No development data/services were changed.
+
+## Stage 11 Environment Preparation: 2026-10-19–20
+
+The user selected loopback/SSH-tunnel access for persistent evaluation and agent
+environments. The existing host Nginx already owns ports 80/443; it was not modified.
+Inspection found ports 8180–8182 free, about 3 GiB available memory and 133 GiB free
+disk. These are session observations, not future resource guarantees. The current
+unrelated baseline contains the two downloader containers and the development-db
+and downloader volumes; the three older stopped containers are no longer present.
+
+Separate deployment Dockerfiles use hash-pinned Gunicorn 26.2.0 alongside the
+unchanged application dependency versions, and the unprivileged Nginx stable
+Alpine image. Initial verification found and corrected these setup issues:
+
+- Dependency tooling needs `PYTHONUSERBASE=/tmp/pip-tools` and a writable pip-tools
+  cache, as previously documented. The first install used the unwritable default.
+- A literal Nginx environment placeholder must survive JavaScript template
+  generation; use a literal string variable rather than interpolating an undefined
+  JavaScript identifier.
+- Compose flow-list tmpfs values containing commas must be quoted as one string.
+- Gunicorn 26.2.0 validates `forwarder_headers` as a comma-separated string; the
+  empty setting is `''`, not `[]`. Deployment builds now validate Gunicorn settings
+  against the installed dependency before release.
+- The frontend's private backend readiness request must send the configured public
+  Host header, since Django correctly rejects the internal `web` hostname.
+- With a read-only frontend, set client/proxy/fastcgi/uwsgi/scgi temporary paths
+  under `/tmp`; the latter three otherwise use unwritable `/var/cache/nginx` paths.
+
+Corrected prototype release `verify-20261020-v4` passed migration execution and
+all database/backend/frontend health checks in the reserved `verify-eval` project.
+Four host-tool tests and three isolated Django deployment-setting checks passed.
+The prototype is disposable and has no user account. Next run the three-environment
+lifecycle with scoped cleanup before starting the persistent environments. Keep
+actual results distinct from pending production backup/restoration acceptance.

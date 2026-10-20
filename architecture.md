@@ -479,7 +479,8 @@ are selected for the deployment runtime; development servers remain separate.
 By the revised 2026-10-13 sequencing, production configuration and deployment
 belong to Stage 11. Stage 9 administrator lifecycle/application verification is
 complete; Stage 10 prefix support and isolated-instance acceptance are also
-complete. Stage 11 production deployment is next.
+complete. Stage 11 is In progress with evaluation/agent preparation; production
+activation and full operational acceptance remain pending.
 
 - Use Docker Compose for reproducible development and VDS deployment.
 - Keep runtime services to the backend, PostgreSQL, and a reverse proxy serving
@@ -601,5 +602,5 @@ No Android implementation has been selected or included in the first version.
 
 1. Select backup tooling, schedule, retention, and destination during deployment
    planning, following the agreed backup and restoration policy.
-2. Select the application server, reverse proxy, and any supplementary frontend
-   libraries during implementation; these were not fixed by the stack decision.
+2. Complete production host-proxy integration and select any supplementary frontend
+   libraries when needed. Gunicorn and Nginx are selected for environment deployment.

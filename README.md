@@ -34,7 +34,9 @@ and reusable development instances passed acceptance. Full root regression passe
 deployment, backups and restoration.
 Stage 9 is complete: administrator safeguards/recovery and development acceptance
 passed 139 PostgreSQL tests, the production build and all 43 Chromium scenarios.
-Stage 11 remains Not started. Detailed evidence is recorded in the implementation
+Stage 11 is In progress, preparing persistent evaluation and agent environments.
+Production activation and full backup/restoration acceptance remain pending.
+Detailed evidence is recorded in the implementation
 tracker.
 No personal account is created automatically, and public registration is unavailable.
 
@@ -250,6 +252,15 @@ lifecycle access, and remove only their reserved synthetic projects/volumes.
 Run them serially with other browser suites. The paired fixture exposes HTTPS
 only inside its isolated Docker network and uses a temporary self-signed certificate;
 it does not publish or configure the proposed production host.
+
+## Persistent Evaluation and Agent Environments
+
+Persistent evaluation and agent deployments use the separate
+[environment commands and SSH access guide](docs/environments.md), with Gunicorn
+and built frontend assets. More agent environments can be added by name. Those
+environments have independent releases, secrets and storage; existing development
+and disposable test commands retain their original scope. Evaluation account
+bootstrap asks for an email and prints a generated password on the terminal.
 
 ## Reports and CSV Export
 
