@@ -186,9 +186,10 @@ actual progress; it does not turn proposals into confirmed requirements.
 | 8 | Remarks, references, images, and search | Done | `142611f`: full lifecycle exit 0; 126 PostgreSQL tests, build, 41 Chromium scenarios; image replacement and scoped cleanup verified |
 | 9 | Development completion and application verification | Done | `1f79ff6`: full lifecycle exit 0; 139 PostgreSQL tests, build, 43 Chromium scenarios; exploratory account checks and scoped cleanup verified |
 | 10 | Multiple-instance prefix support | Done | Sibling/nested/development lifecycles and full root acceptance: 142 PostgreSQL tests, build, 43 Chromium scenarios; isolation/persistence/cleanup verified |
-| 11 | Production deployment and operational verification | In progress | Prepare isolated evaluation/agent deployments; production activation and full operational acceptance remain pending |
+| 11 | Production deployment and operational verification | Deferred | Evaluation/agent deployments are prepared; remaining production activation and backup/restoration acceptance follow UI acceptance |
 
-Statuses are Not started, In progress, Blocked, or Done. Mark a stage Done only
+Statuses are Not started, In progress, Deferred, Blocked, or Done. Deferred records
+work explicitly postponed by the user. Mark a stage Done only
 when its work and completion checks are satisfied. Record any blocker and the
 specific action needed to resolve it; do not infer completion from elapsed effort.
 
@@ -1298,6 +1299,11 @@ inspection. Stage 11 remains Not started; original development data was untouche
   backups and full-system restoration remain Stage 11 work, which is Not started.
 
 ## Stage 11: Production Deployment and Operational Verification
+
+**Deferred by user decision on 2026-10-20:** prioritize the
+[UI adjustment subplan](docs/ui_adjustment_plan.md). Preserve the completed
+environment milestones below; resume production and backup/restoration work only
+after UI acceptance.
 
 Started 2026-10-19 from clean source `0c8637d`. The user requested production,
 user-evaluation and agent environment roles, with more agent environments when

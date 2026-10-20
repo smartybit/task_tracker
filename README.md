@@ -34,7 +34,8 @@ and reusable development instances passed acceptance. Full root regression passe
 deployment, backups and restoration.
 Stage 9 is complete: administrator safeguards/recovery and development acceptance
 passed 139 PostgreSQL tests, the production build and all 43 Chromium scenarios.
-Stage 11 is In progress. Evaluation is healthy with verified public HTTPS;
+The [UI adjustment subplan](docs/ui_adjustment_plan.md) is the current priority;
+remaining Stage 11 work is deferred until UI acceptance. Evaluation is healthy with verified public HTTPS;
 agent access remains private. Production activation and
 backup/restoration acceptance remain pending.
 Detailed evidence is recorded in the implementation
@@ -43,14 +44,18 @@ No personal account is created automatically, and public registration is unavail
 
 ## Task Management
 
-After sign-in, regular users see their task workspace; administrators select
-**Tasks**. Task access follows current project/organization grants. Administrators
+After sign-in, everyone opens **Tasks**. Administrators find account/catalog/grant
+and status management under **Administration**, including **System status** for
+connection checks. Colleagues can review project grants under **My access**. Task access follows current project/organization grants. Administrators
 need explicit grants to view or modify tasks. **Refresh tasks** reloads current
 access and data; **Refresh access** also refreshes account/catalog management.
 
-Create a task in a writable project, optionally choose a parent, and review the
-preview before confirming. Click a task to open its description, status history,
-and permitted editing controls. Use the project/status filters and Flat/Tree view
+Use **New task** to create work in a writable project and review its preview
+before confirming. Each task has an **Actions** menu for **Add subtask**, editing,
+status changes, recording, ownership, moves and deletion. Add subtask preselects
+the parent and project. Clicking a title opens a separate details/remarks window;
+**History** opens status history. **Close details** dismisses the window; finish a
+task through **Change status**. Each command has its own dialog. Use the project/status filters and Flat/Tree view
 button to find work. With status filters active, matching tasks whose parents are
 excluded appear at the top level.
 
@@ -58,9 +63,11 @@ Status changes, moves, and deletion require a preview and confirmation. Choose a
 non-final status for any final ancestors that must reopen. A move's destination
 project is explicit and applies to the subtree; every owner's eligibility is
 checked. Tasks with children or any recorded time cannot be deleted. A stale task
-or preview refreshes the workspace and requires another review.
+or preview retains input and requires explicit **Refresh tasks** and another
+review. Changed drafts require confirmation before dismissal; acknowledged saves
+with failed reloads are reported as saved and must not be submitted again.
 
-Administrators configure statuses under **Statuses**. Once used, a status remains
+Administrators configure statuses under **Administration → Statuses**. Once used, a status remains
 protected even after its tasks change status or are deleted. Write-only project
 access permits task creation with a safe acknowledgement; browsing descriptions
 and lists requires task read access. Advanced write-only changes remain available
@@ -68,7 +75,9 @@ through the revision-aware API described in the domain design.
 
 ## Task Remarks
 
-Open a task to read its chronological remarks and shared stars. Post text below
+Open a task to read its remarks and shared stars. The composer sits above the
+stream. **Remark order** switches between newest first (default) and oldest first;
+the choice is remembered per user for the browser session. Post text above
 the conversation; authorized users can edit, delete, or star any remark. Stars
 link to the original remark and are visible to other readers. Edits retain the
 original author and creation time and show an edit timestamp.
@@ -81,7 +90,7 @@ requires remark write when remarks exist and previews the number removed.
 Failed writes retain text. Stale or denied writes require **Reload remarks** and
 review; changed edits require confirmation before disposal. A confirmed save with
 a failed reload is reported as saved. Drafts belong to the open task window;
-closing or switching tasks discards them. See [the remarks API](docs/remarks_api.md).
+closing or switching tasks asks before discarding changed drafts. See [the remarks API](docs/remarks_api.md).
 
 Descriptions and remarks offer **Insert reference** for readable tasks or remarks.
 Links use stable IDs, display current labels, and open the target task or focus
@@ -111,23 +120,26 @@ test commands; it never uses development data.
 
 After sign-in, the timesheet sits to the right of Tasks on wide screens and below
 Tasks on narrow screens. Choose **Day** and, when permitted, **Timesheet person**.
-All displayed and entered times use the shared working zone shown in the panel.
+Table start/end cells show **HH:MM**. All displayed and entered times use the
+shared working zone shown in the panel; precise values remain available in editors
+and are preserved when unchanged.
 Daily totals cover the whole timesheet across projects; breaks and unknown ends
 count zero. Task labels remain visible after task access is lost; opening their
 descriptions still requires task read permission.
 
 Drag a task into today's sheet to record at the current time, or use a task's
-**Record time** button and the searchable picker. The picker includes final tasks
+**Actions → Record time** command or **Record work…** to open the searchable picker. The picker includes final tasks
 and filters by project and selected statuses. Current recording against a final
 task requires reopening it separately in Tasks. For historical additions, enter
 **Selected-day time** explicitly; dropping a task on a past day selects it and
 asks for that time. Use **Break** and **End of Working Day** to close intervals.
-The target-session selector appears on days with work. Adding after a closing
+The recording window includes a target-session selector; days with multiple
+sessions require an explicit selection. Adding after a closing
 marker previews its conversion to a break before confirmation.
 
 Starting a new day leaves older tails unfinished. Their dates appear as links;
-correcting them preserves today's recording. **Continue previous session…** is
-an explicit overnight action that closes the earlier interval at the supplied
+correcting them preserves today's recording. Open **Overnight work…** and choose
+**Continue previous session** for explicit overnight work; this action that closes the earlier interval at the supplied
 time. **Close overnight recording** closes an earlier active session today.
 
 Click a start/end boundary to preview changing it and its neighbor together.

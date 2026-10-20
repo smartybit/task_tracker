@@ -128,12 +128,24 @@ The following requirements reflect agreed product behavior.
 
 ### Task List and Work Area
 
+- Tasks is the default signed-in screen. Its main workspace contains a task list
+  and right-hand timesheet, stacked on narrow screens. Administration and system
+  connection diagnostics have separate screens; colleagues have a My access page.
+- Task details and remarks open in a separate window. New task, Add subtask,
+  Edit task, Change status, ownership, move, deletion and search use dedicated
+  command windows instead of inline forms. Closing details never changes status;
+  completion requires choosing a final status through Change status.
 - Users can switch between hierarchical and flat task lists and filter by project.
   Multiple selected statuses determine which tasks are shown.
 - A task window provides its description and a chronological remarks/chat section.
 - The timesheet appears on the right-hand side of the work interface, with Task,
   Start Time, and End Time columns.
-- A Day field selects the date whose timesheet entries are displayed.
+- A Day field selects the date whose timesheet entries are displayed. Start and
+  end cells show 24-hour HH:MM in the working zone. Stored timestamps and editing
+  retain their existing precision; display formatting does not round recorded work.
+- Drag and drop is the primary recording interaction. A Record work window offers
+  a keyboard/touch alternative. Historical drops require an explicit time; multiple
+  sessions require an explicit target selection. Overnight controls open separately.
 - Dragging a task into the timesheet creates an entry starting at the current time
   when recording current work. Appending to a past day asks for a time on that
   selected date; middle insertion uses the Edit day dialog described below.
@@ -289,7 +301,10 @@ interval is invented. More involved Friday corrections use Edit day.
 ### Remarks, References, and Images
 
 - Remarks contain arbitrary text and record their author and timestamp.
-- Remarks appear chronologically. Starred remarks are shared, not personal,
+- The New remark composer appears above the main stream. Users can select newest
+  or oldest first by creation time; newest first is the default, with the choice
+  remembered per user for the browser session. Editing does not reposition remarks.
+  Starred remarks are shared, not personal,
   and appear in a separate chronological list at the top of the task window,
   linking to their original position in the main remarks stream.
 - Task descriptions and remarks can reference tasks and remarks.

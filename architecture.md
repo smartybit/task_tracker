@@ -261,6 +261,32 @@ design. Stage 5 owns backend implementation; Stage 6 owns the interface.
   Only changed/new entries are rewritten; retained IDs survive accepted corrections.
   Reads and previews coordinate with domain writers to give coherent responses.
 
+## Evaluation-Driven UI Adjustment Decisions
+
+The [UI subplan](docs/ui_adjustment_plan.md) takes priority over remaining Stage 11
+work. React retains the existing API contracts and backend authority; no schema or
+runtime dependency change is required. The main work area contains list/timesheet
+panels; details, task commands, content search and recording use native dialogs.
+Administration groups management screens and lazily loads System status checks.
+Account/catalog directories load only for screens that need them; guard directory
+responses against newer refreshes or navigation so slow reads cannot replace
+newer results.
+
+- A single active dialog changes views for command forms and previews. Keep the
+  form mounted but hidden during confirmation so cancel restores its input/images.
+  Protect changed drafts on dismissal, reference navigation and browser unload;
+  restore focus to the opener and preserve list/filter context.
+- Stale task revisions/previews require explicit refresh/review. Retain drafts and
+  block retries. Existing timesheet handling distinguishes a confirmed write from a
+  subsequent failed reload, preventing accidental duplicate submission.
+- Format table times as HH:MM using the backend working zone, independently of
+  browser time zone. Precise editor values and command payloads remain unchanged.
+- Sort the fully fetched remark stream by creation timestamp and ID in React.
+  Newest-first is the default; sessionStorage remembers the order per user.
+  The API and shared chronological starred list retain their existing order.
+- Evaluation data/releases are preserved; verification uses isolated synthetic
+  services. Evaluation upgrade remains a separate targeted deployment action.
+
 ## Proposed Data and Transaction Approach
 
 - Model organizations, projects, tasks, statuses, users, access grants, remarks,

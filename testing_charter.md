@@ -342,6 +342,24 @@ using only isolated PostgreSQL, uploads and synthetic accounts.
   prevent accidental mixing, but different paths do not create browser trust
   boundaries. Separate hostnames are required if that isolation is needed.
 
+## UI Adjustment Acceptance
+
+- Sign-in lands on Tasks for administrators and colleagues. The main screen has
+  task-list/timesheet controls, without diagnostics or editing/recording forms.
+  Administration, System status and My access are reachable with appropriate roles.
+- Exercise native task windows, Add subtask defaults, status completion versus
+  Close details, preview cancellation, changed-draft dismissal, keyboard focus,
+  failed/stale submissions and acknowledged-save/reload-failure behavior.
+- Exercise current/historical drag/drop, keyboard/touch recording, ambiguous
+  session selection, breaks, end-day and explicit overnight continuation.
+- Assert HH:MM in the working zone while unchanged precise timestamps, IDs,
+  revisions and report totals survive editor saves. Include another browser zone.
+- Assert composer position, both remark orders, per-user session preference,
+  unchanged edit ordering, chronological shared stars and focused references.
+- Inspect desktop/narrow screenshots; run the build, configuration checks,
+  relevant PostgreSQL tests, full regression lifecycle and prefix verification.
+  Never seed or change evaluation to verify UI behavior.
+
 ## Verification Approach
 
 Stage 11 environment preparation must exercise the actual Gunicorn/static-Nginx
