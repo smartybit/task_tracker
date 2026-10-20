@@ -1,5 +1,6 @@
 from django.core.exceptions import ImproperlyConfigured
-from django.test import SimpleTestCase
+from django.middleware.security import SecurityMiddleware
+from django.test import RequestFactory, SimpleTestCase, override_settings
 
 from config.deployment import deployment_settings
 
@@ -35,3 +36,22 @@ class DeploymentConfigurationTests(SimpleTestCase):
                         {'PUBLIC_SCHEME': 'https'}, {'DJANGO_COOKIE_SECURE': 'true'}):
             with self.subTest(changes=changes), self.assertRaises(ImproperlyConfigured):
                 deployment_settings(self.config(**changes))
+
+    def test_https_internal_health_works_at_root_and_prefixed_mounts(self):
+        for mount in ('/', '/time-tracker-eval/', '/team/evaluation/'):
+            with self.subTest(mount=mount):
+                config = deployment_settings(self.config(
+                    PUBLIC_ORIGIN='https://evaluation.example.com', DJANGO_COOKIE_SECURE='true',
+                    APP_BASE_PATH=mount))
+                with override_settings(**config, FORCE_SCRIPT_NAME=mount.rstrip('/') or None):
+                    middleware = SecurityMiddleware(lambda request: None)
+                    factory = RequestFactory()
+                    health = factory.get('/api/v1/health/', HTTP_HOST='127.0.0.1:8000')
+                    self.assertEqual(health.path, mount + 'api/v1/health/')
+                    self.assertIsNone(middleware.process_request(health))
+                    # Other HTTP routes still require HTTPS; the exception is exact.
+                    for path in ('/api/v1/auth/csrf/', '/api/v1/health/extra', '/api/v1/health'):
+                        request = factory.get(path, HTTP_HOST='evaluation.example.com')
+                        response = middleware.process_request(request)
+                        self.assertEqual(response.status_code, 301)
+                        self.assertEqual(response['Location'], 'https://evaluation.example.com' + request.path)

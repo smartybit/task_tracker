@@ -4,6 +4,8 @@ from urllib.parse import urlsplit
 
 from django.core.exceptions import ImproperlyConfigured
 
+from config.instance import instance_config
+
 DEPLOYED_ROLES = {'production', 'evaluation', 'agent'}
 
 
@@ -36,6 +38,7 @@ def deployment_settings(environ):
         raise ImproperlyConfigured('DJANGO_COOKIE_SECURE must match the PUBLIC_ORIGIN scheme.')
     if environ.get('PUBLIC_SCHEME', parsed.scheme) != parsed.scheme:
         raise ImproperlyConfigured('PUBLIC_SCHEME must match PUBLIC_ORIGIN.')
+    base_path, _, _ = instance_config(environ)
     return {
         'ALLOWED_HOSTS': list(dict.fromkeys([parsed.hostname, 'localhost', '127.0.0.1'])),
         'CSRF_TRUSTED_ORIGINS': [origin],
@@ -43,7 +46,9 @@ def deployment_settings(environ):
         # header with the configured scheme, ignoring client forwarding headers.
         'SECURE_PROXY_SSL_HEADER': ('HTTP_X_FORWARDED_PROTO', 'https'),
         'SECURE_SSL_REDIRECT': secure,
-        'SECURE_REDIRECT_EXEMPT': [r'^api/v1/health/$'],
+        # SecurityMiddleware matches request.path, including FORCE_SCRIPT_NAME.
+        # Internal probes use HTTP even when the browser-facing origin is HTTPS.
+        'SECURE_REDIRECT_EXEMPT': [rf'^{re.escape(base_path.lstrip("/"))}api/v1/health/$'],
         # HSTS is owned by the public host proxy, shared by applications on that host.
         'SECURE_HSTS_SECONDS': 0,
     }
