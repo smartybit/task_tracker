@@ -1,3 +1,4 @@
+import { administration } from "./helpers/ui";
 import { newTestContext, baseURL, origin, appURL } from "./helpers/urls";
 import { expect, test, type APIRequestContext, type BrowserContext, type Page } from "@playwright/test";
 
@@ -62,6 +63,7 @@ test("the Compose proxy enforces CSRF on login and authenticated mutations", asy
 test("administrator creates, edits, deactivates, and resets an account through the UI", async ({ page, browser }) => {
   const email = `ui-account-${Date.now()}@example.test`;
   await login(page);
+  await administration(page, "Accounts");
   const create = page.getByRole("form", { name: "Create account", exact: true });
   await create.getByLabel("Account email").fill(email);
   await create.getByLabel("Display name").fill("Browser Person");
@@ -105,7 +107,7 @@ test("administrator creates, edits, deactivates, and resets an account through t
 
 test("catalog administration protects references and supports rename/delete", async ({ page }) => {
   await login(page);
-  await page.getByRole("button", { name: "Catalogs", exact: true }).click();
+  await administration(page, "Catalogs");
   const org = page.getByRole("form", { name: "Create organization", exact: true });
   await org.getByLabel("Organization name").fill("Browser Organization");
   await org.getByRole("button", { name: "Create organization", exact: true }).click();
@@ -133,7 +135,7 @@ test("grant inheritance and live revocation work across separate browser session
   const email = "ui-grants@example.test";
   const { user, token } = await setupUser(context, email);
   await page.goto(appURL);
-  await page.getByRole("button", { name: "Grants", exact: true }).click();
+  await administration(page, "Grants");
   await page.getByLabel("Grant account").selectOption(user.id);
   await page.getByLabel("Grant target").selectOption({ label: "Example Studio" });
   const grant = page.getByRole("form", { name: "Local grant", exact: true });
@@ -145,6 +147,7 @@ test("grant inheritance and live revocation work across separate browser session
   try {
     const colleague = await other.newPage();
     await login(colleague, email, password);
+    await colleague.getByRole("button", { name: "My access", exact: true }).click();
     await expect(colleague.getByRole("region", { name: "Available projects" })).toContainText("Internal");
     await page.getByLabel("Grant scope").selectOption("projects");
     await page.getByLabel("Grant target").selectOption({ label: "Internal" });
@@ -181,7 +184,7 @@ test("revoking administrator status removes management access without another lo
     expect((await context.request.patch(`${baseURL}/api/v1/users/${user.id}/`, { headers: { "X-CSRFToken": token, Origin: origin }, data: { is_admin: false } })).status()).toBe(200);
     await administrator.getByRole("button", { name: "Refresh access" }).click();
     await expect(administrator.getByRole("navigation", { name: "Management" })).toHaveCount(0);
-    await expect(administrator.getByRole("heading", { name: "Your projects", exact: true })).toBeVisible();
+    await expect(administrator.getByRole("region", { name: "Tasks", exact: true })).toBeVisible();
   } finally { await other.close(); }
 });
 
@@ -191,6 +194,7 @@ test("administrator self-protection preserves own edits and permits changes to a
   const { user: other } = await setupUser(context, `other-admin-${suffix}@example.test`, { is_admin: true });
   await context.clearCookies();
   await login(page, actor.email, password);
+  await administration(page, "Accounts");
   await page.getByLabel("Manage account").selectOption(actor.id);
   const edit = page.getByRole("form", { name: "Edit account", exact: true });
   for (const label of ["Application administrator", "Active account"]) {
@@ -202,6 +206,7 @@ test("administrator self-protection preserves own edits and permits changes to a
   await edit.getByRole("button", { name: "Save account" }).click();
   await expect(page.getByRole("alert")).toHaveText("Changes saved.");
   await page.reload();
+  await administration(page, "Accounts");
   await page.getByLabel("Manage account").selectOption(actor.id);
   await expect(edit.getByLabel("Display name")).toHaveValue("Protected administrator");
   const csrf = (await (await context.request.get(`${baseURL}/api/v1/auth/csrf/`)).json()).csrf_token;
@@ -247,6 +252,7 @@ test("a stale administrator account form rejects edits after privilege revocatio
   try {
     const page = await other.newPage();
     await login(page, actor.email, password);
+    await administration(page, "Accounts");
     await page.getByLabel("Manage account").selectOption(target.id);
     const edit = page.getByRole("form", { name: "Edit account", exact: true });
     await edit.getByLabel("Display name").fill("Must not be saved");

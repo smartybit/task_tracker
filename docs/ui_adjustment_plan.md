@@ -7,7 +7,7 @@ remaining Stage 11 production and backup/restoration work.
 
 ## Milestones
 
-1. **In progress — Application shell:** Tasks landing screen, compact header,
+1. **Implemented; acceptance pending — Application shell:** Tasks landing screen, compact header,
    Tasks/Reports navigation, administrator management and System status grouped
    under Administration, separate My access for colleagues.
 2. **Pending — Task windows:** list and right-hand timesheet on the main screen;
@@ -41,4 +41,11 @@ evaluation is a separate deployment action.
 
 - Planning: three tasks and six remarks reviewed in a PostgreSQL read-only
   transaction. No evaluation records changed.
-- Implementation started; runtime acceptance has not yet run.
+- Application shell and dialog implementation compile with TypeScript/Vite.
+- First focused browser pass: 8/10 passed, including complete task edit/tree,
+  status/hierarchy, move/delete, stale-save, catalog and keyboard/recovery flows.
+  Diagnostics retry exceeded five seconds while the frontend was refreshed;
+  a revocation scenario used an immediate count during reload and skipped opening
+  details. Results retained under `.artifacts/verification/ui-adjustments/`.
+  The selector race is corrected and stable-source regression is in progress;
+  these results are not full acceptance.
