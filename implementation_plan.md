@@ -8,6 +8,12 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 ## Current Position
 
+- UI adjustments are the current priority (2026-10-20), following evaluation
+  feedback and the agreed [UI subplan](docs/ui_adjustment_plan.md). Implementation
+  is In progress; acceptance is pending. Stages 1–10 retain their completion
+  evidence. Remaining Stage 11 production and backup/restoration work is deferred
+  until UI acceptance; existing evaluation/agent deployments remain available.
+
 - Last updated: 2026-10-20.
 - Evaluation time-zone update verified (2026-10-20): shared working zone changed
   from UTC to `Asia/Tbilisi` (UTC+4), as requested for Tbilisi/Yerevan. Runtime zone
