@@ -1299,6 +1299,17 @@ checks passed; the three-environment browser/replacement lifecycle is next.
 Production remains inactive, evaluation has no automatic account, and Stage 11
 stays In progress until its full deployment/backup/restoration criteria are met.
 
+Deployment tooling milestone `5fcee29` includes the working prototype and the
+three-environment verifier. First lifecycle `stage11-environments-20261020-1`
+exited 1 after all three stacks passed startup/bootstrap/duplicate refusal: the
+browser fixture filled report dates before initial report loading completed and
+timed out waiting for the historical total. The fixture now waits for the initial
+table and retains screenshots/traces on failure; application behavior was not
+changed. Scoped cleanup and independent inventory confirmed no synthetic resources
+remained. Additional guards reject orphan Docker identities and foreign-workspace
+projects before deployment operations; all six host-tool tests passed. Retry the
+complete lifecycle on the corrected source before persistent deployment.
+
 Use the Stage 10 prefix/resource contract when configuring the actual production
 server/proxy and independent deployments. Verify both configured mounts together;
 the development forwarding fixture does not establish production readiness.

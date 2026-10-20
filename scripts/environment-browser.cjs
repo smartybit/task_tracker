@@ -13,6 +13,7 @@ const { chromium } = require('/work/node_modules/playwright');
   const snapshot = readFileSync('/work/tests/fixtures/screenshot.png');
   const context = await browser.newContext(options.phase === 'after' ? { storageState: statePath } : {});
   context.setDefaultTimeout(15000);
+  await context.tracing.start({ screenshots: true, snapshots: true });
   const url = (instance, path) => `${instance.url}api/v1/${path}`;
   const write = async (instance, token, path, data, method = 'POST') => {
     const response = await context.request.fetch(url(instance, path), {
@@ -103,6 +104,7 @@ const { chromium } = require('/work/node_modules/playwright');
         await page.reload();
         await page.getByRole('button', { name: 'Reports', exact: true }).click();
         const reports = page.getByRole('region', { name: 'Reports', exact: true });
+        await reports.getByRole('table').waitFor();
         await reports.getByLabel('From date', { exact: true }).fill('2020-10-09');
         await reports.getByLabel('To date', { exact: true }).fill('2020-10-09');
         await page.waitForFunction(expected => document.body.textContent.includes(`Total recorded work: ${expected}.00`), index + 1);
@@ -143,7 +145,16 @@ const { chromium } = require('/work/node_modules/playwright');
       }
       console.log('Existing sessions, data, private images and independent totals survived targeted agent replacement/restart.');
     }
+  } catch (error) {
+    for (const [index, page] of context.pages().entries()) {
+      await page.screenshot({ path: `/work/.artifacts/${options.label}-${options.phase}-failure-${index}.png`, fullPage: true }).catch(() => {});
+      console.error('Failed page:', page.url());
+      console.error(await page.getByRole('region', { name: 'Reports', exact: true }).innerText().catch(() => 'Report region not available.'));
+    }
+    await context.tracing.stop({ path: `/work/.artifacts/${options.label}-${options.phase}-failure.zip` });
+    throw error;
   } finally {
+    await context.tracing.stop().catch(() => {});
     await context.close();
     await browser.close();
   }

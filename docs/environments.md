@@ -51,6 +51,8 @@ python3 scripts/environments.py up agent
 `init` creates unique secrets in `environments/NAME.env` (mode 600, directory
 mode 700). This entire directory is excluded from Git and Docker build contexts.
 It refuses existing files, shared ports/secrets/identities and overlapping mounts.
+It also refuses to register an identity already used by Docker containers,
+networks or volumes, and refuses operations on a project owned by another workspace.
 `list` and `check NAME` show safe metadata without printing secrets. Shell variables
 cannot override the selected environment configuration.
 
@@ -130,7 +132,7 @@ database/domain/image snapshots. Automatic cleanup removes only those reserved
 synthetic projects/storage. Logs/status and screenshots stay in ignored artifacts.
 The browser uses host networking solely to reach the loopback-only test ports.
 
-Prototype startup and four host-tool tests plus three deployment-setting tests
+Prototype startup and six host-tool tests plus three deployment-setting tests
 passed. Three-environment browser/lifecycle acceptance is pending. Production is
 not activated. Backup schedule/retention/destination, verified full-system restore
 and final production operational acceptance remain Stage 11 work. Named volumes

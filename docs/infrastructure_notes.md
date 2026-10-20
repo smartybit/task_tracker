@@ -716,3 +716,14 @@ Four host-tool tests and three isolated Django deployment-setting checks passed.
 The prototype is disposable and has no user account. Next run the three-environment
 lifecycle with scoped cleanup before starting the persistent environments. Keep
 actual results distinct from pending production backup/restoration acceptance.
+
+First three-environment run `stage11-environments-20261020-1` exited 1 after all
+three stacks and interactive bootstrap checks passed. Its report browser fixture
+filled dates before the initial options/default-date load completed, then timed
+out awaiting the historical total. It now waits for the initial report table,
+matching the existing prefixed browser flow, and captures traces/screenshots on
+failure. All reserved projects, volumes and configurations were cleaned up;
+inventory again showed only the two original downloader containers and both
+original volumes. This is a failed attempt, not lifecycle acceptance. Ownership
+guards were added before retry to reject pre-existing orphan resources and Docker
+projects belonging to another workspace; all six host-tool checks passed.

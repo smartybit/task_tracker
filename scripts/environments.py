@@ -124,7 +124,28 @@ def locked():
         yield
 
 
+def assert_new_project(config):
+    selector = f"label=com.docker.compose.project={config['INSTANCE_ID']}"
+    for command in (['ps', '-aq'], ['volume', 'ls', '-q'], ['network', 'ls', '-q']):
+        result = subprocess.run(['docker', *command, '--filter', selector],
+                                capture_output=True, text=True, check=True)
+        if result.stdout.strip():
+            raise ValueError('Docker resources already use this environment identity. Restore its original configuration or choose another name.')
+
+
+def assert_project_owner(config):
+    result = subprocess.run(['docker', 'ps', '-a', '--filter',
+                             f"label=com.docker.compose.project={config['INSTANCE_ID']}",
+                             '--format', '{{.Label "com.docker.compose.project.working_dir"}}'],
+                            capture_output=True, text=True, check=True)
+    for owner in result.stdout.splitlines():
+        if not owner or Path(owner).resolve() != ROOT:
+            raise ValueError('This Docker project belongs to a different workspace. No deployment changes were made.')
+
+
 def compose(name, config, *arguments, check=True, **kwargs):
+    if arguments[0] != 'config':
+        assert_project_owner(config)
     # Explicit env files must win over the caller's shell or .env defaults.
     environment = {key: value for key, value in os.environ.items()
                    if key not in FIELDS and not key.startswith('COMPOSE_')}
@@ -215,6 +236,9 @@ def main():
             name_path(args.name)
             validate(config)
             check_registry(config)
+            if name_path(args.name).exists():
+                raise ValueError('This environment already has a configuration; it was not overwritten.')
+            assert_new_project(config)
             save(args.name, config, create=True)
             describe(args.name, config)
             return

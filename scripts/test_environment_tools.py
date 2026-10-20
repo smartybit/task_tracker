@@ -7,6 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 spec = importlib.util.spec_from_file_location('environment_tools', Path(__file__).with_name('environments.py'))
 environment_tools = importlib.util.module_from_spec(spec)
@@ -71,3 +72,16 @@ class EnvironmentTargetTests(unittest.TestCase):
                 redirect_stdout(output), self.assertRaises(ValueError):
             environment_tools.account('evaluation', self.config(), args)
         self.assertNotIn('Password:', output.getvalue())
+
+    def test_foreign_workspace_cannot_receive_a_compose_operation(self):
+        with patch.object(environment_tools.subprocess, 'run', return_value=SimpleNamespace(stdout='/another/workspace\n')) as run:
+            with self.assertRaisesRegex(ValueError, 'different workspace'):
+                environment_tools.compose('evaluation', self.config(), 'up', '-d')
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(run.call_args.args[0][0:3], ['docker', 'ps', '-a'])
+
+    def test_existing_orphan_storage_cannot_be_registered_as_a_new_environment(self):
+        with patch.object(environment_tools.subprocess, 'run', side_effect=[SimpleNamespace(stdout=''), SimpleNamespace(stdout='existing-volume\n')]) as run:
+            with self.assertRaisesRegex(ValueError, 'original configuration'):
+                environment_tools.assert_new_project(self.config())
+        self.assertEqual(run.call_count, 2)
