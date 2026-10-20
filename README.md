@@ -34,8 +34,8 @@ and reusable development instances passed acceptance. Full root regression passe
 deployment, backups and restoration.
 Stage 9 is complete: administrator safeguards/recovery and development acceptance
 passed 139 PostgreSQL tests, the production build and all 43 Chromium scenarios.
-Stage 11 is In progress, preparing persistent evaluation and agent environments.
-Production activation and full backup/restoration acceptance remain pending.
+Stage 11 is In progress. Private evaluation and agent environments are running;
+production activation and backup/restoration acceptance remain pending.
 Detailed evidence is recorded in the implementation
 tracker.
 No personal account is created automatically, and public registration is unavailable.
@@ -261,6 +261,13 @@ and built frontend assets. More agent environments can be added by name. Those
 environments have independent releases, secrets and storage; existing development
 and disposable test commands retain their original scope. Evaluation account
 bootstrap asks for an email and prints a generated password on the terminal.
+
+On this server, evaluation is running at
+`http://127.0.0.1:8181/time-tracker-eval/` and the agent environment at
+`http://127.0.0.1:8182/time-tracker-agent/`, both accessible through SSH tunnels.
+From the server repository, run `python3 scripts/environments.py bootstrap evaluation`
+to create your administrator. No account was created automatically. Production
+has not been initialized or activated.
 
 ## Reports and CSV Export
 

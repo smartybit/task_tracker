@@ -719,11 +719,42 @@ actual results distinct from pending production backup/restoration acceptance.
 
 First three-environment run `stage11-environments-20261020-1` exited 1 after all
 three stacks and interactive bootstrap checks passed. Its report browser fixture
-filled dates before the initial options/default-date load completed, then timed
-out awaiting the historical total. It now waits for the initial report table,
-matching the existing prefixed browser flow, and captures traces/screenshots on
+lacked a wait for the initial options/default-date load before filling dates,
+then timed out awaiting the historical total. It now waits for the initial report
+table, matching the existing prefixed browser flow, and captures traces/screenshots on
 failure. All reserved projects, volumes and configurations were cleaned up;
 inventory again showed only the two original downloader containers and both
 original volumes. This is a failed attempt, not lifecycle acceptance. Ownership
 guards were added before retry to reject pre-existing orphan resources and Docker
 projects belonging to another workspace; all six host-tool checks passed.
+
+Retry `stage11-environments-20261020-2` on source `7850df8` exited 0. Three real
+Gunicorn/static-Nginx deployments passed the browser checks before and after
+agent release replacement and down/up. Evaluation stayed healthy across 95
+observations. Sessions, domain/database identities, private image bytes and
+independent report totals survived; both sibling container sets were unchanged.
+All synthetic configurations, containers, networks and volumes were removed.
+Independent inventory showed only the two original downloader containers and
+both original persistent volumes. Report screenshots for all three deployments
+were inspected and copied under the run's ignored verification artifact directory.
+
+The serial focused root regression `stage11-root-focused-20261020` exited 0:
+fresh PostgreSQL migrations, system/drift checks and 28 deployment-setting,
+prefix/WSGI and account/administration/concurrency tests passed (79.493 seconds).
+Its trap removed both root services and the disposable network. No production
+or existing development data was used or changed.
+
+Persistent deployment then initialized only `evaluation` and `agent`, built release
+`7850df8-20261020` in their distinct image namespaces and started all six services
+healthy. Frontends are bound to `127.0.0.1:8181` and `127.0.0.1:8182`; database and
+Gunicorn ports are not published. Both databases contain zero users/tasks/images,
+with only migration-installed defaults. No bootstrap was run on either persistent
+environment. A temporary read-only handoff probe initially referred to a nonexistent
+Django `WORKING_TIME_ZONE` setting; corrected to `TIME_ZONE`, it passed all live
+checks and saved safe metadata under
+`.artifacts/verification/stage11-persistent-deployment-20261020.json`.
+Application containers are non-root and read-only, debug is disabled, and restart
+policies are set. Existing downloader container IDs and original volumes remain;
+only the six intended deployment services and their storage/network resources
+were added. Production was not initialized and host public proxy files were not
+changed. See the environment operations guide for SSH and interactive bootstrap.

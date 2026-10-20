@@ -28,14 +28,37 @@ activation and full Stage 11 operational acceptance remain separate work.
   not change evaluation images or its next restart. Updates target an explicit
   environment name. Existing disposable test projects stay separate.
 
-These are implementation defaults, not a claim that public hosting or full
-backup/restoration acceptance is complete. Verified commands, actual deployment
-state and outstanding work will be recorded here as implementation progresses.
+These are implementation defaults. Public hosting and full backup/restoration
+acceptance remain separate from this private deployment milestone.
+
+## Deployed State: 2026-10-20
+
+| Environment | State | Server-local URL | Release |
+| --- | --- | --- | --- |
+| `evaluation` | All three services healthy | `http://127.0.0.1:8181/time-tracker-eval/` | `7850df8-20261020` |
+| `agent` | All three services healthy | `http://127.0.0.1:8182/time-tracker-agent/` | `7850df8-20261020` |
+| Production | Not initialized or activated | Reserved for later setup | None |
+
+Both running environments have fresh migrated databases and empty account, task
+and image tables. Initial statuses are installed by migrations. Run the bootstrap
+command below to create your evaluation administrator. The working time zone is
+the documented default, UTC; `init --zone` selects another IANA zone for a new
+environment. Existing configurations store `WORKING_TIME_ZONE` explicitly.
+
+The six intended services use restart policies and separate persistent volumes.
+Final read-only checks confirmed loopback-only frontend bindings, no published
+database/backend ports, built assets and metadata, rejected unknown hosts/missing
+assets, non-root read-only application containers, and debug disabled. Safe
+deployment evidence is retained in ignored
+`.artifacts/verification/stage11-persistent-deployment-20261020.json`.
+The two existing downloader containers and original volumes were preserved.
 
 ## Targeted Commands
 
 The host needs Python 3, Docker Engine and Compose. Commands work from any current
-directory when the script is addressed by its absolute path. From the repository:
+directory when the script is addressed by its absolute path. The following is the
+initial setup sequence; `evaluation` and `agent` are already initialized and
+running on this server, so use `status` or `bootstrap` for them:
 
 ```sh
 python3 scripts/environments.py init evaluation --role evaluation --port 8181 --path /time-tracker-eval/
@@ -132,11 +155,22 @@ database/domain/image snapshots. Automatic cleanup removes only those reserved
 synthetic projects/storage. Logs/status and screenshots stay in ignored artifacts.
 The browser uses host networking solely to reach the loopback-only test ports.
 
-Prototype startup and six host-tool tests plus three deployment-setting tests
-passed. Three-environment browser/lifecycle acceptance is pending. Production is
-not activated. Backup schedule/retention/destination, verified full-system restore
-and final production operational acceptance remain Stage 11 work. Named volumes
-provide persistence, not a backup.
+On application/tooling source `7850df8`,
+`stage11-environments-20261020-2` exited 0. All three deployments passed startup,
+interactive bootstrap and duplicate refusal, the browser checks above, and
+session/data/image/report preservation after agent replacement and restart.
+Evaluation stayed healthy across 95 observations; its containers and the third
+environment's containers were unchanged. Synthetic resources were fully removed.
+Screenshots of the independent 1.00/2.00/3.00-hour totals were inspected.
+
+Six host-tool tests passed. `stage11-root-focused-20261020` also exited 0:
+fresh PostgreSQL migrations, system/drift checks and 28 authentication,
+administration/concurrency, deployment-setting and prefix/WSGI tests passed
+(79.493 seconds for the tests). Its disposable services were removed.
+
+Production is not activated. Backup schedule/retention/destination, verified
+full-system restore and final production operational acceptance remain Stage 11
+work. Named volumes provide persistence, not a backup.
 
 ## References
 

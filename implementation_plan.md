@@ -15,9 +15,10 @@ actual progress; it does not turn proposals into confirmed requirements.
   backups and restoration move to Stage 11. Stage 10 is Done: sibling/nested
   prefix lifecycles, reusable development instances and full root regression
   passed, with inspected cleanup and original-resource preservation. Stage 11
-  is In progress: prepare persistent user-evaluation and agent environments, with
-  production reserved separately and additional agent environments supported.
-  Follow the
+  is In progress: persistent user-evaluation and agent environments are healthy
+  on loopback ports 8181/8182. Additional agent environments are supported;
+  production activation and backup/restoration acceptance remain pending.
+  Follow the [environment operations guide](docs/environments.md) and
   [multiple-instance design](docs/multiple_instances.md).
 - Stage 10 implementation started from clean source `0b7389a`: canonical path/ID
   validation, prefixed frontend URLs, scoped cookies and frontend/backend startup
@@ -1285,8 +1286,8 @@ Started 2026-10-19 from clean source `0c8637d`. The user requested production,
 user-evaluation and agent environment roles, with more agent environments when
 needed. This milestone prepares evaluation and agent deployment, without activating
 production. Record defaults separately from agreed scope in
-[environment operations](docs/environments.md). Public evaluation access is an open
-preference; initial preparation uses loopback ports and SSH tunneling.
+[environment operations](docs/environments.md). The user selected private
+loopback ports and SSH tunneling for evaluation access.
 
 On 2026-10-19 the user selected SSH-tunnel access and requested an interactive
 email prompt with a generated password printed by the bootstrap command. The
@@ -1294,30 +1295,58 @@ implementation now includes private named configurations, explicit environment
 commands, hashed deployment dependencies, Gunicorn and built Nginx frontend
 images, deployment security validation, persistent volumes, bounded logs and
 restart policies. A disposable prototype passed migrations and all three service
-health checks on 2026-10-20. Four host-tool checks and three deployment-setting
-checks passed; the three-environment browser/replacement lifecycle is next.
+health checks on 2026-10-20. Six host-tool checks and the complete three-environment
+browser/replacement lifecycle subsequently passed.
 Production remains inactive, evaluation has no automatic account, and Stage 11
 stays In progress until its full deployment/backup/restoration criteria are met.
 
 Deployment tooling milestone `5fcee29` includes the working prototype and the
 three-environment verifier. First lifecycle `stage11-environments-20261020-1`
 exited 1 after all three stacks passed startup/bootstrap/duplicate refusal: the
-browser fixture filled report dates before initial report loading completed and
+browser fixture lacked a wait for initial report loading before filling dates and
 timed out waiting for the historical total. The fixture now waits for the initial
 table and retains screenshots/traces on failure; application behavior was not
 changed. Scoped cleanup and independent inventory confirmed no synthetic resources
 remained. Additional guards reject orphan Docker identities and foreign-workspace
-projects before deployment operations; all six host-tool tests passed. Retry the
-complete lifecycle on the corrected source before persistent deployment.
+projects before deployment operations; all six host-tool tests passed.
+
+On corrected application/tooling source `7850df8`,
+`stage11-environments-20261020-2` exited 0: all three compiled-frontend/Gunicorn
+deployments passed bootstrap, same-browser session isolation, routing/host/CSRF,
+private images, distinct data/totals and real CSV downloads. Existing sessions,
+domain/database identities and image bytes survived agent update and restart;
+evaluation stayed healthy across 95 observations and both sibling container sets
+were unchanged. Scoped cleanup was independently inspected. Screenshots of all
+three reports showed independent 1.00/2.00/3.00-hour totals.
+
+`stage11-root-focused-20261020` exited 0: fresh PostgreSQL migrations, Django
+system/drift checks and all 28 focused authentication, administration/concurrency,
+deployment-setting and prefix/WSGI tests (79.493 seconds), followed by inspected
+cleanup. The Stage 10 full 142-test/43-browser result remains the prior broad
+regression evidence; it was not rerun for this deployment milestone.
+
+Persistent `evaluation` and `agent` were initialized, built and started on
+2026-10-20 at `/time-tracker-eval/` port 8181 and `/time-tracker-agent/` port 8182,
+using separate image namespaces with release `7850df8-20261020`. All six services
+are healthy. Read-only handoff checks confirmed loopback bindings, no published
+database/backend ports, compiled assets, expected identity/host handling,
+non-root read-only application containers, debug disabled and zero accounts,
+tasks or images in both databases. Bootstrap is intentionally left to the user.
+Both original downloader containers and original persistent volumes were
+preserved; synthetic verification resources are absent. Production has no
+configuration or resources. The requested non-production preparation is complete;
+the next Stage 11 work is backup/restore implementation and production acceptance.
+Documentation consistency, 110 local links/anchors and whitespace checks passed.
 
 Use the Stage 10 prefix/resource contract when configuring the actual production
 server/proxy and independent deployments. Verify both configured mounts together;
 the development forwarding fixture does not establish production readiness.
 
-- [ ] Select and configure the application server, reverse proxy, production
-  frontend assets, and deployment settings for the VDS.
-- [ ] Persist PostgreSQL data and images across application restarts/replacements.
-- [ ] Document initial setup, account bootstrap, migrations, startup, and updates.
+- [x] Select and configure Gunicorn, static Nginx frontend assets and deployment
+  settings for private evaluation/agent deployments on the VDS.
+- [ ] Configure and accept the public production host/proxy and activate production.
+- [x] Persist PostgreSQL data and images across application restarts/replacements.
+- [x] Document initial setup, account bootstrap, migrations, startup, and updates.
 - [ ] Select backup tooling, schedule, retention, and destination for backups
   managed by the server administrator. Document and exercise full-system
   restoration on another machine from backups of the PostgreSQL cluster,
@@ -1325,7 +1354,7 @@ the development forwarding fixture does not establish production readiness.
   consistency in isolation.
 - [ ] Run the critical API/database and browser checks from the testing charter
   and complete exploratory sessions for permissions and competing edits.
-- [ ] Verify startup, migrations, routing, session isolation and persistence for
+- [x] Verify startup, migrations, routing, session isolation and persistence for
   both configured mounts in the deployment configuration, including independent
   update/restart and instance-scoped operations. Record actual deployment state
   and remaining limitations.
@@ -1424,3 +1453,4 @@ work to Stage 11.
 | 2026-10-13 | Stage 9 completed | Final application source `1f79ff6` passed `stage9-verified1`, exit 0: 139 PostgreSQL tests (594.845s), fresh migrations/system/drift, TypeScript/Vite build and all 43 Chromium scenarios (13.6m). Total lifecycle 25m09s; healthy-stack reset and scoped cleanup inspected. Separate exploratory keyboard/competing-administrator checks and desktop/narrow inspection passed. Original five unrelated container IDs and both volumes preserved; development untouched. Documentation aligned; 89 local links/anchors and whitespace checked. Stage 9 Done; Stage 10 production deployment/restoration remains Not started. Commit: `docs: record Stage 9 completion and verification`. |
 | 2026-10-13 | Multiple-instance development inserted before deployment | By user decision, production server/proxy configuration, deployment and operational verification move from Stage 10 to Stage 11. Stage 10 now covers multiple-instance URL-prefix development. Recorded the agreed capability and a detailed design for configuration, frontend/API/assets, Django script prefix/cookies, routing, resource/image isolation, development tooling and acceptance checks. Stage 10 In progress with design complete; implementation/runtime verification pending. Nine of eleven stages complete; Stage 11 Not started. Documentation consistency, 96 local links/anchors and whitespace checked; no application code, services or application tests changed/run. Commit: `docs: plan multiple-instance prefix support before deployment`. |
 | 2026-10-19 | Stage 10 completed | Preserved and committed the paired-suite fixes as `11c45ec`, reconciled the successful sibling evidence, and passed nested-prefix and reusable-development lifecycles. An interrupted development runner was cleaned up and successfully retried; the cause remains unknown. Full root lifecycle on documentation milestone `ca52bf2` exited 0: 142 PostgreSQL tests (579.216s), configuration checks, build and all 43 Chromium scenarios (13.0m), total 24m13s. Scoped cleanup and preservation of the five original container IDs and both volumes were inspected. Screenshots/logs retained; docs aligned, 104 local links/anchors, script syntax and whitespace passed. Stage 10 Done; 10 of 11 stages complete; Stage 11 production deployment/restoration remains Not started. |
+| 2026-10-20 | Private evaluation and agent deployments prepared | Environment decisions `c3f7a12`, tooling `5fcee29` and ownership/readiness fixes `7850df8` deliver separate persistent Gunicorn/static-Nginx deployments and interactive email/generated-password bootstrap. Three-environment lifecycle retry exited 0, including isolated sessions/data/images/CSV and agent replacement/restart while evaluation stayed healthy across 95 observations; scoped cleanup and report screenshots inspected. Six host-tool checks and 28 focused PostgreSQL/settings/WSGI/account/concurrency checks passed, with system/drift checks. Persistent evaluation and agent are healthy on loopback ports 8181/8182 at release `7850df8-20261020`, with no accounts created. Safe read-only handoff checks passed; original services/storage preserved. Production uninitialized; Stage 11 remains In progress for production activation and backup/restoration acceptance. |
