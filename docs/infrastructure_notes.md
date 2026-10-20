@@ -777,3 +777,51 @@ not a deployment failure; no Docker socket or host permissions were changed.
 Both `verify evaluation` and `verify agent` exited 0 against the running private
 deployments without restarting services or modifying application data. No new
 test stacks were needed. Public HTTPS was not live-tested in this milestone.
+
+## Evaluation HTTPS Handoff: 2026-10-20
+
+The user replaced evaluation's SSH-tunnel access with
+`https://evaluation.example.com/time-tracker-eval/`, keeping existing application login.
+The user will install the prepared `/tmp/sites-available/evaluation.example.com` configuration
+and validate/reload host Nginx with administrator permissions. The maintained
+template is `docker/host-nginx/evaluation.example.com.conf`. Both obsolete project locations
+are removed; the TLS configuration, HTTP redirect and fallback behavior are
+preserved. The new proxy preserves the full application URI and public Host and
+matches the private frontend's 16 MiB request-body envelope. `/etc/nginx` is untouched.
+
+An initial evaluation backend restart timed out waiting for health. HTTP health
+requests were redirected to HTTPS because `SecurityMiddleware` matches the script
+prefix in `request.path`, while `SECURE_REDIRECT_EXEMPT` originally matched only
+`api/v1/health/`. Fix `b6f8dca` derives the exact exemption from the validated mount.
+Four focused deployment tests passed in a networkless container with synthetic
+test settings, including root, prefixed and nested HTTPS middleware requests and
+continued HTTPS redirection elsewhere. The first test invocation omitted required
+settings; retry with synthetic Django/PostgreSQL settings passed without any
+database setup or connection.
+
+Evaluation now runs corrected release `https-health-20261020`, with
+`PUBLIC_ORIGIN=https://evaluation.example.com`, public host/scheme and Secure cookies set.
+Only its backend/frontend were recreated; no migrations, seed or bootstrap ran.
+All services are healthy. Evaluation database, agent and unrelated container IDs
+are unchanged. The original private settings/release were backed up under ignored
+`.artifacts/verification/evaluation-https-20261020/` with mode 600.
+
+A temporary local Nginx fixture validated staged routing syntax and exercised the
+real deployment over fixture HTTPS. Its isolated listeners and certificate replaced
+only the public listeners/host TLS files for this check. Deployment runtime/settings,
+assets/API/PostgreSQL health, canonical redirects with query preservation, obsolete
+routes, Secure scoped CSRF cookies, anonymous protection and missing/untrusted-origin
+CSRF rejection passed. Chromium displayed the sign-in form and connected-database
+status; the screenshot was inspected. The probe's initial assumptions about relative
+redirects, CSRF error text and automatic cookie bootstrap were corrected to match
+existing behavior before acceptance passed. No account was created. The fixture
+proxy and browser were removed; original host config hashes still match.
+
+The standard agent verifier exited 0. The standard evaluation verifier passed
+runtime/settings and direct-loopback HTTP, then failed at the live public mount's
+404, as expected before administrator installation. Host Nginx's actual full TLS
+configuration validation, public verification and authenticated sign-in/sign-out
+remain operator handoff steps; local fixture results must not be presented as
+public HTTPS acceptance. Docker access and the temporary listeners needed sandbox
+escalation; no host permission settings were changed. See the operations guide
+for activation, first-account bootstrap, browser URL and rollback commands.

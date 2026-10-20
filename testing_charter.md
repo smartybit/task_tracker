@@ -353,6 +353,16 @@ synthetic deployment-check names; inspect cleanup before creating persistent
 evaluation/agent environments. Production activation and full-system restoration
 acceptance remain separate Stage 11 work.
 
+For evaluation's HTTPS host-proxy handoff, verify the selected release and retained storage,
+scoped Secure cookies, application sign-in page and unauthenticated API protection,
+CSRF enforcement, built assets/API routing with the full mount preserved, the
+trailing-slash redirect and removal of obsolete project routes. Before administrator
+activation, distinguish local/staged proxy checks from actual public HTTPS
+acceptance; the latter requires the installed configuration, trusted certificate
+and `verify evaluation`. Leave first-account bootstrap interactive and do not
+create evaluation records for synthetic checks. Confirm agent services and the
+evaluation database container remain unchanged.
+
 The read-only `environments.py verify NAME` command must also work after initial
 setup. Exercise rejection of missing/unhealthy services, stale releases, unsafe
 ports/storage/privileges, settings drift, wrong frontend/backend identity, failed

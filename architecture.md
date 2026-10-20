@@ -476,6 +476,23 @@ by preparing evaluation and agent deployments. Selected defaults and operational
 commands are in [environment operations](docs/environments.md). Gunicorn and Nginx
 are selected for the deployment runtime; development servers remain separate.
 
+On 2026-10-20 the user replaced evaluation's SSH-tunnel access with public HTTPS
+at `https://evaluation.example.com/time-tracker-eval/`, retaining application authentication.
+The host Nginx terminates TLS and forwards the complete mount to the existing
+loopback frontend on port 8181, preserving the public Host. The private frontend
+continues to strip the API prefix and overwrite the backend's forwarded scheme
+using the configured HTTPS origin; session/CSRF cookies are Secure. HTTPS startup
+exposed a health-check redirect bug: the exemption now matches the configured
+script prefix, as Django's security middleware sees it in `request.path`.
+Evaluation uses a corrected release, without schema or product behavior changes.
+The host route allows a 16 MiB request envelope
+to match the private frontend; the application's per-image limit is unchanged.
+The maintained host template is [evaluation.example.com.conf](docker/host-nginx/evaluation.example.com.conf);
+its staged copy is `/tmp/sites-available/evaluation.example.com`. The user installs and validates
+it and reloads host Nginx; preparing the handoff does not modify `/etc/nginx`.
+The obsolete project routes are removed from the replacement. Agent remains
+private, and production activation and backup/restoration remain separate work.
+
 The existing environment manager owns reusable live verification through
 `verify NAME`. It inspects only the selected deployment's container settings,
 configured release, named volumes and published ports, reads a whitelist of Django

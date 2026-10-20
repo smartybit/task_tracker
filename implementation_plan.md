@@ -20,6 +20,12 @@ actual progress; it does not turn proposals into confirmed requirements.
   production activation and backup/restoration acceptance remain pending.
   Follow the [environment operations guide](docs/environments.md) and
   [multiple-instance design](docs/multiple_instances.md).
+- Evaluation HTTPS handoff prepared 2026-10-20: all services are healthy at release
+  `https-health-20261020`, retaining application login. The Nginx replacement is
+  `/tmp/sites-available/evaluation.example.com`; `/etc/nginx` is unchanged. Four deployment
+  regression tests and staged HTTPS/Chromium checks passed. Public verification
+  currently reaches the old host's 404; the next action is administrator installation,
+  `nginx -t`, reload, bootstrap if needed and `verify evaluation`. Agent access stays private.
 - Stage 10 implementation started from clean source `0b7389a`: canonical path/ID
   validation, prefixed frontend URLs, scoped cookies and frontend/backend startup
   matching are implemented. Three focused PostgreSQL/WSGI checks, two frontend
@@ -1287,7 +1293,8 @@ user-evaluation and agent environment roles, with more agent environments when
 needed. This milestone prepares evaluation and agent deployment, without activating
 production. Record defaults separately from agreed scope in
 [environment operations](docs/environments.md). The user selected private
-loopback ports and SSH tunneling for evaluation access.
+loopback ports and SSH tunneling for evaluation access initially; the 2026-10-20
+HTTPS handoff below supersedes that access decision for evaluation.
 
 On 2026-10-19 the user selected SSH-tunnel access and requested an interactive
 email prompt with a generated password printed by the bootstrap command. The
@@ -1351,6 +1358,47 @@ data changes. The one-off regression wrapper remains outside the working tree;
 existing test modules/runners retain that responsibility. Documentation, Python
 syntax, 111 local links/anchors and whitespace checks passed. Public HTTPS probing
 is supported but was not exercised against a live public deployment at this milestone.
+
+Evaluation HTTPS handoff (2026-10-20): by user decision, evaluation now uses
+`https://evaluation.example.com/time-tracker-eval/` and existing application authentication;
+agent remains private. The host template is tracked and copied to
+`/tmp/sites-available/evaluation.example.com`, with both obsolete project locations removed.
+The host's existing TLS/HTTP redirect is preserved; the new proxy retains the
+full mount and permits a 16 MiB request envelope, matching the private frontend.
+No `/etc/nginx` files were changed; hash comparison confirmed preservation.
+
+First HTTPS runtime application failed its backend health wait: Django's security
+middleware matches `request.path` including the script prefix, while the original
+health exemption matched only the unprefixed path. Fix `b6f8dca` makes the exception
+prefix-aware and exact. Four deployment configuration tests passed in an isolated
+networkless container, including root, evaluation and nested HTTPS health requests
+while other HTTP paths still redirect. No database was needed for these tests.
+Built and applied evaluation-only release `https-health-20261020`; all three
+services are healthy, with no migration, seed or bootstrap run.
+
+Staged proxy acceptance passed using a temporary loopback Nginx with fixture TLS:
+runtime/settings/release/storage checks, built frontend assets and PostgreSQL/API
+health through direct and staged proxy access, slash/query and HTTP-to-HTTPS
+redirects, obsolete-route rejection, scoped Secure CSRF cookies, unauthenticated
+protection and valid/missing/untrusted-origin CSRF behavior using invalid synthetic
+credentials. Chromium rendered the sign-in form and connected-database status;
+its screenshot was inspected. Initial probe assertions were corrected for Nginx's
+absolute redirects, the JSON `csrf_failed` response and lazy CSRF-cookie bootstrap
+before the successful acceptance run. The temporary proxy and browser were removed.
+Only evaluation backend/frontend container IDs changed: its database, all agent
+and unrelated container IDs were preserved. `verify agent` exited 0.
+
+The standard `verify evaluation` passed runtime/settings and direct HTTP checks,
+then exited nonzero at the actual public mount's HTTP 404, as expected before
+administrator activation. Local fixture acceptance is not public HTTPS acceptance.
+Private rollback configuration and safe result metadata are retained under
+`.artifacts/verification/evaluation-https-20261020/`. Administrator instructions,
+browser URL, interactive account bootstrap and rollback are in the operations
+guide. The next action is user installation/validation/reload of the host config,
+then `verify evaluation` and real account sign-in/sign-out. Production and full
+Stage 11 backup/restoration acceptance remain pending. Documentation consistency,
+114 local links/anchors and whitespace checks passed; no broad application or
+database regression suite was rerun for this focused deployment fix.
 
 Use the Stage 10 prefix/resource contract when configuring the actual production
 server/proxy and independent deployments. Verify both configured mounts together;

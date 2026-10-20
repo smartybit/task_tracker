@@ -63,6 +63,11 @@ The following requirements reflect agreed product behavior.
   evaluation release must survive work, test resets and updates in agent environments.
   Current deployment preparation targets evaluation and agent work; production
   remains a separate target.
+- Evaluation is accessed at `https://evaluation.example.com/time-tracker-eval/` using the
+  existing application sign-in, without an additional proxy password or IP
+  restriction (agreed 2026-10-20). This replaces SSH-tunnel access for evaluation;
+  agent access remains private. The user installs and reloads the prepared host
+  Nginx configuration with administrator permissions.
 - The environment bootstrap command asks for an administrator email interactively,
   generates a strong password, and prints it on the terminal after successful
   account creation (agreed 2026-10-19). Do not create an evaluation account

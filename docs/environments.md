@@ -21,28 +21,31 @@ activation and full Stage 11 operational acceptance remain separate work.
 - Evaluation uses `/time-tracker-eval/` on loopback port 8181; the first persistent
   agent environment uses `/time-tracker-agent/` on loopback port 8182. Production
   reserves `/time-tracker-prod/`; it is not activated by this milestone.
-- Loopback HTTP is for SSH-tunnel access. Public HTTPS requires an explicit origin
-  and host-proxy configuration that preserves the application mount. Existing
-  public host configuration is inspected but not changed during preparation.
+- Evaluation uses the public origin `https://evaluation.example.com`, Secure cookies and the
+  existing application login (agreed 2026-10-20). Host Nginx must preserve the full
+  mount when forwarding to loopback. Its replacement is prepared in `/tmp` for
+  administrator installation; `/etc/nginx` is not changed by this preparation.
+  Agent retains loopback HTTP and SSH-tunnel access.
 - Named, versioned builds isolate releases: rebuilding an agent environment does
   not change evaluation images or its next restart. Updates target an explicit
   environment name. Existing disposable test projects stay separate.
 
-These are implementation defaults. Public hosting and full backup/restoration
-acceptance remain separate from this private deployment milestone.
+Public HTTPS activation awaits the administrator's installation below. Full
+backup/restoration and production acceptance remain separate Stage 11 work.
 
 ## Deployed State: 2026-10-20
 
-| Environment | State | Server-local URL | Release |
+| Environment | State | Access URL | Release |
 | --- | --- | --- | --- |
-| `evaluation` | All three services healthy | `http://127.0.0.1:8181/time-tracker-eval/` | `7850df8-20261020` |
+| `evaluation` | All services healthy; host HTTPS activation pending | `https://evaluation.example.com/time-tracker-eval/` | `https-health-20261020` |
 | `agent` | All three services healthy | `http://127.0.0.1:8182/time-tracker-agent/` | `7850df8-20261020` |
 | Production | Not initialized or activated | Reserved for later setup | None |
 
-Both running environments have fresh migrated databases and empty account, task
-and image tables. Initial statuses are installed by migrations. Run the bootstrap
-command below to create your evaluation administrator. The working time zone is
-the documented default, UTC; `init --zone` selects another IANA zone for a new
+At initial deployment both environments had fresh migrated databases and empty
+account, task and image tables; this is historical evidence, not an assumption
+for future checks. Initial statuses are installed by migrations. Run the bootstrap
+command below if you have not yet created your evaluation administrator. The
+working time zone is the documented default, UTC; `init --zone` selects another IANA zone for a new
 environment. Existing configurations store `WORKING_TIME_ZONE` explicitly.
 
 The six intended services use restart policies and separate persistent volumes.
@@ -53,6 +56,23 @@ deployment evidence is retained in ignored
 `.artifacts/verification/stage11-persistent-deployment-20261020.json`.
 The two existing downloader containers and original volumes were preserved.
 
+The HTTPS follow-up built evaluation-only release `https-health-20261020` from
+health-check fix `b6f8dca` and recreated only evaluation's backend/frontend.
+Four deployment regression tests passed without database setup. A temporary local
+HTTPS proxy using the staged routing passed the deployment checks, redirects,
+obsolete-route rejection, Secure CSRF cookies, anonymous protection and CSRF
+enforcement; Chromium rendered the sign-in form and connected-database status.
+No evaluation account was created and authenticated sign-in/sign-out is left to
+the operator. All other container IDs and host Nginx file hashes were preserved;
+`verify agent` passed. Safe results and the inspected screenshot are under
+`.artifacts/verification/evaluation-https-20261020/`.
+
+The actual public `verify evaluation` currently fails at HTTP 404 after passing
+runtime/settings and direct-loopback checks. This is expected until the staged
+host configuration is installed; fixture TLS validation does not establish live
+certificate or host-configuration acceptance. Run the full verifier again after
+administrator activation.
+
 ## Targeted Commands
 
 The host needs Python 3, Docker Engine and Compose. Commands work from any current
@@ -61,7 +81,7 @@ initial setup sequence; `evaluation` and `agent` are already initialized and
 running on this server, so use `status` or `bootstrap` for them:
 
 ```sh
-python3 scripts/environments.py init evaluation --role evaluation --port 8181 --path /time-tracker-eval/
+python3 scripts/environments.py init evaluation --role evaluation --port 8181 --path /time-tracker-eval/ --origin https://evaluation.example.com
 python3 scripts/environments.py build evaluation
 python3 scripts/environments.py up evaluation
 python3 scripts/environments.py status evaluation
@@ -152,22 +172,85 @@ python3 -m unittest discover -s scripts -p test_environment_tools.py -v
 These tests need permission to bind ephemeral loopback sockets and do not need
 Docker or change deployed services.
 
-## SSH Access
+## Activate Evaluation HTTPS (Administrator Handoff)
+
+The evaluation runtime is configured for HTTPS at
+`https://evaluation.example.com/time-tracker-eval/`, with persistent storage and corrected
+release `https-health-20261020`. The fix makes the internal HTTP health-check
+exemption account for the URL prefix under HTTPS; the original release remains
+available for rollback. Until host Nginx is updated, the public URL will not reach the app.
+The old HTTP SSH-tunnel URL no longer supports normal sign-in with these settings.
+
+The reviewed replacement is `/tmp/sites-available/evaluation.example.com`; the maintained
+copy is [docker/host-nginx/evaluation.example.com.conf](../docker/host-nginx/evaluation.example.com.conf).
+It removes both obsolete project locations, preserves Certbot/TLS and the HTTP
+redirect, and proxies only `/time-tracker-eval/` to `127.0.0.1:8181` without stripping
+the prefix. The no-slash path redirects to the canonical trailing slash. Existing
+application authentication controls access; there is no extra proxy password.
+
+On the server, run with administrator permissions:
+
+```sh
+sudo cp -a /etc/nginx/sites-available/evaluation.example.com /etc/nginx/sites-available/evaluation.example.com.before-time-tracker
+sudo cp /tmp/sites-available/evaluation.example.com /etc/nginx/sites-available/evaluation.example.com
+sudo nginx -t
+```
+
+Keep the backup from the first installation; do not overwrite it on retries.
+Only if the validation succeeds:
+
+```sh
+sudo systemctl reload nginx
+cd /home/vasiliy/Projects/task_tracker
+python3 scripts/environments.py verify evaluation
+```
+
+Open **https://evaluation.example.com/time-tracker-eval/** in your browser. If needed, run
+`python3 scripts/environments.py bootstrap evaluation` in your server terminal
+first: enter your email and use the generated password printed there. If you
+already have an administrator, use its existing credentials. No account is created
+automatically by the HTTPS preparation. No SSH tunnel is needed for evaluation.
+After activation, check sign-in/sign-out, the slash redirect and rejection of
+the removed project paths. The live verifier checks trusted HTTPS and built
+frontend/API health without changing application records.
+
+If `nginx -t` fails, do not reload. Restore the saved file and validate again.
+To undo a successfully applied host route, restore and reload:
+
+```sh
+sudo cp /etc/nginx/sites-available/evaluation.example.com.before-time-tracker /etc/nginx/sites-available/evaluation.example.com
+sudo nginx -t
+```
+
+Only after successful validation, run `sudo systemctl reload nginx`.
+To also restore evaluation's previous SSH-access settings, from the project root:
+
+```sh
+cp .artifacts/verification/evaluation-https-20261020/evaluation.before-https.env environments/evaluation.env
+python3 scripts/environments.py check evaluation
+python3 scripts/environments.py up evaluation
+python3 scripts/environments.py verify evaluation
+```
+
+The private backup retains the original secrets and release; it is ignored by
+Git. Do not publish it. Runtime rollback retains database/upload volumes and runs
+the normal migration check for the unchanged release. After rollback the original
+SSH tunnel URL can be used again.
+
+## Agent SSH Access
 
 From your computer, replace `YOUR_SERVER` with your usual SSH host:
 
 ```sh
-ssh -N -L 8181:127.0.0.1:8181 vasiliy@YOUR_SERVER
+ssh -N -L 8182:127.0.0.1:8182 vasiliy@YOUR_SERVER
 ```
 
-Open `http://127.0.0.1:8181/time-tracker-eval/`. Keep the local port and the
-configured origin consistent. Agent access, when needed, uses another tunnel
-forwarding port 8182 and `http://127.0.0.1:8182/time-tracker-agent/`.
+Open `http://127.0.0.1:8182/time-tracker-agent/`. Keep the local port and the
+configured origin consistent.
 Only the frontend is published, bound to server loopback. PostgreSQL and Gunicorn
 have no host ports. SSH provides transport encryption; loopback HTTP intentionally
-has non-Secure scoped cookies. Public HTTP origins are rejected. Public HTTPS
-needs separate host-proxy configuration, HTTPS cookies and operational acceptance;
-no public host configuration is changed by these commands.
+has non-Secure scoped cookies in the private agent environment. Public HTTP
+origins are rejected. Evaluation uses the HTTPS handoff above.
 
 ## First Administrator
 

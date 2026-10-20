@@ -34,8 +34,9 @@ and reusable development instances passed acceptance. Full root regression passe
 deployment, backups and restoration.
 Stage 9 is complete: administrator safeguards/recovery and development acceptance
 passed 139 PostgreSQL tests, the production build and all 43 Chromium scenarios.
-Stage 11 is In progress. Private evaluation and agent environments are running;
-production activation and backup/restoration acceptance remain pending.
+Stage 11 is In progress. Evaluation is healthy with HTTPS settings prepared for
+host Nginx activation; agent access remains private. Production activation and
+backup/restoration acceptance remain pending.
 Detailed evidence is recorded in the implementation
 tracker.
 No personal account is created automatically, and public registration is unavailable.
@@ -256,15 +257,17 @@ it does not publish or configure the proposed production host.
 ## Persistent Evaluation and Agent Environments
 
 Persistent evaluation and agent deployments use the separate
-[environment commands and SSH access guide](docs/environments.md), with Gunicorn
+[environment commands and access guide](docs/environments.md), with Gunicorn
 and built frontend assets. More agent environments can be added by name. Those
 environments have independent releases, secrets and storage; existing development
 and disposable test commands retain their original scope. Evaluation account
 bootstrap asks for an email and prints a generated password on the terminal.
 
-On this server, evaluation is running at
-`http://127.0.0.1:8181/time-tracker-eval/` and the agent environment at
-`http://127.0.0.1:8182/time-tracker-agent/`, both accessible through SSH tunnels.
+On this server, evaluation is configured for
+`https://evaluation.example.com/time-tracker-eval/`, pending the administrator's
+[host Nginx installation and reload](docs/environments.md#activate-evaluation-https-administrator-handoff).
+Its frontend stays on loopback port 8181. Agent remains at
+`http://127.0.0.1:8182/time-tracker-agent/`, accessible through an SSH tunnel.
 From the server repository, run `python3 scripts/environments.py bootstrap evaluation`
 to create your administrator. No account was created automatically. Production
 has not been initialized or activated.
