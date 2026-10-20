@@ -1338,6 +1338,20 @@ configuration or resources. The requested non-production preparation is complete
 the next Stage 11 work is backup/restore implementation and production acceptance.
 Documentation consistency, 110 local links/anchors and whitespace checks passed.
 
+Follow-up agreed on 2026-10-20: incorporate reusable live checks from the temporary
+handoff probe into `scripts/environments.py verify NAME`, without adding another
+standalone script. Implemented and verified: the command inspects only one named
+deployment's containers/settings and checks frontend/API identity, database health
+and built assets through GET requests. It has no account/task/image count or
+host-wide inventory assumptions and uses the configured time zone. Thirteen host
+tests passed, including real loopback HTTP, failure cases, all three roles and a
+nested arbitrary environment in Europe/Berlin. `verify evaluation` and `verify agent`
+both exited 0 against the existing deployments, without migrations, restarts or
+data changes. The one-off regression wrapper remains outside the working tree;
+existing test modules/runners retain that responsibility. Documentation, Python
+syntax, 111 local links/anchors and whitespace checks passed. Public HTTPS probing
+is supported but was not exercised against a live public deployment at this milestone.
+
 Use the Stage 10 prefix/resource contract when configuring the actual production
 server/proxy and independent deployments. Verify both configured mounts together;
 the development forwarding fixture does not establish production readiness.
@@ -1454,3 +1468,4 @@ work to Stage 11.
 | 2026-10-13 | Multiple-instance development inserted before deployment | By user decision, production server/proxy configuration, deployment and operational verification move from Stage 10 to Stage 11. Stage 10 now covers multiple-instance URL-prefix development. Recorded the agreed capability and a detailed design for configuration, frontend/API/assets, Django script prefix/cookies, routing, resource/image isolation, development tooling and acceptance checks. Stage 10 In progress with design complete; implementation/runtime verification pending. Nine of eleven stages complete; Stage 11 Not started. Documentation consistency, 96 local links/anchors and whitespace checked; no application code, services or application tests changed/run. Commit: `docs: plan multiple-instance prefix support before deployment`. |
 | 2026-10-19 | Stage 10 completed | Preserved and committed the paired-suite fixes as `11c45ec`, reconciled the successful sibling evidence, and passed nested-prefix and reusable-development lifecycles. An interrupted development runner was cleaned up and successfully retried; the cause remains unknown. Full root lifecycle on documentation milestone `ca52bf2` exited 0: 142 PostgreSQL tests (579.216s), configuration checks, build and all 43 Chromium scenarios (13.0m), total 24m13s. Scoped cleanup and preservation of the five original container IDs and both volumes were inspected. Screenshots/logs retained; docs aligned, 104 local links/anchors, script syntax and whitespace passed. Stage 10 Done; 10 of 11 stages complete; Stage 11 production deployment/restoration remains Not started. |
 | 2026-10-20 | Private evaluation and agent deployments prepared | Environment decisions `c3f7a12`, tooling `5fcee29` and ownership/readiness fixes `7850df8` deliver separate persistent Gunicorn/static-Nginx deployments and interactive email/generated-password bootstrap. Three-environment lifecycle retry exited 0, including isolated sessions/data/images/CSV and agent replacement/restart while evaluation stayed healthy across 95 observations; scoped cleanup and report screenshots inspected. Six host-tool checks and 28 focused PostgreSQL/settings/WSGI/account/concurrency checks passed, with system/drift checks. Persistent evaluation and agent are healthy on loopback ports 8181/8182 at release `7850df8-20261020`, with no accounts created. Safe read-only handoff checks passed; original services/storage preserved. Production uninitialized; Stage 11 remains In progress for production activation and backup/restoration acceptance. |
+| 2026-10-20 | Reusable live deployment verification | Incorporated useful temporary handoff checks into `environments.py verify NAME`, with no standalone script or dependency additions. Checks selected services, release/storage/port/runtime settings, frontend/backend identity, built assets and PostgreSQL health without application data changes. Thirteen host tests, both live private deployments, Python syntax, 111 local links/anchors and whitespace checks passed. Public HTTPS was not live-tested; regression/isolation/backup acceptance remains separate. Stage 11 stays In progress. |

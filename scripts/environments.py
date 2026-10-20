@@ -3,6 +3,7 @@ import argparse
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import fcntl
+from html.parser import HTMLParser
 import json
 import os
 from pathlib import Path
@@ -11,6 +12,8 @@ import secrets
 import subprocess
 import sys
 from urllib.parse import urlsplit
+from urllib.error import HTTPError, URLError
+from urllib.request import build_opener, HTTPRedirectHandler, ProxyHandler, Request
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -165,6 +168,137 @@ def describe(name, config):
     print(f"{name}: {config['ENVIRONMENT_ROLE']}; {config['PUBLIC_ORIGIN']}{config['APP_BASE_PATH']}; release {config['RELEASE']}")
 
 
+class FrontendAssets(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.paths = []
+
+    def handle_starttag(self, tag, attributes):
+        attributes = dict(attributes)
+        if tag == 'script' and attributes.get('src'):
+            self.paths.append(attributes['src'])
+        if tag == 'link' and 'stylesheet' in attributes.get('rel', '').split():
+            self.paths.append(attributes.get('href', ''))
+
+
+class NoRedirects(HTTPRedirectHandler):
+    def redirect_request(self, request, response, code, message, headers, new_url):
+        return None
+
+
+def verify_response(opener, url, expected=200, *, host=None):
+    try:
+        response = opener.open(Request(url, headers={'Host': host} if host else {}), timeout=10)
+    except HTTPError as exc:
+        response = exc
+    except URLError as exc:
+        raise ValueError(f'Cannot reach {url}: {exc.reason}') from exc
+    with response:
+        if response.status != expected:
+            raise ValueError(f'{url}: expected HTTP {expected}, received {response.status}.')
+        body = response.read(8 * 1024 * 1024 + 1)
+        if len(body) > 8 * 1024 * 1024:
+            raise ValueError(f'{url}: response exceeds the verification size limit.')
+        return response.headers, body
+
+
+def verify_http(config):
+    # Reach the private frontend directly and, if different, the configured public
+    # origin too. Never follow redirects or send credentials to another location.
+    opener = build_opener(ProxyHandler({}), NoRedirects())
+    local = f"http://127.0.0.1:{config['HTTP_PORT']}"
+    for origin in dict.fromkeys((local, config['PUBLIC_ORIGIN'])):
+        base = origin + config['APP_BASE_PATH']
+        host = urlsplit(config['PUBLIC_ORIGIN']).netloc
+        headers, html = verify_response(opener, base, host=host)
+        if 'no-store' not in headers.get('Cache-Control', '') or b'/@vite/' in html:
+            raise ValueError('The frontend must serve uncached built HTML, without a Vite client.')
+        _, metadata = verify_response(opener, base + 'instance.json', host=host)
+        if json.loads(metadata) != {'basePath': config['APP_BASE_PATH'], 'instanceId': config['INSTANCE_ID']}:
+            raise ValueError('The served frontend identity or mount differs from the configuration.')
+        headers, health = verify_response(opener, base + 'api/v1/health/', host=host)
+        if (json.loads(health) != {'status': 'ok', 'database': 'postgresql', 'api_version': 'v1'}
+                or headers.get('X-Task-Tracker-Instance') != config['INSTANCE_ID']
+                or headers.get('X-Task-Tracker-Base-Path') != config['APP_BASE_PATH']):
+            raise ValueError('API/database health or backend identity does not match this environment.')
+        assets = FrontendAssets()
+        assets.feed(html.decode('utf-8'))
+        if not assets.paths:
+            raise ValueError('The frontend HTML contains no built assets.')
+        for path in assets.paths:
+            if (not path.startswith(config['APP_BASE_PATH'] + 'assets/')
+                    or not re.fullmatch(r'/[A-Za-z0-9_./-]+', path) or '..' in path.split('/')):
+                raise ValueError('A frontend asset URL escapes the configured asset mount.')
+            headers, body = verify_response(opener, origin + path, host=host)
+            if not body or 'immutable' not in headers.get('Cache-Control', ''):
+                raise ValueError('Built assets must be nonempty and served with immutable caching.')
+        verify_response(opener, base + 'assets/__deployment_verify_missing__.js', 404, host=host)
+        print(f'PASS HTTP: frontend identity/assets and API/PostgreSQL health at {base}')
+    verify_response(opener, local + config['APP_BASE_PATH'], 400, host='unexpected.invalid')
+
+
+def verify(name, config):
+    result = compose(name, config, 'ps', '--all', '--quiet', 'db', 'web', 'frontend',
+                     capture_output=True, text=True, timeout=30)
+    ids = result.stdout.split()
+    if len(ids) != 3:
+        raise ValueError('Expected one existing db, web and frontend container. Run status for details.')
+    # Project only safe fields: Docker's full inspection includes environment secrets.
+    template = ('{"service":{{json (index .Config.Labels "com.docker.compose.service")}},'
+                '"image":{{json .Config.Image}},"user":{{json .Config.User}},'
+                '"running":{{json .State.Running}},'
+                '"health":{{if .State.Health}}{{json .State.Health.Status}}{{else}}null{{end}},'
+                '"read_only":{{json .HostConfig.ReadonlyRootfs}},'
+                '"restart":{{json .HostConfig.RestartPolicy.Name}},'
+                '"ports":{{json .HostConfig.PortBindings}},'
+                '"cap_drop":{{json .HostConfig.CapDrop}},'
+                '"security":{{json .HostConfig.SecurityOpt}},"mounts":{{json .Mounts}}}')
+    result = subprocess.run(['docker', 'inspect', '--format', template, *ids],
+                            capture_output=True, text=True, check=True, timeout=30)
+    containers = [json.loads(line) for line in result.stdout.splitlines()]
+    if sorted(info['service'] for info in containers) != ['db', 'frontend', 'web']:
+        raise ValueError('The selected project does not contain the expected services.')
+    for info in containers:
+        service = info['service']
+        if not info['running'] or info['health'] != 'healthy' or info['restart'] != 'unless-stopped':
+            raise ValueError(f'{service}: expected a healthy running service with restart policy unless-stopped.')
+        ports = {'8080/tcp': [{'HostIp': '127.0.0.1', 'HostPort': config['HTTP_PORT']}]} if service == 'frontend' else {}
+        if (info['ports'] or {}) != ports:
+            raise ValueError(f'{service}: published ports differ from the configured loopback-only frontend binding.')
+        if any(mount['Type'] == 'bind' for mount in info['mounts']):
+            raise ValueError(f'{service}: deployment containers must not use host bind mounts.')
+        if service in ('web', 'frontend'):
+            if info['image'] != f"{config['INSTANCE_ID']}-{service}:{config['RELEASE']}":
+                raise ValueError(f'{service}: running release differs from the selected release. Apply it with up.')
+            if (info['user'].split(':')[0] in ('', '0', 'root') or not info['read_only']
+                    or 'ALL' not in (info['cap_drop'] or [])
+                    or 'no-new-privileges:true' not in (info['security'] or [])):
+                raise ValueError(f'{service}: expected a non-root read-only container with restricted privileges.')
+        if service in ('db', 'web'):
+            volume, destination = (('database', '/var/lib/postgresql/data') if service == 'db'
+                                   else ('uploads', '/var/lib/task-tracker/uploads'))
+            if not any(mount['Type'] == 'volume' and mount['Name'] == f"{config['INSTANCE_ID']}_{volume}"
+                       and mount['Destination'] == destination for mount in info['mounts']):
+                raise ValueError(f'{service}: expected this environment\'s persistent {volume} volume.')
+    print('PASS containers: health, selected release, loopback ports, persistent volumes and runtime restrictions')
+    expected = dict(DEBUG=False, APP_ENV=config['ENVIRONMENT_ROLE'], INSTANCE_ID=config['INSTANCE_ID'],
+                    APP_BASE_PATH=config['APP_BASE_PATH'], TIME_ZONE=config['WORKING_TIME_ZONE'],
+                    SESSION_COOKIE_SECURE=config['COOKIE_SECURE'] == 'true',
+                    CSRF_COOKIE_SECURE=config['COOKIE_SECURE'] == 'true',
+                    SESSION_COOKIE_PATH=config['APP_BASE_PATH'], CSRF_COOKIE_PATH=config['APP_BASE_PATH'],
+                    CSRF_TRUSTED_ORIGINS=[config['PUBLIC_ORIGIN']])
+    source = ("import os,json; os.environ.setdefault('DJANGO_SETTINGS_MODULE','config.settings'); "
+              'from django.conf import settings; '
+              f'print(json.dumps({{key:getattr(settings,key) for key in {list(expected)!r}}}))')
+    result = compose(name, config, 'exec', '-T', 'web', 'python', '-c', source,
+                     capture_output=True, text=True, timeout=30)
+    if json.loads(result.stdout) != expected:
+        raise ValueError('Backend settings differ from the configured role, identity, zone, debug or cookie/origin settings.')
+    print('PASS settings: configured role, identity, time zone, debug disabled and cookie/origin settings')
+    verify_http(config)
+    print(f'PASS {name}: deployment verification complete; application data was not modified.')
+
+
 def account(name, config, args):
     command = 'bootstrap_admin' if args.action == 'bootstrap' else 'reset_password'
     email = args.email or input('Administrator email: ').strip()
@@ -204,8 +338,9 @@ def main():
     init.add_argument('--zone', default='UTC')
     init.add_argument('--release')
     actions.add_parser('list', help='List configured environments without secrets.')
-    for action in ('build', 'up', 'down', 'status', 'logs', 'check'):
-        action_parser = actions.add_parser(action)
+    for action in ('build', 'up', 'down', 'status', 'logs', 'check', 'verify'):
+        help_options = {'help': 'Verify an existing deployment without changing application data.'} if action == 'verify' else {}
+        action_parser = actions.add_parser(action, **help_options)
         action_parser.add_argument('name')
         if action == 'build':
             action_parser.add_argument('--release')
@@ -274,6 +409,8 @@ def main():
         elif args.action == 'check':
             compose(args.name, config, 'config', '--quiet')
             describe(args.name, config)
+        elif args.action == 'verify':
+            verify(args.name, config)
         else:
             account(args.name, config, args)
 
@@ -281,5 +418,5 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except (ValueError, OSError, subprocess.CalledProcessError) as exc:
+    except (ValueError, OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
         sys.exit(f'Environment operation failed: {exc}')

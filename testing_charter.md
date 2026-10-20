@@ -353,6 +353,15 @@ synthetic deployment-check names; inspect cleanup before creating persistent
 evaluation/agent environments. Production activation and full-system restoration
 acceptance remain separate Stage 11 work.
 
+The read-only `environments.py verify NAME` command must also work after initial
+setup. Exercise rejection of missing/unhealthy services, stale releases, unsafe
+ports/storage/privileges, settings drift, wrong frontend/backend identity, failed
+database health and redirects/assets outside the mount. Verify arbitrary named
+environments and configured time zones without querying account/task counts or
+changing application data. Run the command against the existing evaluation and
+agent deployments; fixture writes and destructive lifecycle tests remain confined
+to the synthetic deployment-check projects above.
+
 The [reusable test setup](architecture.md#reusable-test-setup) describes
 shared services, isolation, fixture/reset handling, and result capture. The
 [implementation plan](implementation_plan.md#shared-test-environment) maps that

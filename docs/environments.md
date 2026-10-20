@@ -65,6 +65,7 @@ python3 scripts/environments.py init evaluation --role evaluation --port 8181 --
 python3 scripts/environments.py build evaluation
 python3 scripts/environments.py up evaluation
 python3 scripts/environments.py status evaluation
+python3 scripts/environments.py verify evaluation
 
 python3 scripts/environments.py init agent --role agent --port 8182 --path /time-tracker-agent/
 python3 scripts/environments.py build agent
@@ -101,6 +102,55 @@ Names are explicit on every operation. An agent build/reset/restart must target 
 agent environment, never evaluation or production. The original `scripts/test.sh`
 and prefix fixtures remain disposable synthetic projects, separate from these
 persistent environments. `logs NAME` returns bounded recent service logs.
+
+## Verify a Running Deployment
+
+After startup, an update or a restart, run:
+
+```sh
+python3 scripts/environments.py verify evaluation
+python3 scripts/environments.py verify agent
+```
+
+`check NAME` validates configuration, `status NAME` lists services, and `verify NAME`
+checks the existing deployment. Verification returns 0 after all checks pass;
+a failed check prints the reason and returns nonzero. It never starts, restarts,
+migrates or seeds services, and makes no application data changes. Existing
+accounts/records, additional environments and any configured working time zone
+are supported. Service access logs can record its GET requests.
+
+Checks cover all three services' health/restart policies, the selected application
+release, loopback-only frontend bindings, unpublished backend/database ports,
+environment-owned persistent volumes, and non-root/read-only restricted application
+containers. A whitelist of Django settings is compared with the configuration,
+including identity, role, zone, debug, cookie paths/security and trusted origin;
+the probe prints only those settings, with no account/task/image queries or
+secret output.
+The command then checks built HTML/assets and caching, instance metadata,
+API/backend identity and PostgreSQL health, missing-asset rejection and local
+unknown-host rejection.
+
+HTTP probes reach the loopback frontend directly. When the configured public
+origin differs, it must also be reachable and pass the frontend/API checks;
+HTTPS uses certificate validation. Redirects and assets outside the configured
+mount are rejected. HTTP requests use a 10-second socket timeout and an 8 MiB response
+limit; Docker inspection/settings commands have 30-second timeouts. A release
+selected by `build` but not applied by `up` is reported as a mismatch.
+
+This is a deployment health/configuration check. Authentication, permission
+matrices, concurrent edits, image/CSV behavior, cross-instance isolation and
+restart persistence remain covered by the existing regression/lifecycle suites.
+Backup/restoration acceptance remains separate. The old one-off `/tmp` checks are
+not needed to operate or verify deployments.
+
+Host tooling tests, including local HTTP fixtures, run with:
+
+```sh
+python3 -m unittest discover -s scripts -p test_environment_tools.py -v
+```
+
+These tests need permission to bind ephemeral loopback sockets and do not need
+Docker or change deployed services.
 
 ## SSH Access
 

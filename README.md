@@ -269,6 +269,11 @@ From the server repository, run `python3 scripts/environments.py bootstrap evalu
 to create your administrator. No account was created automatically. Production
 has not been initialized or activated.
 
+Use `python3 scripts/environments.py verify evaluation` (or `verify agent`) after
+startup or updates to check the running deployment without modifying application
+data. The [operations guide](docs/environments.md#verify-a-running-deployment)
+describes its checks and limits.
+
 ## Reports and CSV Export
 
 Select **Reports** to view project summaries, people by day, or task hierarchies.

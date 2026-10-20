@@ -67,6 +67,10 @@ The following requirements reflect agreed product behavior.
   generates a strong password, and prints it on the terminal after successful
   account creation (agreed 2026-10-19). Do not create an evaluation account
   automatically during deployment preparation.
+- Provide a server-side command to verify one named running environment without
+  changing application data or restarting services. It must work after accounts
+  and data exist, with the configured time zone and additional environments
+  (agreed 2026-10-20).
 - Support independent installations on the same hostname under different
   configurable URL prefixes, for example `/time-tracker-test/` and
   `/time-tracker-prod/` (agreed 2026-10-13). Preserve root-path hosting for existing

@@ -758,3 +758,22 @@ policies are set. Existing downloader container IDs and original volumes remain;
 only the six intended deployment services and their storage/network resources
 were added. Production was not initialized and host public proxy files were not
 changed. See the environment operations guide for SSH and interactive bootstrap.
+
+## Reusable Live Verification: 2026-10-20
+
+By user agreement, reusable checks from the temporary handoff script now live in
+`scripts/environments.py verify NAME`. No extra standalone script was added and
+the dated temporary regression wrapper was not imported. The command has no empty
+database, UTC-only, environment-count or unrelated-container assumptions. It
+performs scoped inspection, a whitelisted Django settings read and HTTP GETs;
+deployment lifecycle operations and application record queries are excluded.
+
+Thirteen host-tool tests passed, including actual ephemeral loopback HTTP servers,
+redirect/mount/identity/database-health failures, runtime/container drift, all
+three roles and a nested additional environment with Europe/Berlin configured.
+The initial sandboxed run could not create HTTP fixture sockets (EPERM); the
+approved retry outside the sandbox passed. This is a test-execution restriction,
+not a deployment failure; no Docker socket or host permissions were changed.
+Both `verify evaluation` and `verify agent` exited 0 against the running private
+deployments without restarting services or modifying application data. No new
+test stacks were needed. Public HTTPS was not live-tested in this milestone.

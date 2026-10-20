@@ -476,6 +476,16 @@ by preparing evaluation and agent deployments. Selected defaults and operational
 commands are in [environment operations](docs/environments.md). Gunicorn and Nginx
 are selected for the deployment runtime; development servers remain separate.
 
+The existing environment manager owns reusable live verification through
+`verify NAME`. It inspects only the selected deployment's container settings,
+configured release, named volumes and published ports, reads a whitelist of Django
+settings, and checks frontend/API identity, PostgreSQL health and built assets
+through GET requests. It checks the loopback frontend and a different configured
+public origin, with normal HTTPS certificate validation and no redirect following.
+It does not depend on empty databases, a fixed time zone or a host-wide container
+inventory. One-off dated regression wrappers stay outside the maintained scripts;
+the existing test runners and test modules retain regression responsibility.
+
 By the revised 2026-10-13 sequencing, production configuration and deployment
 belong to Stage 11. Stage 9 administrator lifecycle/application verification is
 complete; Stage 10 prefix support and isolated-instance acceptance are also
