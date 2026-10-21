@@ -910,3 +910,32 @@ evaluation remains on its original release and retains its records and working
 zone. No persistent environment was seeded, migrated or upgraded for UI acceptance.
 Safe identity/cleanup metadata is retained in
 `.artifacts/verification/ui-adjustments/preservation-final.json`.
+
+## Authorized Evaluation UI Deployment: 2026-10-21
+
+After discussing readiness, the user explicitly authorized evaluation deployment
+of source `1ca13e4`. New release `ui-1ca13e4-20261021` was built and applied with
+the standard environment manager in foreground terminal mode. Its predecessor
+`https-health-20261020` and private configuration were retained for rollback.
+Only evaluation's backend/frontend containers were recreated; database, agent and
+unrelated container identities were preserved. The normal migration check reported
+no migrations to apply. Read-only repeatable-read domain fingerprints, migration
+history, database identity and upload hashes matched before/after. No seed/reset
+or application-record writes were performed; only the release setting changed.
+Public HTTPS, Secure cookies and `Asia/Tbilisi` are unchanged.
+
+Standard evaluation verification passed through loopback and actual public HTTPS;
+agent verification passed. A separate Chromium check rendered the compact public
+sign-in UI, with no JavaScript errors and no automatic health diagnostics. The
+screenshot was inspected. No authenticated login was attempted; user review of
+the new workspace remains next. Prior full application/prefixed-deployment results
+remain valid because deployed application source is unchanged.
+
+The deployment command exited 0. Safe metadata/fingerprints, browser results and
+screenshot are under `.artifacts/verification/evaluation-ui-20261021/`; bounded
+deployment output is in `.artifacts/verification/evaluation-ui-20261021.log`.
+`evaluation.before-ui.env` is private (mode 600 in a mode-700 ignored directory);
+it retains the old release plus current HTTPS/Tbilisi settings. UI rollback
+instructions are in the operations guide. Deployment approval does not resume
+deferred Stage 11 production or backup/restoration work, or authorize later
+persistent releases without discussion.

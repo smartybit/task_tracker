@@ -37,8 +37,10 @@ passed 139 PostgreSQL tests, the production build and all 43 Chromium scenarios.
 The [UI adjustment subplan](docs/ui_adjustment_plan.md) is implemented and technically
 verified: 146 PostgreSQL tests, 47 Chromium scenarios, build/configuration checks,
 and three built prefixed deployments passed. User UI review is next; remaining
-Stage 11 work is deferred until UI acceptance. Evaluation retains its existing
-release and is healthy with verified public HTTPS; agent access remains private.
+Stage 11 work is deferred until UI acceptance. After separate user authorization,
+evaluation now runs UI release `ui-1ca13e4-20261021` with verified public HTTPS;
+existing records/uploads and its Tbilisi working zone are preserved. Agent access
+remains private.
 Production activation and backup/restoration acceptance remain pending.
 Detailed evidence is recorded in the implementation tracker.
 No personal account is created automatically, and public registration is unavailable.

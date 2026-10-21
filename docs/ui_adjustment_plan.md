@@ -79,9 +79,9 @@ evaluation is a separate deployment action.
   records/identities and image bytes survived targeted replacement/restart;
   the synthetic evaluation sibling stayed healthy across 157 observations.
   The deployment-browser reload order is corrected in `6bb5543`.
-- Final inspection preserved all eight original container identities and six
-  persistent volumes, with no test/deployment-check containers, networks, volumes
-  or temporary configurations remaining. Standard read-only `verify evaluation`
+- At technical acceptance, final inspection preserved all eight original container
+  identities and six persistent volumes, with no test/deployment-check containers,
+  networks, volumes or temporary configurations remaining. Standard read-only `verify evaluation`
   (including public HTTPS) and `verify agent` checks passed. Evaluation retains
   its existing release and records; no migrations, reset, seed or upgrade ran there.
   The first interrupted deployment attempt and earlier browser diagnostics remain
@@ -89,6 +89,17 @@ evaluation is a separate deployment action.
 
 ## Handoff
 
-Implementation and technical acceptance are complete. Review the delivered UI
-before resuming deferred Stage 11 work. Updating evaluation requires a separate
-deployment action; the verified synthetic deployments were removed after checks.
+Implementation and technical acceptance are complete. After discussing readiness,
+the user separately authorized deployment on 2026-10-21. Evaluation now runs
+`ui-1ca13e4-20261021` (source `1ca13e4`) at
+`https://evaluation.example.com/time-tracker-eval/`. Standard local/public verification and
+Chromium sign-in rendering passed; authenticated user review is next. Read-only
+fingerprints confirmed unchanged records, migration history, database identity and
+uploads. Only evaluation's backend/frontend containers were replaced; its Tbilisi
+zone, agent and unrelated services were preserved. Rollback configuration/images
+are retained; see [operations](environments.md).
+
+Persistent deployments require discussion and explicit authorization; the approved
+evaluation update does not authorize future releases. Review the delivered UI
+before resuming deferred Stage 11 work. The synthetic verification deployments
+were removed after their checks.

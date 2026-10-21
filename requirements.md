@@ -63,6 +63,9 @@ The following requirements reflect agreed product behavior.
   evaluation release must survive work, test resets and updates in agent environments.
   Current deployment preparation targets evaluation and agent work; production
   remains a separate target.
+- Deploying a new release to a persistent environment requires an intermediate
+  discussion and explicit user authorization (agreed 2026-10-21). Completing
+  implementation or verification does not authorize deployment by itself.
 - Evaluation is accessed at `https://evaluation.example.com/time-tracker-eval/` using the
   existing application sign-in, without an additional proxy password or IP
   restriction (agreed 2026-10-20). This replaces SSH-tunnel access for evaluation;

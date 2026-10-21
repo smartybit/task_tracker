@@ -17,7 +17,13 @@ actual progress; it does not turn proposals into confirmed requirements.
   exit 0. Technical acceptance is complete; user review is next.
   Stages 1–10 retain their completion evidence. Remaining Stage 11 production and
   backup/restoration work is deferred until UI acceptance; existing
-  evaluation/agent deployments remain available. Evaluation has not been upgraded.
+  evaluation/agent deployments remain available. After a readiness discussion and
+  explicit authorization, evaluation was upgraded on 2026-10-21 to
+  `ui-1ca13e4-20261021` (source `1ca13e4`). Local/public HTTPS and Chromium sign-in
+  checks passed. Domain records, migration history, database identity and uploads
+  matched read-only fingerprints; only evaluation's backend/frontend were replaced.
+  Agent verification passed and unrelated containers were preserved. Rollback
+  configuration/images remain available; see [operations](docs/environments.md).
 
 - Last updated: 2026-10-21.
 - Evaluation time-zone update verified (2026-10-20): shared working zone changed
@@ -36,8 +42,8 @@ actual progress; it does not turn proposals into confirmed requirements.
   production activation and backup/restoration acceptance remain pending.
   Follow the [environment operations guide](docs/environments.md) and
   [multiple-instance design](docs/multiple_instances.md).
-- Evaluation HTTPS activated by the user on 2026-10-20: all services are healthy
-  at release `https-health-20261020`, retaining application login. Four deployment
+- Evaluation HTTPS activated by the user on 2026-10-20 at release
+  `https-health-20261020`, retaining application login. Four deployment
   regression tests and staged HTTPS/Chromium checks passed before handoff; public
   verification now also passes. The user created the first administrator and
   organization/project; read-only Django API-handler checks confirmed their

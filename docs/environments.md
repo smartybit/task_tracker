@@ -5,7 +5,7 @@ The user requested three or more independent environments on 2026-10-19:
 | Role | Purpose | Data policy |
 | --- | --- | --- |
 | Production | Real work, after production acceptance | Persistent; separate activation |
-| Evaluation | User testing and evaluation of a selected release | Persistent; agent checks must not reset or upgrade it |
+| Evaluation | User testing and evaluation of a selected release | Persistent; agent checks must not reset or upgrade it; release updates require separate user authorization |
 | Agent | Development, exploration and verification | Separate data; additional named environments may be created |
 
 This Stage 11 milestone prepares evaluation and agent deployments. Production
@@ -34,11 +34,15 @@ Evaluation public HTTPS is active and verified after the administrator's
 installation. Full backup/restoration and production acceptance remain separate
 Stage 11 work.
 
-## Deployed State: 2026-10-20
+Discuss a persistent deployment before applying it and obtain explicit user
+authorization for the release and target. Implementation/testing alone does not
+authorize deployment (confirmed 2026-10-21).
+
+## Deployed State: 2026-10-21
 
 | Environment | State | Access URL | Release |
 | --- | --- | --- | --- |
-| `evaluation` | All services healthy; public HTTPS verified | `https://evaluation.example.com/time-tracker-eval/` | `https-health-20261020` |
+| `evaluation` | UI adjustments deployed; all services healthy; public HTTPS verified | `https://evaluation.example.com/time-tracker-eval/` | `ui-1ca13e4-20261021` |
 | `agent` | All three services healthy | `http://127.0.0.1:8182/time-tracker-agent/` | `7850df8-20261020` |
 | Production | Not initialized or activated | Reserved for later setup | None |
 
@@ -84,6 +88,41 @@ existing frontend Nginx was gracefully reloaded to refresh upstream DNS. Runtime
 verifiers passed. No build, migration or application-record write was performed.
 Only evaluation's backend container ID changed. Private rollback configuration
 and safe results are under `.artifacts/verification/evaluation-tbilisi-20261020/`.
+
+After an intermediate readiness discussion and explicit user authorization on
+2026-10-21, evaluation was upgraded to UI source `1ca13e4`, release
+`ui-1ca13e4-20261021`. Its backend/frontend were rebuilt and recreated using the
+standard environment manager. The migration check reported no migrations to apply.
+Read-only before/after fingerprints confirmed unchanged domain records, migration
+history, database identity and upload bytes. Evaluation's database container,
+agent and unrelated container identities were preserved. All configuration except
+the release selection is unchanged, including public HTTPS, Secure cookies and
+`Asia/Tbilisi`.
+
+Standard evaluation verification passed through loopback and actual public HTTPS;
+agent verification passed. Chromium displayed the new compact public sign-in UI
+without JavaScript errors or automatic connection diagnostics. No account login,
+seed, reset or application-record write was performed. Prior full regression and
+three synthetic prefixed-deployment results are in the
+[UI subplan](ui_adjustment_plan.md). User review of the authenticated UI is next;
+remaining Stage 11 production and backup/restoration work stays deferred.
+
+Safe deployment results, fingerprints and the public sign-in screenshot are under
+`.artifacts/verification/evaluation-ui-20261021/`. The private rollback config is
+`evaluation.before-ui.env` in that directory (mode 600); it retains the previous
+`https-health-20261020` release, HTTPS settings and Tbilisi zone. Both previous
+application images remain available. If rollback is needed, restore only this
+configuration and restart evaluation with the standard commands:
+
+```sh
+cp .artifacts/verification/evaluation-ui-20261021/evaluation.before-ui.env environments/evaluation.env
+python3 scripts/environments.py up evaluation
+python3 scripts/environments.py verify evaluation
+```
+
+This UI rollback does not restore the database or uploads; the release introduced
+no backend/schema changes. Do not use the older pre-HTTPS rollback configuration
+for a UI-only rollback.
 
 ## Targeted Commands
 
