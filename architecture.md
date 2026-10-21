@@ -534,8 +534,9 @@ the existing test runners and test modules retain regression responsibility.
 By the revised 2026-10-13 sequencing, production configuration and deployment
 belong to Stage 11. Stage 9 administrator lifecycle/application verification is
 complete; Stage 10 prefix support and isolated-instance acceptance are also
-complete. Stage 11 is In progress with evaluation/agent preparation; production
-activation and full operational acceptance remain pending.
+complete. Stage 11 is deferred after evaluation/agent preparation while the
+[UI subplan](docs/ui_adjustment_plan.md) takes priority; production activation and
+full operational acceptance remain pending.
 
 - Use Docker Compose for reproducible development and VDS deployment.
 - Keep runtime services to the backend, PostgreSQL, and a reverse proxy serving

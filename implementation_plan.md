@@ -8,13 +8,18 @@ actual progress; it does not turn proposals into confirmed requirements.
 
 ## Current Position
 
-- UI adjustments are the current priority (2026-10-20), following evaluation
-  feedback and the agreed [UI subplan](docs/ui_adjustment_plan.md). Implementation
-  is In progress; acceptance is pending. Stages 1–10 retain their completion
-  evidence. Remaining Stage 11 production and backup/restoration work is deferred
-  until UI acceptance; existing evaluation/agent deployments remain available.
+- UI adjustments follow evaluation feedback and the agreed
+  [UI subplan](docs/ui_adjustment_plan.md). Implementation `cfb6c23` passed the full
+  clean regression on 2026-10-21: 146 PostgreSQL tests (953.412s), both frontend
+  configuration checks, TypeScript/Vite production build, and all 47 Chromium
+  scenarios (21.2m), exit 0. Three built/prefixed Gunicorn/static-Nginx deployments
+  also passed isolation, image/CSV, replacement/restart and data-preservation checks,
+  exit 0. Technical acceptance is complete; user review is next.
+  Stages 1–10 retain their completion evidence. Remaining Stage 11 production and
+  backup/restoration work is deferred until UI acceptance; existing
+  evaluation/agent deployments remain available. Evaluation has not been upgraded.
 
-- Last updated: 2026-10-20.
+- Last updated: 2026-10-21.
 - Evaluation time-zone update verified (2026-10-20): shared working zone changed
   from UTC to `Asia/Tbilisi` (UTC+4), as requested for Tbilisi/Yerevan. Runtime zone
   and offset confirmed; standard evaluation/public HTTPS and agent verification
@@ -26,8 +31,8 @@ actual progress; it does not turn proposals into confirmed requirements.
   backups and restoration move to Stage 11. Stage 10 is Done: sibling/nested
   prefix lifecycles, reusable development instances and full root regression
   passed, with inspected cleanup and original-resource preservation. Stage 11
-  is In progress: persistent user-evaluation and agent environments are healthy
-  on loopback ports 8181/8182. Additional agent environments are supported;
+  is Deferred after preparation: persistent user-evaluation and agent environments
+  are healthy on loopback ports 8181/8182. Additional agent environments are supported;
   production activation and backup/restoration acceptance remain pending.
   Follow the [environment operations guide](docs/environments.md) and
   [multiple-instance design](docs/multiple_instances.md).
@@ -1321,8 +1326,9 @@ images, deployment security validation, persistent volumes, bounded logs and
 restart policies. A disposable prototype passed migrations and all three service
 health checks on 2026-10-20. Six host-tool checks and the complete three-environment
 browser/replacement lifecycle subsequently passed.
-Production remains inactive, evaluation has no automatic account, and Stage 11
-stays In progress until its full deployment/backup/restoration criteria are met.
+Production remains inactive and evaluation has no automatic account. Stage 11
+was In progress at this preparation milestone; remaining work is now deferred
+as recorded above, and its full deployment/backup/restoration criteria remain open.
 
 Deployment tooling milestone `5fcee29` includes the working prototype and the
 three-environment verifier. First lifecycle `stage11-environments-20261020-1`
@@ -1534,3 +1540,4 @@ work to Stage 11.
 | 2026-10-19 | Stage 10 completed | Preserved and committed the paired-suite fixes as `11c45ec`, reconciled the successful sibling evidence, and passed nested-prefix and reusable-development lifecycles. An interrupted development runner was cleaned up and successfully retried; the cause remains unknown. Full root lifecycle on documentation milestone `ca52bf2` exited 0: 142 PostgreSQL tests (579.216s), configuration checks, build and all 43 Chromium scenarios (13.0m), total 24m13s. Scoped cleanup and preservation of the five original container IDs and both volumes were inspected. Screenshots/logs retained; docs aligned, 104 local links/anchors, script syntax and whitespace passed. Stage 10 Done; 10 of 11 stages complete; Stage 11 production deployment/restoration remains Not started. |
 | 2026-10-20 | Private evaluation and agent deployments prepared | Environment decisions `c3f7a12`, tooling `5fcee29` and ownership/readiness fixes `7850df8` deliver separate persistent Gunicorn/static-Nginx deployments and interactive email/generated-password bootstrap. Three-environment lifecycle retry exited 0, including isolated sessions/data/images/CSV and agent replacement/restart while evaluation stayed healthy across 95 observations; scoped cleanup and report screenshots inspected. Six host-tool checks and 28 focused PostgreSQL/settings/WSGI/account/concurrency checks passed, with system/drift checks. Persistent evaluation and agent are healthy on loopback ports 8181/8182 at release `7850df8-20261020`, with no accounts created. Safe read-only handoff checks passed; original services/storage preserved. Production uninitialized; Stage 11 remains In progress for production activation and backup/restoration acceptance. |
 | 2026-10-20 | Reusable live deployment verification | Incorporated useful temporary handoff checks into `environments.py verify NAME`, with no standalone script or dependency additions. Checks selected services, release/storage/port/runtime settings, frontend/backend identity, built assets and PostgreSQL health without application data changes. Thirteen host tests, both live private deployments, Python syntax, 111 local links/anchors and whitespace checks passed. Public HTTPS was not live-tested; regression/isolation/backup acceptance remains separate. Stage 11 stays In progress. |
+| 2026-10-21 | Evaluation-driven UI adjustments delivered | Starred evaluation feedback guides the focused task-list/right-hand-timesheet workspace, separate command/detail/search windows, Administration/System status, HH:MM display and top remark composer with session ordering. Application `cfb6c23` passed clean lifecycle `ui-adjustments-final-20261021`: 146 PostgreSQL tests (953.412s), fresh migrations/system/drift, both configuration checks, production build and all 47 Chromium scenarios (21.2m), exit 0. Built lifecycle `ui-adjustments-release-20261021-retry` also exited 0 across three independent prefixed Gunicorn/static-Nginx deployments, with isolated sessions/images/CSV, data preservation and sibling availability across 157 observations during replacement/restart. Browser harness correction `6bb5543` is verified. Desktop/narrow screenshots inspected; scoped cleanup and all eight original container identities/six volumes preserved. Persistent evaluation/public HTTPS and agent read-only verification passed; neither was upgraded. Technical acceptance complete; user review is next and Stage 11 remains Deferred. Earlier failed/interrupted diagnostics are retained in the UI subplan and infrastructure notes. |

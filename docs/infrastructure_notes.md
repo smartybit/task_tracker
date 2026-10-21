@@ -876,3 +876,37 @@ The expanded browser workload took 24.4 minutes before the clean PostgreSQL suit
 Raised the full test-runner bound from 30 to 45 minutes to accommodate both layers
 and inspected cleanup. Account-only runs retain their existing three-minute bound.
 Runtime final acceptance is still pending at this documentation milestone.
+
+The full clean lifecycle `ui-adjustments-final-20261021` subsequently exited 0 on
+implementation `cfb6c23`: 146 PostgreSQL tests (953.412s), fresh migrations,
+system/drift checks, both frontend configuration checks, TypeScript/Vite build,
+and 47 Chromium scenarios (21.2m). Scoped test-service cleanup completed; final
+screenshots were inspected and archived under the UI verification directory.
+
+The first built-deployment run `ui-adjustments-release-20261021` was interrupted
+during its second synthetic instance startup: command exit 143, no runner status
+file and no remaining host verifier. No application assertion failed. Both
+reserved deployment-check projects, their synthetic volumes and private configs
+were explicitly removed before the foreground-terminal retry. Persistent
+evaluation/agent and unrelated services were not targeted. The interruption's
+cause is unknown. Local Node is unavailable; use the existing container runtime
+for the deployment browser script rather than installing host dependencies.
+
+The foreground-terminal retry `ui-adjustments-release-20261021-retry` exited 0:
+three real Gunicorn/static-Nginx deployments, including a nested mount, passed
+built assets/routing/host/CSRF checks, same-browser isolated sessions, private
+images, independent report totals and actual CSV downloads. Existing sessions,
+database identity/records and image bytes survived targeted synthetic agent
+replacement/restart; its evaluation sibling stayed healthy across 157 observations.
+Close task details before page reload in the browser harness, since a fresh page
+opens the task list without a detail dialog (`6bb5543`). All reserved projects,
+volumes, networks and configurations were removed by automatic scoped cleanup.
+
+Independent final inspection confirmed all eight original container identities
+and six original persistent volumes were preserved, with no test or synthetic
+deployment resources remaining. Read-only evaluation verification passed both
+loopback and actual public HTTPS; agent verification also passed. Persistent
+evaluation remains on its original release and retains its records and working
+zone. No persistent environment was seeded, migrated or upgraded for UI acceptance.
+Safe identity/cleanup metadata is retained in
+`.artifacts/verification/ui-adjustments/preservation-final.json`.
