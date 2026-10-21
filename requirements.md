@@ -67,7 +67,8 @@ The following requirements reflect agreed product behavior.
 - Deploying a new release to a persistent environment requires an intermediate
   discussion and explicit user authorization (agreed 2026-10-21). Completing
   implementation or verification does not authorize deployment by itself.
-- Evaluation is accessed at `https://evaluation.example.com/time-tracker-eval/` using the
+- Evaluation is accessed at its configured public HTTPS origin and
+  `/time-tracker-eval/` mount using the
   existing application sign-in, without an additional proxy password or IP
   restriction (agreed 2026-10-20). This replaces SSH-tunnel access for evaluation;
   agent access remains private. The user installs and reloads the prepared host

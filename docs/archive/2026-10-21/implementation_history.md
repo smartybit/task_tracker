@@ -7,6 +7,8 @@
 > [current status](../../../implementation_plan.md), and
 > [archive index](../README.md) before using this evidence.
 > Current replacement: [implementation tracker](../../../implementation_plan.md).
+> Public hostnames and host-specific paths in this record use illustrative
+> `example.com` values in place of the original deployment domain.
 
 This is the working implementation tracker. Product behavior is defined in
 [requirements.md](../../../requirements.md), technical decisions in

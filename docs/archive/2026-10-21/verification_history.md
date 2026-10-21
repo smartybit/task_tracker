@@ -8,6 +8,8 @@
 > [archive index](../README.md) before using this evidence.
 > Current replacement: [infrastructure troubleshooting](../../infrastructure_notes.md)
 > and [operating procedures](../../environments.md).
+> Public hostnames and host-specific paths in this record use illustrative
+> `example.com` values in place of the original deployment domain.
 
 Recorded on 2026-10-08 during the foundation work in `c54e5ad`. These are observed
 setup problems, fixes, and verification limits, not new product requirements.

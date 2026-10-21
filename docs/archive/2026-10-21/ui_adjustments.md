@@ -8,6 +8,8 @@
 > [archive index](../README.md) before using this evidence.
 > Current replacements: [UI design](../../../architecture.md#web-interface),
 > [usage](../../user_guide.md), and [pending review](../../../implementation_plan.md#current-position).
+> Public hostnames in this record use illustrative `example.com` values in place
+> of the original deployment domain.
 
 Agreed 2026-10-20 after read-only review of evaluation tasks and six remarks.
 The starred remark governs this objective: structure everyday task work and move

@@ -41,7 +41,7 @@ class DeploymentConfigurationTests(SimpleTestCase):
         for mount in ('/', '/time-tracker-eval/', '/team/evaluation/'):
             with self.subTest(mount=mount):
                 config = deployment_settings(self.config(
-                    PUBLIC_ORIGIN='https://evaluation.example.com', DJANGO_COOKIE_SECURE='true',
+                    PUBLIC_ORIGIN='https://public.example.test', DJANGO_COOKIE_SECURE='true',
                     APP_BASE_PATH=mount))
                 with override_settings(**config, FORCE_SCRIPT_NAME=mount.rstrip('/') or None):
                     middleware = SecurityMiddleware(lambda request: None)
@@ -51,7 +51,7 @@ class DeploymentConfigurationTests(SimpleTestCase):
                     self.assertIsNone(middleware.process_request(health))
                     # Other HTTP routes still require HTTPS; the exception is exact.
                     for path in ('/api/v1/auth/csrf/', '/api/v1/health/extra', '/api/v1/health'):
-                        request = factory.get(path, HTTP_HOST='evaluation.example.com')
+                        request = factory.get(path, HTTP_HOST='public.example.test')
                         response = middleware.process_request(request)
                         self.assertEqual(response.status_code, 301)
-                        self.assertEqual(response['Location'], 'https://evaluation.example.com' + request.path)
+                        self.assertEqual(response['Location'], 'https://public.example.test' + request.path)

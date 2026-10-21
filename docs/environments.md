@@ -36,7 +36,7 @@ Use `verify NAME` below to check current runtime state; this table is not a live
 
 | Environment | Recorded state | Access URL | Release | Working zone |
 | --- | --- | --- | --- | --- |
-| `evaluation` | UI deployed; public HTTPS verified; authenticated user review pending | `https://evaluation.example.com/time-tracker-eval/` | `ui-1ca13e4-20261021` (source `1ca13e4`) | `Asia/Tbilisi` |
+| `evaluation` | UI deployed; public HTTPS verified; authenticated user review pending | Configured HTTPS origin + `/time-tracker-eval/` (private environment configuration) | `ui-1ca13e4-20261021` (source `1ca13e4`) | `Asia/Tbilisi` |
 | `agent` | All three services healthy; private access | `http://127.0.0.1:8182/time-tracker-agent/` | `7850df8-20261020` | UTC |
 | Production | Not initialized/activated | Prefix `/time-tracker-prod/` reserved | None | Not configured |
 
@@ -90,7 +90,10 @@ python3 scripts/environments.py build agent
 python3 scripts/environments.py up agent
 ```
 
-`init` creates unique secrets in `environments/NAME.env` (mode 600, directory
+The example origin above is illustrative; use the intended host when initializing a
+new environment. The existing evaluation origin is in the ignored
+`environments/evaluation.env` file. `init` creates unique secrets in
+`environments/NAME.env` (mode 600, directory
 mode 700). This entire directory is excluded from Git and Docker build contexts.
 It refuses existing files, shared ports/secrets/identities and overlapping mounts.
 It also refuses to register an identity already used by Docker containers,
@@ -175,7 +178,7 @@ Docker or change deployed services.
 The tracked [host Nginx example](../docker/host-nginx/example.conf.template) shows
 the TLS/HTTP redirect and prefix-preserving proxy pattern. Copy it to a local
 `docker/host-nginx/HOST.conf` file, which Git ignores. For evaluation, set the host
-to `evaluation.example.com`, mount to `/time-tracker-eval/`, loopback target to
+to the configured evaluation host, mount to `/time-tracker-eval/`, loopback target to
 `127.0.0.1:8181`, and certificate paths to that host's actual paths. Preserve any
 other routes needed on the host. The bare mount redirects to its trailing slash;
 the proxy allows the same 16 MiB request body envelope as the private frontend.
