@@ -1,3 +1,4 @@
+import { taskCommand, closeTaskWindow } from "./helpers/ui";
 import { origin } from "./helpers/urls";
 import { expect, test } from "@playwright/test";
 import { baseURL, flags, login, setup } from "./helpers/content";
@@ -11,7 +12,9 @@ test("description references survive renames and mask revoked or deleted targets
     const target = await f.contentWrite('tasks/', { ...payload, confirm: true, expected_domain_revision: preview.domain_revision });
     await login(page, f.alice.email);
     const taskList = page.getByRole('list', { name: 'Task list', exact: true });
+    await closeTaskWindow(page);
     await taskList.getByRole('button', { name: f.task.title, exact: true }).click();
+    await taskCommand(page, 'Edit task');
     const edit = page.getByRole('form', { name: 'Edit task', exact: true });
     await edit.getByRole('textbox', { name: 'Description', exact: true }).fill('See ');
     await edit.getByRole('button', { name: 'Insert reference', exact: true }).click();
@@ -23,9 +26,11 @@ test("description references survive renames and mask revoked or deleted targets
     await expect(detail.getByRole('link', { name: target.title, exact: true })).toBeVisible();
     await detail.getByRole('link', { name: target.title, exact: true }).click();
     await expect(detail.getByRole('heading', { name: target.title, exact: true })).toBeVisible();
+    await taskCommand(page, 'Edit task');
     const targetEdit = page.getByRole('form', { name: 'Edit task', exact: true });
     await targetEdit.getByRole('textbox', { name: 'Task title', exact: true }).fill('Renamed destination');
     await targetEdit.getByRole('button', { name: 'Save task', exact: true }).click();
+    await closeTaskWindow(page);
     await taskList.getByRole('button', { name: f.task.title, exact: true }).click();
     await expect(detail.getByRole('link', { name: 'Renamed destination', exact: true })).toBeVisible();
     await f.write(`users/${f.alice.id}/grants/projects/${f.project.id}/`, {}, 'PUT');

@@ -1,6 +1,8 @@
 import { newTestContext, baseURL, origin, appURL } from "./helpers/urls";
 import { expect, test, type APIRequestContext, type Browser, type Page, type Locator } from '@playwright/test';
 
+test.use({ timezoneId: 'America/Los_Angeles' });
+
 const password = 'browser-timesheet-long-password';
 const friday = '2020-10-09';
 async function authenticate(request: APIRequestContext, email: string, secret = password) {
@@ -92,13 +94,15 @@ test('current work supports task actions, drag and drop, breaks, closing, and re
   try {
     await page.clock.install({ time: new Date(`${f.today}T10:00:00Z`) });
     await login(page, f.person.email);
+    await page.getByLabel('Actions for Time meeting', { exact: true }).click();
     await page.getByRole('button', { name: 'Record Time meeting', exact: true }).click();
     await expect(sheet(page).getByRole('combobox', { name: 'Recording picker task', exact: true })).toHaveValue(f.meeting.id);
     await manualTime(page, `${f.today}T09:00`);
     await sheet(page).getByRole('button', { name: 'Record task', exact: true }).click(); await saved(page);
-    await page.getByRole('list', { name: 'Task list', exact: true }).getByRole('button', { name: 'Time email', exact: true }).dragTo(sheet(page)); await saved(page);
-    await manualTime(page, `${f.today}T11:00`); await sheet(page).getByRole('button', { name: 'Break', exact: true }).click(); await saved(page);
-    await manualTime(page, `${f.today}T12:00`); await sheet(page).getByRole('button', { name: 'End of Working Day', exact: true }).click(); await saved(page);
+    await page.getByRole('list', { name: 'Task list', exact: true }).getByRole('button', { name: 'Time email', exact: true }).dragTo(sheet(page).getByText('Drop a task here to record work.', { exact: true }));
+    await expect(sheet(page).getByRole('table').getByRole('button', { name: 'Time email', exact: true })).toBeVisible(); await saved(page);
+    await page.clock.setFixedTime(new Date(`${f.today}T11:00:00Z`)); await sheet(page).getByRole('button', { name: 'Break', exact: true }).click(); await saved(page);
+    await page.clock.setFixedTime(new Date(`${f.today}T12:00:00Z`)); await sheet(page).getByRole('button', { name: 'End of Working Day', exact: true }).click(); await saved(page);
     const stored = await f.day(f.today);
     expect(stored.sessions[0].rows.map((r: { kind: string }) => r.kind)).toEqual(['task', 'task', 'break']);
     expect(stored.work_seconds).toBe(7200);
@@ -121,12 +125,14 @@ test('historical Friday additions and final tasks preserve today recording and p
     await login(page, f.person.email); await selectDay(page, friday);
     await expect(sheet(page).getByRole('status')).toContainText('Unfinished');
     await expect(sheet(page)).toContainText('3 h');
+    await sheet(page).getByRole('button', { name: 'Record work…', exact: true }).click();
     await sheet(page).getByRole('searchbox', { name: 'Recording picker search', exact: true }).fill('Historical');
     await sheet(page).getByRole('combobox', { name: 'Recording picker project', exact: true }).selectOption(f.project.id);
     await sheet(page).getByRole('checkbox', { name: 'Completed', exact: true }).check();
     await sheet(page).getByRole('combobox', { name: 'Recording picker task', exact: true }).selectOption(f.final.id);
     await manualTime(page, `${friday}T14:00`); await sheet(page).getByRole('button', { name: 'Record task', exact: true }).click(); await saved(page);
-    await manualTime(page, `${friday}T17:00`); await sheet(page).getByRole('button', { name: 'End of Working Day', exact: true }).click(); await saved(page);
+    await sheet(page).getByRole('button', { name: 'End of Working Day', exact: true }).click();
+    await manualTime(page, `${friday}T17:00`); await page.getByRole('dialog').getByRole('button', { name: 'End of Working Day', exact: true }).click(); await saved(page);
     expect((await f.day(friday)).work_seconds).toBe(7 * 3600 + 17 * 60);
     expect((await f.day(f.today)).sessions).toEqual(current);
     const final = await (await f.actor.request.get(`${baseURL}/api/v1/tasks/${f.final.id}/`)).json();
@@ -189,6 +195,7 @@ test('competing tabs preserve stale drafts and require explicit reload and revie
     await sheet(page).getByRole('button', { name: 'Edit day…', exact: true }).click();
     await editor(page).getByLabel('Row 1 start', { exact: true }).fill(`${friday}T08:00`);
     const other = await second.newPage(); await login(other, f.person.email);
+    await sheet(other).getByRole('button', { name: 'Record work…', exact: true }).click();
     await sheet(other).getByRole('checkbox', { name: 'Use current time', exact: true }).uncheck();
     await manualTime(other, `${f.today}T10:00`);
     await sheet(other).getByRole('combobox', { name: 'Recording picker task', exact: true }).selectOption(f.email.id);
@@ -213,7 +220,7 @@ test('ordinary boundaries, last deletion, resumption advice and stale previews r
     await f.command(friday, 'append', { session, at: `${friday}T10:00:00Z`, task: f.email.id });
     await f.command(friday, 'end_day', { session, at: `${friday}T12:00:00Z` });
     await login(page, f.person.email); await selectDay(page, friday);
-    await sheet(page).getByRole('button', { name: `Edit end of Time meeting at ${friday} 10:00:00`, exact: true }).click();
+    await sheet(page).getByRole('button', { name: `Edit end of Time meeting at 10:00`, exact: true }).click();
     const boundary = page.getByRole('dialog', { name: 'Edit time boundary', exact: true });
     await boundary.getByLabel('Boundary time', { exact: true }).fill(`${friday}T10:30`);
     await boundary.getByRole('button', { name: 'Preview boundary change', exact: true }).click();
@@ -221,13 +228,15 @@ test('ordinary boundaries, last deletion, resumption advice and stale previews r
     await page.getByRole('dialog', { name: 'Confirm timesheet change', exact: true }).getByRole('button', { name: 'Confirm timesheet change', exact: true }).click();
     await expect(sheet(page).getByRole('alert')).toContainText('Preview the changes again');
     expect((await f.day(friday)).sessions[0].rows[0].ended_at).toContain('10:00:00');
+    if (await page.getByRole('dialog').count()) { page.once('dialog', prompt => prompt.accept()); await page.getByRole('dialog').getByRole('button', { name: /Cancel (boundary|recording)/ }).click(); }
     await sheet(page).getByRole('button', { name: 'Reload timesheet', exact: true }).click();
-    await sheet(page).getByRole('button', { name: `Edit end of Time meeting at ${friday} 10:00:00`, exact: true }).click();
+    await sheet(page).getByRole('button', { name: `Edit end of Time meeting at 10:00`, exact: true }).click();
     await boundary.getByLabel('Boundary time', { exact: true }).fill(`${friday}T10:30`);
     await boundary.getByRole('button', { name: 'Preview boundary change', exact: true }).click(); await confirm(page);
     const rows = (await f.day(friday)).sessions[0].rows; expect(rows[0].ended_at).toBe(rows[1].started_at);
     await sheet(page).getByRole('button', { name: 'Delete last record', exact: true }).click(); await confirm(page);
     expect((await f.day(friday)).sessions[0].rows).toHaveLength(1);
+    await sheet(page).getByRole('button', { name: 'Record work…', exact: true }).click();
     await sheet(page).getByRole('combobox', { name: 'Recording picker task', exact: true }).selectOption(f.email.id);
     await manualTime(page, `${friday}T13:00`); await sheet(page).getByRole('button', { name: 'Record task', exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Confirm timesheet change', exact: true })).toContainText('Convert the closing marker to a break'); await confirm(page);
@@ -265,13 +274,14 @@ test('whole colleague sheets preserve restricted references and recheck write pe
     expect((await f.day(friday)).work_seconds).toBe(14400);
     page.once('dialog', dialog => dialog.accept()); await editor(page).getByRole('button', { name: 'Cancel', exact: true }).click();
     await f.write(`users/${f.colleague.id}/`, { read_others_timesheets: false, write_others_timesheets: true }, 'PATCH');
-    await sheet(page).getByRole('button', { name: `Edit start of Time meeting at ${friday} 08:00:00`, exact: true }).click();
+    await sheet(page).getByRole('button', { name: `Edit start of Time meeting at 08:00`, exact: true }).click();
     const boundary = page.getByRole('dialog', { name: 'Edit time boundary', exact: true });
     await boundary.getByLabel('Boundary time', { exact: true }).fill(`${friday}T07:00`);
     await boundary.getByRole('button', { name: 'Preview boundary change', exact: true }).click();
     await expect(boundary.getByRole('alert')).toContainText('Timesheet read access changed');
     await expect(page.getByRole('dialog', { name: 'Confirm timesheet change', exact: true })).not.toBeVisible();
     expect((await f.day(friday)).work_seconds).toBe(14400);
+    page.once('dialog', prompt => prompt.accept());
     await boundary.getByRole('button', { name: 'Cancel boundary', exact: true }).click();
     await page.getByRole('button', { name: 'Refresh access', exact: true }).click();
     await expect(sheet(page)).toContainText('Reading this timesheet requires Read Others');
@@ -285,13 +295,14 @@ test('explicit overnight continuation splits work and fixes midnight connections
     const previous = new Date(Date.parse(`${f.today}T00:00:00Z`) - 86400000).toISOString().slice(0, 10);
     const session = await f.start(previous, '23:00:00');
     await login(page, f.person.email);
+    await sheet(page).getByRole('button', { name: 'Overnight work…', exact: true }).click();
     await sheet(page).getByRole('combobox', { name: 'Recording picker task', exact: true }).selectOption(f.email.id);
     await sheet(page).getByRole('combobox', { name: 'Previous session', exact: true }).selectOption(session);
     await manualTime(page, `${f.today}T01:00`);
     await sheet(page).getByRole('button', { name: 'Continue previous session', exact: true }).click(); await saved(page);
     expect((await f.day(previous)).work_seconds).toBe(3600);
     expect((await f.day(f.today)).work_seconds).toBe(3600);
-    await manualTime(page, `${f.today}T02:00`); await sheet(page).getByRole('button', { name: 'End of Working Day', exact: true }).click(); await saved(page);
+    await page.clock.setFixedTime(new Date(`${f.today}T02:00:00Z`)); await sheet(page).getByRole('button', { name: 'End of Working Day', exact: true }).click(); await saved(page);
     expect((await f.day(f.today)).work_seconds).toBe(7200);
     await sheet(page).getByRole('button', { name: 'Edit day…', exact: true }).click();
     await expect(editor(page).getByLabel('Row 1 start', { exact: true })).toBeDisabled();
@@ -310,16 +321,19 @@ test('historical task drops ask for selected-day time and current final tasks re
   const f = await setup(browser, 'drop-past');
   try {
     await login(page, f.person.email);
+    await sheet(page).getByRole('button', { name: 'Record work…', exact: true }).click();
     await sheet(page).getByRole('combobox', { name: 'Recording picker task', exact: true }).selectOption(f.final.id);
     await sheet(page).getByRole('button', { name: 'Record task', exact: true }).click();
     await expect(sheet(page).getByRole('alert')).toContainText('Reopen the task separately');
     expect((await f.day(f.today)).sessions).toHaveLength(0);
+    page.once('dialog', prompt => prompt.accept());
+    await page.getByRole('dialog').getByRole('button', { name: 'Cancel recording', exact: true }).click();
     await selectDay(page, friday);
-    await page.getByRole('list', { name: 'Task list', exact: true }).getByRole('button', { name: 'Time meeting', exact: true }).dragTo(sheet(page));
-    await expect(sheet(page).getByRole('alert')).toContainText('Enter a start time on the selected day');
+    await page.getByRole('list', { name: 'Task list', exact: true }).getByRole('button', { name: 'Time meeting', exact: true }).dragTo(sheet(page).getByText('Drop a task here to record work.', { exact: true }));
+    await expect(page.getByRole('dialog', { name: 'Record work', exact: true })).toBeVisible();
     expect((await f.day(friday)).sessions).toHaveLength(0);
     await manualTime(page, `${friday}T09:30`); await sheet(page).getByRole('button', { name: 'Record task', exact: true }).click(); await saved(page);
-    await expect(sheet(page).getByRole('table')).toContainText(`${friday} 09:30`);
+    await expect(sheet(page).getByRole('table')).toContainText('09:30');
     await sheet(page).getByRole('table').getByRole('button', { name: 'Time meeting', exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Task description', exact: true })).toContainText('Protected description of Time meeting');
   } finally { await f.close(); }
@@ -332,6 +346,7 @@ test('running day drafts retain unknown ends and precision while independent his
     const session = await f.start(f.today, '09:00:00.000123');
     await f.command(f.today, 'append', { session, at: `${f.today}T10:00:00.000456Z`, task: f.email.id });
     await login(page, f.person.email);
+    await expect(sheet(page).getByRole('button', { name: 'Edit start of Time meeting at 09:00', exact: true })).toHaveText('09:00');
     const beforeSave = (await f.day(f.today)).revision;
     await sheet(page).getByRole('button', { name: 'Edit day…', exact: true }).click();
     const contextPath = `**/api/v1/timesheets/${f.person.id}/context/`;
@@ -343,6 +358,7 @@ test('running day drafts retain unknown ends and precision while independent his
     await page.unroute(contextPath);
     await editor(page).getByRole('button', { name: 'Cancel', exact: true }).click();
     await expect(editor(page)).not.toBeVisible();
+    if (await page.getByRole('dialog').count()) { page.once('dialog', prompt => prompt.accept()); await page.getByRole('dialog').getByRole('button', { name: /Cancel (boundary|recording)/ }).click(); }
     await sheet(page).getByRole('button', { name: 'Reload timesheet', exact: true }).click();
     await expect(sheet(page).getByRole('alert')).toContainText('Timesheet reloaded');
     const unchanged = (await f.day(f.today)).sessions[0];
@@ -364,5 +380,29 @@ test('running day drafts retain unknown ends and precision while independent his
       return { absolute: instant('2026-10-09T23:00', 'Europe/Berlin'), local: localStamp('2026-10-09T22:30:00Z', 'Europe/Berlin') };
     });
     expect(converted).toEqual({ absolute: '2026-10-09T21:00:00.000Z', local: '2026-10-10T00:30:00' });
+  } finally { await f.close(); }
+});
+
+test('multiple sessions require a target and unchanged boundary edits retain precise instants', async ({ page, browser }) => {
+  const f = await setup(browser, 'session-choice');
+  try {
+    const sessions = [9, 13].map((hour, index) => ({ client_key: `session-${index}`, state: 'closed', ended_at: `${friday}T${hour + 1}:00:00Z`, rows: [{
+      client_key: `row-${index}`, kind: 'task', task: f.meeting.id,
+      started_at: `${friday}T${String(hour).padStart(2, '0')}:00:00.000123Z`, ended_at: `${friday}T${hour + 1}:00:00Z`,
+    }] }));
+    await f.command(friday, 'replace_day', { sessions });
+    await login(page, f.person.email); await selectDay(page, friday);
+    const before = await f.day(friday);
+    await page.getByRole('list', { name: 'Task list', exact: true }).getByRole('button', { name: 'Time email', exact: true }).dragTo(sheet(page).getByText('Drop a task here to record work.', { exact: true }));
+    const recording = page.getByRole('dialog', { name: 'Record work', exact: true });
+    await expect(recording.getByRole('combobox', { name: 'Target session', exact: true })).toHaveValue('');
+    await expect(recording.getByRole('button', { name: 'Record task', exact: true })).toBeDisabled();
+    expect(await f.day(friday)).toEqual(before);
+    await recording.getByRole('button', { name: 'Cancel recording', exact: true }).click();
+    await sheet(page).getByRole('button', { name: 'Edit start of Time meeting at 09:00', exact: true }).click();
+    await page.getByRole('button', { name: 'Preview boundary change', exact: true }).click(); await confirm(page);
+    const after = await f.day(friday);
+    expect(after.sessions[0].rows[0].started_at).toBe(before.sessions[0].rows[0].started_at);
+    expect(after.work_seconds).toBe(before.work_seconds);
   } finally { await f.close(); }
 });

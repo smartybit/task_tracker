@@ -21,9 +21,19 @@ export function Timesheet({ user, version, request, openTask, onError }: {
   const [at, setAt] = useState('');
   const [useNow, setUseNow] = useState(true);
   const [continuation, setContinuation] = useState('');
+  const [tool, setTool] = useState<'record' | 'break' | 'end' | 'continue' | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  function dismiss() {
+    if (busy) return;
+    if (pending) { setPending(null); return; }
+    if (dirty && !window.confirm('Discard unsaved recording changes?')) return;
+    setTool(null); setBoundary(null); setDirty(false);
+  }
+  function openTool(next: 'record' | 'break' | 'end' | 'continue') { setTool(next); setDirty(false); setMessage(''); setUseNow(date === context?.today); if (day && day.sessions.length > 1) setSession(''); }
   const [edit, setEdit] = useState(false);
   const [pending, setPending] = useState<{ body: Command; preview: Preview & { before: Day; after: Day } } | null>(null);
-  const [boundary, setBoundary] = useState<{ entry: string; edge: 'start' | 'end'; at: string } | null>(null);
+  const [boundary, setBoundary] = useState<{ entry: string; edge: 'start' | 'end'; at: string; original: string } | null>(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [stale, setStale] = useState(false);
@@ -85,8 +95,7 @@ export function Timesheet({ user, version, request, openTask, onError }: {
   useEffect(() => {
     if (!request) return;
     setTask(request.id);
-    form.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    form.current?.querySelector<HTMLButtonElement>('[data-record]')?.focus();
+    openTool('record');
   }, [request]);
 
   async function run(operation: () => Promise<void>) {
@@ -99,7 +108,7 @@ export function Timesheet({ user, version, request, openTask, onError }: {
   }
   async function send(body: Command) {
     await api(`timesheets/${owner}/commands/`, 'POST', body);
-    setPending(null); setBoundary(null);
+    setPending(null); setBoundary(null); setTool(null); setDirty(false);
     try { await load(); setMessage('Timesheet saved.'); }
     catch (error) {
       setStale(true);
@@ -122,56 +131,77 @@ export function Timesheet({ user, version, request, openTask, onError }: {
     if (!day || !writable || stale) return;
     void run(async () => {
       if (taskId === '') throw new Error('Choose a readable task first.');
+      if (day.sessions.length > 1 && !session) throw new Error('Choose the target session.');
       const target = day.sessions.find(s => s.id === session);
       const time = atOverride ?? timestamp();
       if (target?.state === 'closed') await preview(payload('resume', { session, at: time, task: taskId }));
       else await send(payload(target ? 'append' : 'start', { ...(target ? { session } : {}), at: time, task: taskId }));
     });
   }
-  return <section className="workspace timesheet-panel" aria-label="Timesheet" onDragOver={event => { if (writable && day && !stale && event.dataTransfer.types.includes('application/x-task-tracker-task')) event.preventDefault(); }} onDrop={event => {
-    event.preventDefault(); const id = event.dataTransfer.getData('application/x-task-tracker-task');
+  return <section className={`workspace timesheet-panel${dragging ? " drag-target" : ""}`} onDragEnter={() => setDragging(true)} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragging(false); }} aria-label="Timesheet" onDragOver={event => { if (writable && day && !stale && event.dataTransfer.types.includes('application/x-task-tracker-task')) event.preventDefault(); }} onDrop={event => {
+    event.preventDefault(); setDragging(false); const id = event.dataTransfer.getData('application/x-task-tracker-task');
     if (!id || !writable || !day || stale || busy) return;
     setTask(id);
-    if (context && date === context.today) record(id, new Date().toISOString());
-    else { setMessage('Task selected. Enter a start time on the selected day, then choose Record task.'); form.current?.querySelector<HTMLInputElement>('input[type="datetime-local"]')?.focus(); }
+    if (context && date === context.today && day.sessions.length <= 1) record(id, new Date().toISOString());
+    else { openTool('record'); }
   }}>
-    <h2>Timesheet</h2><p>Drop a task here or use the picker. Daily totals include the whole timesheet, across all projects.</p>
-    {message && <p role="alert">{message}</p>}
+    <h2>Timesheet</h2><p className="drop-hint">Drop a task here to record work.</p>
+    {!tool && !boundary && !pending && message && <p role="alert">{message}</p>}
     <label>Timesheet person<select value={owner} disabled={busy} onChange={event => { setDay(null); setOwner(event.target.value); }}><option value={user.id}>My timesheet</option>{people.filter(p => p.id !== user.id).map(p => <option value={p.id} key={p.id}>{p.display_name}</option>)}</select></label>
-    {!readable ? <p>Reading this timesheet requires Read Others’ Timesheets. Write-only commands remain available through the revision-aware API.</p> : <>
+    {!readable ? <p>Reading this timesheet requires Read Others’ Timesheets.</p> : <>
       <label>Day<input type="date" value={date} disabled={busy} onChange={event => { if (event.target.value) { setDay(null); setDate(event.target.value); } }} /></label>
       <button className="secondary" disabled={busy} onClick={() => { void run(async () => { await load(); setCatalog(await catalogs()); setMessage('Timesheet reloaded. Review current work before making changes.'); }); }}>Reload timesheet</button>
       {!day || !context ? <p>Loading timesheet…</p> : <>
-        <p>Working time zone: {day.time_zone}. Total: <strong>{hours(day.work_seconds)}</strong>. Unfinished rows count zero until closed.</p>
+        <p>Working time zone: {day.time_zone}. Total (all projects): <strong>{hours(day.work_seconds)}</strong>.</p>
         {day.unfinished && <p className="draft-warning" role="status">Unfinished: this day has a row without an end time. Only closed task intervals contribute to its partial total.</p>}
         {context.open_sessions.filter(s => s.date !== date).map(s => <p key={s.id}>{s.state === 'active' ? 'Active recording' : 'Unfinished session'} on <button className="task-link" onClick={() => setDate(s.date)}>{s.date}</button> · {s.tail.task_label} · no end recorded.</p>)}
-        <DayTable day={day} openTask={openTask} boundary={writable && !busy && !stale ? (entry, edge, at) => setBoundary({ entry, edge, at: localStamp(at, day.time_zone) }) : undefined} remove={writable && !busy && !stale ? entry => { void run(() => preview(payload('delete_last', { entry }))); } : undefined} />
+        <DayTable day={day} openTask={openTask} boundary={writable && !busy && !stale ? (entry, edge, at) => (setDirty(false), setBoundary({ entry, edge, at: localStamp(at, day.time_zone), original: at })) : undefined} remove={writable && !busy && !stale ? entry => { void run(() => preview(payload('delete_last', { entry }))); } : undefined} />
         {stale && <p role="status">Access or data changed. Reload timesheet and review before making another change.</p>}
         {writable && <>
           <button className="secondary" disabled={busy || stale} onClick={() => setEdit(true)}>Edit day…</button>
-          <form ref={form} aria-label="Record work" onSubmit={event => { event.preventDefault(); record(task); }}><fieldset disabled={busy || stale}>
-            <h3>Record work</h3>
-            {day.sessions.length > 0 && <label>Target session<select value={session} onChange={event => setSession(event.target.value)}>{day.sessions.map((s, i) => <option key={s.id} value={s.id}>Session {i + 1} · {s.state}</option>)}</select></label>}
-            {date === context.today && <label className="check"><input type="checkbox" checked={useNow} onChange={event => setUseNow(event.target.checked)} />Use current time</label>}
-            {!(date === context.today && useNow) && <label>Selected-day time<input type="datetime-local" step="any" value={at} onChange={event => setAt(event.target.value)} required /></label>}
-            <TaskPicker {...catalog} value={task} onChange={setTask} prefix="Recording picker" />
-            {day.sessions.find(s => s.id === session)?.state === 'closed' && <p>Adding work after End of Working Day requires confirmation to convert the marker to a break.</p>}
-            <div className="inline"><button data-record disabled={!task}>Record task</button><button type="button" className="secondary" onClick={() => record(null)}>Break</button>
-              {day.sessions.find(s => s.id === session)?.state !== 'closed' && session && <button type="button" onClick={() => { void run(() => send(payload('end_day', { session, at: timestamp() }))); }}>End of Working Day</button>}
-            </div>
-            {date === context.today && context.open_sessions.some(s => s.date < date) && <fieldset className="continuation"><legend>Continue previous session…</legend><p>Starting today normally creates an independent session. Continue only for real overnight work; the previous open interval will be closed at the supplied time.</p>
-              <label>Previous session<select value={continuation} onChange={event => setContinuation(event.target.value)}><option value="">Choose an unfinished session</option>{context.open_sessions.filter(s => s.date < date).map(s => <option value={s.id} key={s.id}>{s.date} · {s.tail.task_label} · {s.state}</option>)}</select></label>
-              <button type="button" disabled={!continuation || !task} onClick={() => { void run(() => send(payload('continue', { session: continuation, at: timestamp(), task }))); }}>Continue previous session</button>
-              {context.open_sessions.some(s => s.state === 'active' && s.date < date) && <button type="button" className="secondary" onClick={() => { const active = context.open_sessions.find(s => s.state === 'active' && s.date < date)!; void run(() => send(payload('end_day', { session: active.id, at: timestamp() }))); }}>Close overnight recording</button>}
-            </fieldset>}
-          </fieldset></form>
+          <button className="secondary" disabled={busy || stale} onClick={() => openTool('record')}>Record work…</button>
+          <button className="secondary" disabled={busy || stale} onClick={() => {
+            if (date !== context.today || day.sessions.length > 1) openTool('break'); else record(null, new Date().toISOString());
+          }}>Break</button>
+          {day.sessions.length > 0 && <button disabled={busy || stale || day.sessions.every(s => s.state === 'closed')} onClick={() => {
+            if (date !== context.today || day.sessions.length > 1) openTool('end');
+            else { void run(() => send(payload('end_day', { session, at: new Date().toISOString() }))); }
+          }}>End of Working Day</button>}
+          {date === context.today && context.open_sessions.some(s => s.date < date) && <button className="secondary" disabled={busy || stale} onClick={() => openTool('continue')}>Overnight work…</button>}
         </>}
         {edit && <DayEditor owner={owner} day={day} {...catalog} onClose={() => setEdit(false)} onError={onError} onSaved={async () => { try { await load(); setMessage('Day changes saved.'); } catch (error) { setStale(true); throw error; } }} onReload={async () => { const result = await load(); setCatalog(await catalogs()); return result; }} />}
       </>}
     </>}
-    {boundary && <Modal name="Edit time boundary" onDismiss={() => { if (!busy) setBoundary(null); }}><h3>Edit shared {boundary.edge} boundary</h3><p>The adjoining row will change together. Midnight connections stay fixed.</p><form onSubmit={event => { event.preventDefault(); void run(async () => { const at = instant(boundary.at, day!.time_zone); if (!at) throw new Error('Enter a boundary time.'); await preview(payload('boundary', { entry: boundary.entry, edge: boundary.edge, at })); }); }}><label>Boundary time<input type="datetime-local" step="any" value={boundary.at} onChange={event => setBoundary({ ...boundary, at: event.target.value })} required /></label><button disabled={busy}>Preview boundary change</button><button type="button" className="secondary" disabled={busy} onClick={() => setBoundary(null)}>Cancel boundary</button>{message && <p role="alert">{message}</p>}</form></Modal>}
-    {pending && <Modal name="Confirm timesheet change" onDismiss={() => { if (!busy) setPending(null); }}><h3>Review timesheet change</h3><p>{pending.preview.advice}</p><h4>Before</h4><DayTable day={pending.preview.before} /><h4>After</h4><DayTable day={pending.preview.after} />
-      {message && <p role="alert">{message}</p>}<button disabled={busy} onClick={() => { void run(() => send({ ...pending.body, confirm: true, expected_domain_revision: pending.preview.domain_revision })); }}>{busy ? 'Applying…' : 'Confirm timesheet change'}</button><button className="secondary" disabled={busy} onClick={() => setPending(null)}>Cancel change</button>
+    {(tool || boundary || pending) && day && context && <Modal name={pending ? 'Confirm timesheet change' : boundary ? 'Edit time boundary' : tool === 'continue' ? 'Overnight work' : tool === 'break' ? 'Record break' : tool === 'end' ? 'End of Working Day' : 'Record work'} dirty={dirty} onDismiss={dismiss}>
+      {message && <p role="alert">{message}</p>}
+      {stale && <p role="status">Access or data changed. Close this window, reload the timesheet and review before saving again. Your input is retained until you close.</p>}
+      <div hidden={!!pending}>
+      {tool && <form ref={form} aria-label="Record work" onChange={() => setDirty(true)} onSubmit={event => {
+        event.preventDefault();
+        if (tool === 'end') { void run(() => send(payload('end_day', { session, at: timestamp() }))); }
+        else if (tool === 'continue') { void run(() => send(payload('continue', { session: continuation, at: timestamp(), task }))); }
+        else record(tool === 'break' ? null : task);
+      }}><fieldset disabled={busy || stale}>
+        <h3>{tool === 'continue' ? 'Overnight work' : tool === 'break' ? 'Record break' : tool === 'end' ? 'End of Working Day' : 'Record work'}</h3>
+        <p>{date} · {context.time_zone}</p>
+        {day.sessions.length > 0 && tool !== 'continue' && <label>Target session<select value={session} required onChange={event => setSession(event.target.value)}><option value="" disabled>Choose a session</option>{day.sessions.map((s, i) => <option key={s.id} value={s.id} disabled={tool === 'end' && s.state === 'closed'}>Session {i + 1} · {s.state}</option>)}</select></label>}
+        {date === context.today && <label className="check"><input type="checkbox" checked={useNow} onChange={event => setUseNow(event.target.checked)} />Use current time</label>}
+        {!(date === context.today && useNow) && <label>Selected-day time<input type="datetime-local" step="any" value={at} onChange={event => setAt(event.target.value)} required /></label>}
+        {(tool === 'record' || tool === 'continue') && <TaskPicker {...catalog} value={task} onChange={setTask} prefix="Recording picker" />}
+        {tool === 'record' && day.sessions.find(s => s.id === session)?.state === 'closed' && <p>Adding work after End of Working Day requires confirmation to convert the marker to a break.</p>}
+        {tool === 'continue' && <><p>Continue only for real overnight work. Starting today normally leaves earlier sessions unfinished.</p>
+          <label>Previous session<select value={continuation} onChange={event => setContinuation(event.target.value)}><option value="">Choose an unfinished session</option>{context.open_sessions.filter(s => s.date < date).map(s => <option value={s.id} key={s.id}>{s.date} · {s.tail.task_label} · {s.state}</option>)}</select></label>
+          <button disabled={!continuation || !task}>Continue previous session</button>
+          {context.open_sessions.some(s => s.state === 'active' && s.date < date) && <button type="button" className="secondary" onClick={() => { const active = context.open_sessions.find(s => s.state === 'active' && s.date < date)!; void run(() => send(payload('end_day', { session: active.id, at: timestamp() }))); }}>Close overnight recording</button>}
+        </>}
+        {tool !== 'continue' && <button data-record disabled={(day.sessions.length > 1 && !session) || (tool === 'record' ? !task : tool === 'end' ? !session : false)}>{tool === 'record' ? 'Record task' : tool === 'break' ? 'Record break' : 'End of Working Day'}</button>}
+      </fieldset></form>}
+      {boundary && <><h3>Edit shared {boundary.edge} boundary</h3><p>The adjoining row will change together. Midnight connections stay fixed. Working time zone: {day.time_zone}.</p><form onSubmit={event => { event.preventDefault(); void run(async () => { const at = boundary.at === localStamp(boundary.original, day.time_zone) ? boundary.original : instant(boundary.at, day.time_zone); if (!at) throw new Error('Enter a boundary time.'); await preview(payload('boundary', { entry: boundary.entry, edge: boundary.edge, at })); }); }}><label>Boundary time<input type="datetime-local" step="any" value={boundary.at} onChange={event => { setDirty(true); setBoundary({ ...boundary, at: event.target.value }); }} required /></label><button disabled={busy || stale}>Preview boundary change</button></form></>}
+      <button type="button" className="secondary" disabled={busy} onClick={dismiss}>{boundary ? 'Cancel boundary' : 'Cancel recording'}</button>
+      </div>
+      {pending && <><h3>Review timesheet change</h3><p>{pending.preview.advice}</p><h4>Before</h4><DayTable day={pending.preview.before} /><h4>After</h4><DayTable day={pending.preview.after} />
+        <button disabled={busy || stale} onClick={() => { void run(() => send({ ...pending.body, confirm: true, expected_domain_revision: pending.preview.domain_revision })); }}>{busy ? 'Applying…' : 'Confirm timesheet change'}</button><button className="secondary" disabled={busy} onClick={() => setPending(null)}>Cancel change</button>
+      </>}
     </Modal>}
   </section>;
 }

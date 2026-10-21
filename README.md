@@ -46,7 +46,8 @@ No personal account is created automatically, and public registration is unavail
 
 After sign-in, everyone opens **Tasks**. Administrators find account/catalog/grant
 and status management under **Administration**, including **System status** for
-connection checks. Colleagues can review project grants under **My access**. Task access follows current project/organization grants. Administrators
+connection checks. Colleagues can review project grants under **My access**. Task
+access follows current project/organization grants. Administrators
 need explicit grants to view or modify tasks. **Refresh tasks** reloads current
 access and data; **Refresh access** also refreshes account/catalog management.
 
@@ -55,7 +56,8 @@ before confirming. Each task has an **Actions** menu for **Add subtask**, editin
 status changes, recording, ownership, moves and deletion. Add subtask preselects
 the parent and project. Clicking a title opens a separate details/remarks window;
 **History** opens status history. **Close details** dismisses the window; finish a
-task through **Change status**. Each command has its own dialog. Use the project/status filters and Flat/Tree view
+task through **Change status**. Each command has its own dialog. Use the
+project/status filters and Flat/Tree view
 button to find work. With status filters active, matching tasks whose parents are
 excluded appear at the top level.
 
@@ -128,7 +130,8 @@ count zero. Task labels remain visible after task access is lost; opening their
 descriptions still requires task read permission.
 
 Drag a task into today's sheet to record at the current time, or use a task's
-**Actions → Record time** command or **Record work…** to open the searchable picker. The picker includes final tasks
+**Actions → Record time** command or **Record work…** to open the searchable
+picker. The picker includes final tasks
 and filters by project and selected statuses. Current recording against a final
 task requires reopening it separately in Tasks. For historical additions, enter
 **Selected-day time** explicitly; dropping a task on a past day selects it and
@@ -139,7 +142,8 @@ marker previews its conversion to a break before confirmation.
 
 Starting a new day leaves older tails unfinished. Their dates appear as links;
 correcting them preserves today's recording. Open **Overnight work…** and choose
-**Continue previous session** for explicit overnight work; this action that closes the earlier interval at the supplied
+**Continue previous session** for explicit overnight work; this closes the
+earlier interval at the supplied
 time. **Close overnight recording** closes an earlier active session today.
 
 Click a start/end boundary to preview changing it and its neighbor together.
@@ -447,7 +451,7 @@ For a bounded full test run with a captured log and exit status:
 sh scripts/test-runner.sh verification-1 full
 ```
 
-This runs the same `scripts/test.sh` workflow with a 30-minute limit, foreground
+This runs the same `scripts/test.sh` workflow with a 45-minute limit, foreground
 supervision, and closed standard input. Results default to ignored
 `.artifacts/verification/verification-1.log` and `.status`; the wrapper returns
 the test command's exit status. Use a new label for each run. An optional third

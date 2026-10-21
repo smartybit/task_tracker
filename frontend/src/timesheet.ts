@@ -36,7 +36,7 @@ export function instant(value: string, zone: string): string | null {
 }
 export function clock(value: string | null, zone: string): string {
   if (!value) return 'Unfinished';
-  return localStamp(value, zone).replace('T', ' ');
+  return localStamp(value, zone).slice(11, 16);
 }
 export function hours(seconds: number): string {
   return `${Number((seconds / 3600).toFixed(4))} h`;

@@ -1,3 +1,4 @@
+import { taskCommand, closeTaskWindow } from "./helpers/ui";
 import { newTestContext, origin } from "./helpers/urls";
 import { expect, test, type Page } from "@playwright/test";
 import { baseURL, flags, login, setup } from "./helpers/content";
@@ -27,6 +28,8 @@ test("remarks retain chronology and authors, share stars, and navigate to origin
     await post(page, text);
     await post(page, "Second chronological remark");
     await expect(stream(page).getByRole("article")).toHaveCount(2);
+    await expect(stream(page).getByRole("article").first()).toContainText("Second chronological remark");
+    await page.getByRole("combobox", { name: "Remark order", exact: true }).selectOption("oldest");
     await expect(stream(page).getByRole("article").first()).toContainText(text);
     await expect(stream(page).locator("script")).toHaveCount(0);
     await stream(page).getByRole("article").first().getByRole("button", { name: "Star remark", exact: true }).click();
@@ -36,7 +39,8 @@ test("remarks retain chronology and authors, share stars, and navigate to origin
     await f.write(`users/${f.bob.id}/grants/projects/${f.project.id}/`, { ...flags, task_write: false }, "PUT");
     const colleague = await other.newPage();
     await login(colleague, f.bob.email); await open(colleague, f.task.title);
-    await expect(colleague.getByRole("form", { name: "Edit task", exact: true })).not.toBeVisible();
+    await colleague.getByRole("combobox", { name: "Remark order", exact: true }).selectOption("oldest");
+    await expect(colleague.getByRole("button", { name: "Edit task", exact: true })).not.toBeVisible();
     await expect(stars(colleague).getByRole("link")).toContainText("First remark");
     await stream(colleague).getByRole("article").first().getByRole("button", { name: "Edit remark", exact: true }).click();
     const edit = discussion(colleague).getByRole("form", { name: "Edit remark", exact: true });
@@ -140,15 +144,20 @@ test("task deletion requires remark write and confirms the current remark count"
   try {
     await login(page, f.alice.email); await open(page, f.task.title); await post(page, "Deletion discussion");
     await f.write(`users/${f.alice.id}/grants/projects/${f.project.id}/`, { ...flags, remark_write: false }, "PUT");
+    await taskCommand(page, "Delete task");
     await page.getByRole("button", { name: "Preview deletion", exact: true }).click();
     await expect(page.getByRole("region", { name: "Tasks", exact: true }).getByRole("alert").first()).toContainText("remark write access");
     await f.write(`users/${f.alice.id}/grants/projects/${f.project.id}/`, flags, "PUT");
+    await page.getByRole("dialog").getByRole("button", { name: "Refresh tasks", exact: true }).click();
+    await taskCommand(page, "Delete task");
     await page.getByRole("button", { name: "Preview deletion", exact: true }).click();
     const confirmation = page.getByRole("dialog", { name: "Confirm task change", exact: true });
     await expect(confirmation).toContainText("deletes 1 remark(s)");
     await f.contentWrite(`tasks/${f.task.id}/remarks/`, { body: "Arrived after preview" });
     await confirmation.getByRole("button", { name: "Confirm change", exact: true }).click();
     await expect(page.getByRole("region", { name: "Tasks", exact: true }).getByRole("alert").first()).toContainText("preview is out of date");
+    await page.getByRole("dialog").getByRole("button", { name: "Refresh tasks", exact: true }).click();
+    await taskCommand(page, "Delete task");
     await page.getByRole("button", { name: "Preview deletion", exact: true }).click();
     await expect(confirmation).toContainText("deletes 2 remark(s)");
     await confirmation.getByRole("button", { name: "Confirm change", exact: true }).click();

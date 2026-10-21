@@ -1,11 +1,27 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { type Project } from './api';
-import { type Day, type PickerTask, type PickerStatus, clock, hours } from './timesheet';
+import { type Day, type PickerTask, type PickerStatus, clock, hours, localStamp } from './timesheet';
 
-export function Modal({ name, onDismiss, children }: { name: string; onDismiss: () => void; children: ReactNode }) {
+export function Modal({ name, onDismiss, children, dirty = false }: { name: string; onDismiss: () => void; children: ReactNode; dirty?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => { const dialog = ref.current!; dialog.showModal(); return () => dialog.close(); }, []);
-  return <dialog ref={ref} aria-label={name} onCancel={event => { event.preventDefault(); onDismiss(); }}>{children}</dialog>;
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    const dialog = ref.current!; dialog.showModal();
+    return () => {
+      dialog.close();
+      if (previous?.isConnected) {
+        const target = previous.checkVisibility() ? previous : previous.closest('details')?.querySelector('summary');
+        (target as HTMLElement | null)?.focus({ preventScroll: true });
+      }
+    };
+  }, []);
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { if (dirty) event.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+  useEffect(() => { ref.current?.focus(); }, [name]);
+  return <dialog ref={ref} tabIndex={-1} aria-label={name} onCancel={event => { event.preventDefault(); onDismiss(); }}>{children}</dialog>;
 }
 
 export function TaskPicker({ tasks, projects, statuses, value, onChange, prefix = 'Picker' }: {
@@ -46,7 +62,7 @@ function TimeRows({ session, day, openTask, boundary, remove }: {
       {(['start', 'end'] as const).map(edge => {
         const at = edge === 'start' ? row.started_at : row.ended_at;
         const fixed = edge === 'start' ? index === 0 && session.continues_before : index === session.rows.length - 1 && session.continues_after;
-        return <td key={edge}>{boundary && at && !fixed ? <button className="time-boundary" aria-label={`Edit ${edge} of ${row.task_label} at ${clock(at, day.time_zone)}`} onClick={() => boundary(row.id, edge, at)}>{clock(at, day.time_zone)}</button> : <span>{clock(at, day.time_zone)}{fixed && ' (fixed)'}</span>}</td>;
+        return <td key={edge}>{boundary && at && !fixed ? <button className="time-boundary" title={`${localStamp(at, day.time_zone).replace('T', ' ')} · ${day.time_zone}`} aria-label={`Edit ${edge} of ${row.task_label} at ${clock(at, day.time_zone)}${localStamp(at, day.time_zone).slice(0, 10) !== day.date ? ` on ${localStamp(at, day.time_zone).slice(0, 10)}` : ''}`} onClick={() => boundary(row.id, edge, at)}>{clock(at, day.time_zone)}</button> : <span aria-label={at && localStamp(at, day.time_zone).slice(0, 10) !== day.date ? `${clock(at, day.time_zone)} on ${localStamp(at, day.time_zone).slice(0, 10)}${fixed ? ' (fixed)' : ''}` : undefined} title={at ? `${localStamp(at, day.time_zone).replace('T', ' ')} · ${day.time_zone}` : undefined}>{clock(at, day.time_zone)}{fixed && ' (fixed)'}</span>}</td>;
       })}
     </tr>)}
     {session.ended_at && <tr><td>End of Working Day</td><td>{clock(session.ended_at, day.time_zone)}</td><td>—</td></tr>}

@@ -117,7 +117,8 @@ export function DayEditor({ owner, day, tasks, projects, statuses, onSaved, onCl
       if (failure instanceof ApiError) { setFields(failure.fields); if (['stale_revision', 'permission_denied', 'not_found'].includes(failure.code)) setStale(true); if (failure.code === 'authentication_required') onError(failure); }
     } finally { lock.current = false; setBusy(false); }
   }
-  return <Modal name="Edit day" onDismiss={dismiss}>
+  return <Modal name={picker ? "Choose draft task" : "Edit day"} onDismiss={() => { if (picker) setPicker(null); else dismiss(); }}>
+    <div hidden={!!picker}>
     <h2>Edit day · {base.date}</h2><p>All times use {base.time_zone}. Add, remove, and change rows freely. Fill internal gaps with Break rows; stored work changes only after a valid Save changes.</p>
     {error && <p role="alert">{error}</p>}
     {Object.keys(warnings).length > 0 && <p className="draft-warning" role="status">Draft needs review: highlighted rows have gaps, overlaps, or incomplete values.</p>}
@@ -153,6 +154,7 @@ export function DayEditor({ owner, day, tasks, projects, statuses, onSaved, onCl
         }}>Reload day and discard draft</button>}
       </div>
     </fieldset>
-    {picker && <Modal name="Choose draft task" onDismiss={() => setPicker(null)}><h3>Choose task for draft row</h3><TaskPicker tasks={tasks} projects={projects} statuses={statuses} value={draft.find(s => s.key === picker.session)?.rows.find(r => r.key === picker.row)?.task ?? ''} onChange={task => { editRow(picker.session, picker.row, { task, label: tasks.find(t => t.id === task)?.title ?? '' }); }} prefix="Draft picker" /><button onClick={() => setPicker(null)}>Done choosing task</button></Modal>}
+    </div>
+    {picker && <section><h3>Choose task for draft row</h3><TaskPicker tasks={tasks} projects={projects} statuses={statuses} value={draft.find(s => s.key === picker.session)?.rows.find(r => r.key === picker.row)?.task ?? ''} onChange={task => { editRow(picker.session, picker.row, { task, label: tasks.find(t => t.id === task)?.title ?? '' }); }} prefix="Draft picker" /><button onClick={() => setPicker(null)}>Done choosing task</button></section>}
   </Modal>;
 }

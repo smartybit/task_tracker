@@ -9,12 +9,15 @@ test("the development server accepts its internal Compose hostname", async ({ re
 });
 
 async function diagnostics(page: import('@playwright/test').Page) {
+  const accountRequests: string[] = [];
+  page.on('request', request => { if (/\/api\/v1\/users\/\?/.test(request.url())) accountRequests.push(request.url()); });
   await page.goto(appURL);
   await page.getByLabel('Email', { exact: true }).fill('admin@example.test');
   await page.getByLabel('Password', { exact: true }).fill('synthetic-test-only-password');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Tasks', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Check connection' })).toHaveCount(0);
+  expect(accountRequests).toEqual([]);
   await administration(page, 'System status');
 }
 

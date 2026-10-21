@@ -10,15 +10,15 @@ remaining Stage 11 production and backup/restoration work.
 1. **Implemented; acceptance pending — Application shell:** Tasks landing screen, compact header,
    Tasks/Reports navigation, administrator management and System status grouped
    under Administration, separate My access for colleagues.
-2. **Pending — Task windows:** list and right-hand timesheet on the main screen;
+2. **Implemented; acceptance pending — Task windows:** list and right-hand timesheet on the main screen;
    native task detail, search and command dialogs; New task and Add subtask;
    status/history/ownership/move/delete commands; Close details is dismissal,
    Change status is completion. Preserve list context and protect changed drafts.
-3. **Pending — Recording:** drag/drop is primary; Record work dialog is the
+3. **Implemented; acceptance pending — Recording:** drag/drop is primary; Record work dialog is the
    keyboard/touch alternative. Historical drops require a time. Keep Break,
    End of Working Day and Edit day commands; move session/overnight controls into
    dialogs. Show HH:MM without rounding stored/editable timestamps.
-4. **Pending — Remarks:** composer above stream; newest first by default with
+4. **Implemented; acceptance pending — Remarks:** composer above stream; newest first by default with
    oldest-first option remembered per user for the browser session. Shared stars
    remain chronological and links focus originals in either stream order.
 5. **Pending — Acceptance:** browser workflows, precision/permission/stale/failure
@@ -49,3 +49,18 @@ evaluation is a separate deployment action.
   details. Results retained under `.artifacts/verification/ui-adjustments/`.
   The selector race is corrected and stable-source regression is in progress;
   these results are not full acceptance.
+
+- 2026-10-21: latest source builds successfully. Nine focused browser cases pass,
+  including native current-work drag/drop, multiple-session choice, unchanged
+  microsecond boundary preservation, focus/draft dismissal, remark ordering and
+  saved-write/reload-failure recovery. Two focused failures were a reused fixed
+  account fixture (409) and task-list loading exceeding a five-second assertion;
+  the latter now waits explicitly for list readiness. Full fresh-database and
+  built/prefixed deployment acceptance remain pending.
+- Desktop and narrow workspace/remarks screenshots were inspected. No page-width
+  overflow was found. A further permission-test rerun exposed that an empty list
+  has zero visible height; readiness now waits for the loaded matching-task count.
+  The rerun failed and its command client reported 143; it is not acceptance.
+- The permission workflow passed its corrected standalone rerun (1/1, 56.2s,
+  command exit 0). The implementation milestone is ready for full clean lifecycle
+  acceptance; evaluation has not been updated.

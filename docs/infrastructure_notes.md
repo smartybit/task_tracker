@@ -847,3 +847,32 @@ Safe result metadata and private rollback configuration are under
 `.artifacts/verification/evaluation-tbilisi-20261020/`. Existing browser pages
 should be refreshed to fetch the new shared working zone. Documentation checks
 cover this configuration-only update; no new regression suite was needed.
+
+## UI Adjustment Verification: 2026-10-20–21
+
+Use the disposable test project and reserved synthetic deployment-check names;
+never seed or upgrade persistent evaluation for UI checks. Original persistent
+container/volume identities were captured before starting verification.
+
+The first broad diagnostic browser run recorded 39 passes, five failures and one
+unrun case in 24.4 minutes. Failures included wrapped-select exact-label locators,
+missing explicit project selection in a reopened creation dialog, an initial login
+while a build ran, and a native drag whose whole-panel target scrolled during the
+operation. Use accessible combobox roles, explicit dialog commands and the visible
+drop target; assert the recorded row rather than reusing an earlier save message.
+Do not compile or refresh frontend source during a browser acceptance run.
+
+A focused repeat also selected the fixed ui-grants account workflow against an
+already-used synthetic database and received 409, which is fixture reuse rather
+than application permission failure. The final lifecycle must recreate its own
+PostgreSQL database. Empty task lists have zero height; assert the loaded matching
+count to distinguish ready/empty from loading, instead of list visibility.
+
+Two command clients returned 143 after completed failure logs. Keep those results
+as diagnostic evidence, not successful lifecycle acceptance. Artifacts are under
+`.artifacts/verification/ui-adjustments/`.
+
+The expanded browser workload took 24.4 minutes before the clean PostgreSQL suite.
+Raised the full test-runner bound from 30 to 45 minutes to accommodate both layers
+and inspected cleanup. Account-only runs retain their existing three-minute bound.
+Runtime final acceptance is still pending at this documentation milestone.

@@ -102,6 +102,7 @@ const { chromium } = require('/work/node_modules/playwright');
         await attached.scrollIntoViewIfNeeded();
         await page.waitForFunction(image => image.complete && image.naturalWidth === 128, await attached.elementHandle());
         await page.reload();
+        await page.getByRole('button', { name: 'Close details', exact: true }).click();
         await page.getByRole('button', { name: 'Reports', exact: true }).click();
         const reports = page.getByRole('region', { name: 'Reports', exact: true });
         await reports.getByRole('table').waitFor();

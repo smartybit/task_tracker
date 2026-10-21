@@ -8,10 +8,12 @@ interface Remark {
 }
 type Edit = { remark: Remark; body: string; images: ImageUpload[] };
 
-export function Remarks({ task, project, version, onError, children, onOpen, targetRemark }: {
-  task: string; project: string; version: number; onError: (error: unknown) => void; children?: ReactNode;
+export function Remarks({ task, project, version, onError, children, onOpen, targetRemark, userId, onDirtyChange }: {
+  userId: string; onDirtyChange?: (dirty: boolean) => void; task: string; project: string; version: number; onError: (error: unknown) => void; children?: ReactNode;
   onOpen: OpenReference; targetRemark?: string;
 }) {
+  const sortKey = `remarks-order:${userId}`;
+  const [order, setOrder] = useState(() => { try { return sessionStorage.getItem(sortKey) || "newest"; } catch { return "newest"; } });
   const [rows, setRows] = useState<Remark[]>([]);
   const [permissions, setPermissions] = useState<Flags | null>(null);
   const [draft, setDraft] = useState("");
@@ -88,6 +90,11 @@ export function Remarks({ task, project, version, onError, children, onOpen, tar
 
   const readable = permissions?.task_read && permissions.remark_read;
   const writable = permissions?.task_read && permissions.remark_write;
+  useEffect(() => { onDirtyChange?.(!!(draft.trim() || draftImages.length || (edit && (edit.body !== edit.remark.body || edit.images.length)))); }, [draft, draftImages, edit, onDirtyChange]);
+  const ordered = [...rows].sort((a, b) => {
+    const comparison = a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id);
+    return order === "oldest" ? comparison : -comparison;
+  });
   const stars = rows.filter(row => row.starred);
   const target = (id: string) => `remark-${id}`;
   const stamp = (value: string) => <time dateTime={value}>{new Date(value).toLocaleString()}</time>;
@@ -112,8 +119,15 @@ export function Remarks({ task, project, version, onError, children, onOpen, tar
     }}>Reload remarks</button>
     {loading && <p role="status">Loading remarks…</p>}
     {blocked && !loading && <p>Reload remarks to review the latest content and access before changing it. Your unsaved text is retained.</p>}
+    {writable && <form aria-label="Post remark" onSubmit={event => {
+      event.preventDefault(); void change(`tasks/${task}/remarks/`, "POST", { body: draft, images: editorImages(new FormData(event.currentTarget)) }, "Remark posted.");
+    }}><fieldset disabled={busy || blocked}>
+      <ContentEditor label="New remark" value={draft} onChange={setDraft} images={draftImages} onImagesChange={setDraftImages} required />
+      <button disabled={!draft.trim() || edit !== null}>Post remark</button>
+    </fieldset></form>}
+    {readable && <label>Remark order<select value={order} onChange={event => { setOrder(event.target.value); try { sessionStorage.setItem(sortKey, event.target.value); } catch { /* Sorting also works without storage. */ } }}><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select></label>}
     {readable && <>
-      <ol className="remark-stream" aria-label="Chronological remarks">{rows.map(row => <li key={row.id}>
+      <ol className="remark-stream" aria-label="Chronological remarks">{ordered.map(row => <li key={row.id}>
         <article id={target(row.id)} tabIndex={-1} aria-label={`Remark by ${row.author_name}`}>
           <p className="remark-meta">{row.author_name} · {stamp(row.created_at)}{row.edited_at && <> · Edited {stamp(row.edited_at)}</>}{row.starred && " · Starred"}</p>
           <p className="description"><ContentText text={row.body} onOpen={onOpen} /></p>
@@ -139,12 +153,6 @@ export function Remarks({ task, project, version, onError, children, onOpen, tar
       {!rows.length && <p>No remarks yet.</p>}
     </>}
     {permissions && !readable && <p>Remark reading is not permitted.</p>}
-    {writable && <form aria-label="Post remark" onSubmit={event => {
-      event.preventDefault(); void change(`tasks/${task}/remarks/`, "POST", { body: draft, images: editorImages(new FormData(event.currentTarget)) }, "Remark posted.");
-    }}><fieldset disabled={busy || blocked}>
-      <ContentEditor label="New remark" value={draft} onChange={setDraft} images={draftImages} onImagesChange={setDraftImages} required />
-      <button disabled={!draft.trim() || edit !== null}>Post remark</button>
-    </fieldset></form>}
     {blocked && !writable && (draft || (edit && edit.body !== edit.remark.body)) && <p className="description" aria-label="Unsaved remark text">{edit && edit.body !== edit.remark.body ? edit.body : draft}</p>}
     {blocked && !writable && !!(draftImages.length || edit?.images.length) && <p>Unsaved images are retained. Restore remark access and reload before saving.</p>}
   </section>;

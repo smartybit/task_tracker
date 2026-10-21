@@ -1,3 +1,4 @@
+import { administration, closeTaskWindow, taskCommand } from "./helpers/ui";
 import { newTestContext, baseURL, origin, appURL } from "./helpers/urls";
 import { expect, test, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
@@ -10,6 +11,7 @@ async function login(page: Page, email: string, secret = password) {
   await form.getByLabel("Password", { exact: true }).fill(secret);
   await form.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.getByText("Signed in as", { exact: false })).toBeVisible();
+  await expect(page.getByText(/^\d+ matching tasks$/)).toBeVisible({ timeout: 15000 });
 }
 async function loginAPI(request: APIRequestContext, email = "admin@example.test", secret = fixturePassword) {
   const csrf = await (await request.get(`${baseURL}/api/v1/auth/csrf/`)).json();
@@ -44,6 +46,8 @@ async function confirm(page: Page) {
   await expect(page.getByRole("region", { name: "Tasks", exact: true }).getByRole("alert")).toHaveText("Changes saved.");
 }
 async function create(page: Page, title: string, project: string, parent?: string, status = "In Progress") {
+  await closeTaskWindow(page);
+  await page.getByRole("button", { name: "New task", exact: true }).click();
   const form = page.getByRole("form", { name: "Create task", exact: true });
   await expect(form).toBeVisible();
   await form.getByLabel("Task title", { exact: true }).fill(title);
@@ -57,10 +61,12 @@ async function create(page: Page, title: string, project: string, parent?: strin
 }
 const description = (page: Page) => page.getByRole("dialog", { name: "Task description", exact: true });
 async function select(page: Page, title: string) {
+  await closeTaskWindow(page);
   await page.getByRole("list", { name: /Task (list|tree)/ }).getByRole("button", { name: title, exact: true }).click();
   await expect(description(page).getByRole("heading", { name: title, exact: true })).toBeVisible();
 }
 async function status(page: Page, name: string) {
+  await taskCommand(page, "Change status");
   const form = page.getByRole("form", { name: "Change status", exact: true });
   await form.getByRole("combobox", { name: "New status", exact: true }).selectOption({ label: name });
   await form.getByRole("button", { name: "Preview status change" }).click();
@@ -73,6 +79,7 @@ test("tasks can be created, edited, assigned, filtered, and browsed as a tree", 
     await create(page, "Root workflow", f.project.id);
     await create(page, "Child workflow", f.project.id, "Root workflow");
     await create(page, "Leaf workflow", f.project.id, "Child workflow", "Completed");
+    await closeTaskWindow(page);
     await page.getByRole("button", { name: "Flat view", exact: true }).click();
     await expect(page.getByRole("list", { name: "Task tree", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Collapse Root workflow", exact: true }).click();
@@ -80,15 +87,19 @@ test("tasks can be created, edited, assigned, filtered, and browsed as a tree", 
     await page.getByRole("button", { name: "Expand Root workflow", exact: true }).click();
     await select(page, "Leaf workflow");
     await expect(description(page)).toContainText("Second line.");
+    await taskCommand(page, "Edit task");
     const edit = page.getByRole("form", { name: "Edit task", exact: true });
     await edit.getByLabel("Task title", { exact: true }).fill("Renamed leaf");
     await edit.getByRole("textbox", { name: "Description", exact: true }).fill("Updated description");
     await edit.getByRole("button", { name: "Save task", exact: true }).click();
     await expect(description(page).getByRole("heading", { name: "Renamed leaf", exact: true })).toBeVisible();
+    await taskCommand(page, "Transfer ownership");
     const owner = page.getByRole("form", { name: "Transfer ownership", exact: true });
     await owner.getByRole("combobox", { name: "New owner", exact: true }).selectOption(f.colleague.id);
     await owner.getByRole("button", { name: "Transfer ownership", exact: true }).click();
     await expect(description(page)).toContainText(`Owner: ${f.colleague.display_name}`);
+    await closeTaskWindow(page);
+    await page.locator(".status-filters > summary").click();
     await page.getByRole("region", { name: "Tasks", exact: true }).getByRole("checkbox", { name: "Completed", exact: true }).check();
     await page.getByRole("region", { name: "Tasks", exact: true }).getByRole("checkbox", { name: "Postponed", exact: true }).check();
     await expect(page.getByText("1 matching tasks", { exact: true })).toBeVisible();
@@ -118,17 +129,18 @@ test("finalization is blocked until descendants finish and reopening previews al
     await expect(page.getByRole("alert")).toContainText("Every descendant must be final");
     for (const title of ["Status leaf", "Status child", "Status root"]) {
       await select(page, title); await status(page, "Completed"); await confirm(page);
-      await expect(description(page)).toContainText("In Progress → Completed");
+      await taskCommand(page, "History");
+      await expect(page.getByRole("dialog")).toContainText("In Progress → Completed");
     }
     await select(page, "Status leaf");
     await status(page, "In Progress");
     const preview = page.getByRole("dialog", { name: "Confirm task change", exact: true });
     for (const title of ["Status root", "Status child", "Status leaf"]) await expect(preview).toContainText(title);
     await preview.getByRole("button", { name: "Cancel change" }).click();
-    await expect(description(page)).toContainText("Completed");
+    await expect(page.getByRole("dialog")).toContainText("Completed");
     await status(page, "In Progress"); await confirm(page);
     for (const title of ["Status root", "Status child", "Status leaf"]) {
-      await select(page, title); await expect(description(page)).toContainText("Completed → In Progress");
+      await select(page, title); await taskCommand(page, "History"); await expect(page.getByRole("dialog")).toContainText("Completed → In Progress");
     }
   } finally { await f.admin.close(); }
 });
@@ -140,8 +152,9 @@ test("moves reject cycles, move complete subtrees, and deletion protects parents
     await create(page, "Move root", f.project.id);
     await create(page, "Move child", f.project.id, "Move root");
     await select(page, "Move root");
-    await description(page).getByRole("button", { name: "Preview deletion" }).click();
+    await taskCommand(page, "Delete task"); await page.getByRole("button", { name: "Preview deletion", exact: true }).click();
     await expect(page.getByRole("alert")).toContainText("child tasks or recorded time");
+    await taskCommand(page, "Move task");
     const form = page.getByRole("form", { name: "Move task", exact: true });
     await form.getByRole("combobox", { name: "New parent", exact: true }).selectOption({ label: `Move child (${f.project.name})` });
     await form.getByRole("button", { name: "Preview move" }).click();
@@ -151,13 +164,14 @@ test("moves reject cycles, move complete subtrees, and deletion protects parents
     await form.getByRole("button", { name: "Preview move" }).click();
     await expect(page.getByRole("dialog", { name: "Confirm task change", exact: true })).toContainText("Move child");
     await confirm(page);
+    await closeTaskWindow(page);
     await page.getByRole("combobox", { name: "Filter project", exact: true }).selectOption(f.other.id);
     await expect(page.getByText("2 matching tasks", { exact: true })).toBeVisible();
     await select(page, "Move child");
-    await description(page).getByRole("button", { name: "Preview deletion" }).click(); await confirm(page);
+    await taskCommand(page, "Delete task"); await page.getByRole("button", { name: "Preview deletion", exact: true }).click(); await confirm(page);
     await expect(page.getByRole("button", { name: "Move child", exact: true })).not.toBeVisible();
     await select(page, "Move root");
-    await description(page).getByRole("button", { name: "Preview deletion" }).click(); await confirm(page);
+    await taskCommand(page, "Delete task"); await page.getByRole("button", { name: "Preview deletion", exact: true }).click(); await confirm(page);
     await expect(page.getByText("0 matching tasks", { exact: true })).toBeVisible();
   } finally { await f.admin.close(); }
 });
@@ -170,10 +184,12 @@ test("stale tabs and stale previews reject changes and require another review", 
     await create(page, "Stale task", f.project.id);
     const other = await second.newPage(); await login(other, f.user.email); await select(other, "Stale task");
     await expect(description(page).getByRole("heading", { name: "Stale task", exact: true })).toBeVisible();
+    await taskCommand(page, "Edit task");
     const edit = page.getByRole("form", { name: "Edit task", exact: true });
     await edit.getByRole("textbox", { name: "Description", exact: true }).fill("First tab saved");
     await edit.getByRole("button", { name: "Save task", exact: true }).click();
     await expect(description(page)).toContainText("First tab saved");
+    await taskCommand(other, "Edit task");
     const stale = other.getByRole("form", { name: "Edit task", exact: true });
     await stale.getByRole("textbox", { name: "Description", exact: true }).fill("Must not overwrite");
     await stale.getByLabel("Add images", { exact: true }).setInputFiles("tests/fixtures/screenshot.png");
@@ -184,8 +200,9 @@ test("stale tabs and stale previews reject changes and require another review", 
     await expect(stale.getByRole("status")).toContainText("1 new image");
     await expect(stale.getByRole("button", { name: "Save task", exact: true })).toBeDisabled();
     await expect(other.getByText(/refreshing tasks discards unsaved task drafts and images/)).toBeVisible();
-    await other.getByRole("button", { name: "Refresh tasks", exact: true }).click();
-    await expect(description(other)).toContainText("First tab saved");
+    other.once("dialog", prompt => prompt.accept());
+    await other.getByRole("dialog").getByRole("button", { name: "Refresh tasks", exact: true }).click();
+    await expect(other.getByRole("dialog")).toContainText("First tab saved");
     await expect(stale.getByRole("textbox", { name: "Description", exact: true })).toHaveValue("First tab saved");
     await expect(stale.getByRole("button", { name: "Save task", exact: true })).toBeEnabled();
     await status(page, "Completed");
@@ -194,7 +211,11 @@ test("stale tabs and stale previews reject changes and require another review", 
     await dialog.getByRole("button", { name: "Confirm change", exact: true }).click();
     await expect(page.getByRole("alert")).toContainText("preview is out of date");
     await expect(dialog).not.toBeVisible();
-    await expect(description(page)).toContainText("Created as In Progress");
+    page.once("dialog", prompt => prompt.accept());
+    await page.getByRole("dialog").getByRole("button", { name: "Refresh tasks", exact: true }).click();
+    await taskCommand(page, "History");
+    await expect(page.getByRole("dialog")).toContainText("Created as In Progress");
+    await page.getByRole("button", { name: "Back to details", exact: true }).click();
     await status(page, "Completed"); await confirm(page);
   } finally { await second.close(); await f.admin.close(); }
 });
@@ -206,10 +227,13 @@ test("live revocation removes task content and write-only creation returns a saf
     await create(page, "Restricted task title", f.project.id);
     await expect(description(page).getByRole("heading", { name: "Restricted task title", exact: true })).toBeVisible();
     await f.write(`users/${f.user.id}/grants/projects/${f.project.id}/`, { task_read: true }, "PUT");
+    await closeTaskWindow(page);
     await page.getByRole("button", { name: "Refresh tasks", exact: true }).click();
+    await select(page, "Restricted task title");
     await expect(description(page).getByRole("heading", { name: "Restricted task title", exact: true })).toBeVisible();
-    await expect(page.getByRole("form", { name: "Edit task", exact: true })).not.toBeVisible();
+    await expect(description(page).getByRole("button", { name: "Edit task", exact: true })).not.toBeVisible();
     await f.write(`users/${f.user.id}/grants/projects/${f.project.id}/`, { task_write: true }, "PUT");
+    await closeTaskWindow(page);
     await page.getByRole("button", { name: "Refresh tasks", exact: true }).click();
     await expect(page.getByRole("button", { name: "Restricted task title", exact: true })).not.toBeVisible();
     await expect(description(page)).not.toBeVisible();
@@ -217,15 +241,19 @@ test("live revocation removes task content and write-only creation returns a saf
     await expect(description(page)).not.toBeVisible();
     await expect(page.getByRole("list", { name: "Task list", exact: true })).not.toContainText("Write-only new task");
     await f.write(`users/${f.user.id}/grants/projects/${f.project.id}/`, {}, "PUT");
+    await closeTaskWindow(page);
+    await page.getByRole("button", { name: "New task", exact: true }).click();
     const form = page.getByRole("form", { name: "Create task", exact: true });
     await form.getByLabel("Task title", { exact: true }).fill("Revoked creation");
+    await form.getByRole("combobox", { name: "Task project", exact: true }).selectOption(f.project.id);
     await form.getByRole("button", { name: "Preview new task" }).click();
     await expect(page.getByRole("alert")).toContainText("Task write access is required");
+    await closeTaskWindow(page);
     await page.getByRole("button", { name: "Sign out", exact: true }).click();
     await login(page, "admin@example.test", fixturePassword);
     await page.getByRole("navigation", { name: "Management" }).getByRole("button", { name: "Tasks", exact: true }).click();
     await expect(page.getByText("0 matching tasks", { exact: true })).toBeVisible();
-    await expect(page.getByRole("form", { name: "Create task", exact: true })).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "New task", exact: true })).not.toBeVisible();
   } finally { await f.admin.close(); }
 });
 
@@ -234,9 +262,10 @@ test("status catalog permits unused changes and protects used statuses", async (
   try {
     await login(page, f.user.email);
     await create(page, "Catalog task", f.project.id, undefined, "Completed");
+    await closeTaskWindow(page);
     await page.getByRole("button", { name: "Sign out", exact: true }).click();
     await login(page, "admin@example.test", fixturePassword);
-    await page.getByRole("button", { name: "Statuses", exact: true }).click();
+    await administration(page, "Statuses");
     const used = page.getByRole("form", { name: "Status Completed", exact: true });
     await expect(used.getByLabel("Status name", { exact: true })).toBeDisabled();
     await expect(used).toContainText("permanently protected");
@@ -258,6 +287,8 @@ test("task forms support keyboard use, repeated submission protection, and faile
   const f = await setup(browser, "recovery");
   try {
     await login(page, f.user.email);
+    await closeTaskWindow(page);
+    await page.getByRole("button", { name: "New task", exact: true }).click();
     const form = page.getByRole("form", { name: "Create task", exact: true });
     await form.getByLabel("Task title", { exact: true }).focus();
     await page.keyboard.type("Keyboard task"); await page.keyboard.press("Tab");
@@ -278,6 +309,8 @@ test("task forms support keyboard use, repeated submission protection, and faile
     await expect(page.getByRole("dialog", { name: "Confirm task change", exact: true })).not.toBeVisible();
     await expect(page.getByRole("list", { name: "Task list", exact: true }).getByRole("button", { name: "Keyboard task", exact: true })).toHaveCount(1);
     await page.setViewportSize({ width: 390, height: 844 });
+    await closeTaskWindow(page);
+    await page.getByRole("button", { name: "New task", exact: true }).click();
     await expect(page.getByRole("form", { name: "Create task", exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();
     await page.screenshot({ path: testInfo.outputPath("tasks-narrow.png"), fullPage: true });

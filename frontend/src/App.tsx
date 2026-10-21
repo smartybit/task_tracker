@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, allPages, ApiError, getHealth, type User, type Organization, type Project } from "./api";
 import { StatusManagement } from "./Tasks";
 import { WorkArea } from "./WorkArea";
@@ -14,19 +14,45 @@ export function App() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [version, setVersion] = useState(0);
+  const directoryGeneration = useRef(0);
 
   function onError(error: unknown) {
     setMessage(error instanceof Error ? error.message : "The request failed.");
     if (error instanceof ApiError && error.code === "authentication_required") setUser(null);
   }
-  async function refresh() {
+  async function directories(me: User, screen: string) {
+    const accountsNeeded = me.is_admin && ["Accounts", "Grants"].includes(screen);
+    const catalogsNeeded = me.is_admin && ["Catalogs", "Grants"].includes(screen);
+    const projectsNeeded = catalogsNeeded || screen === "My access";
+    return Promise.all([
+      accountsNeeded ? allPages<User>("users/") : Promise.resolve([]),
+      catalogsNeeded ? allPages<Organization>("organizations/") : Promise.resolve([]),
+      projectsNeeded ? allPages<Project>("projects/") : Promise.resolve([]),
+    ]);
+  }
+  async function refresh(screen = tab) {
     const me = await api<User>("auth/me/");
-    const [orgs, available, accounts] = await Promise.all([allPages<Organization>("organizations/"), allPages<Project>("projects/"), me.is_admin ? allPages<User>("users/") : Promise.resolve([])]);
-    setUser(me); setTab(current => !me.is_admin && ["Accounts", "Catalogs", "Grants", "Statuses", "System status"].includes(current) ? "Tasks" : current); setOrganizations(orgs); setProjects(available); setUsers(accounts); setVersion(value => value + 1);
+    const generation = ++directoryGeneration.current;
+    const [accounts, orgs, available] = await directories(me, screen);
+    if (generation === directoryGeneration.current) { setUsers(accounts); setOrganizations(orgs); setProjects(available); }
+    setUser(me);
+    setTab(current => !me.is_admin && ["Accounts", "Catalogs", "Grants", "Statuses", "System status"].includes(current) ? "Tasks" : current);
+    if (!me.is_admin) { setUsers([]); setOrganizations([]); }
+    setVersion(value => value + 1);
   }
   useEffect(() => { void refresh().catch(error => {
     if (!(error instanceof ApiError && error.code === "authentication_required")) onError(error);
   }); }, []);
+  useEffect(() => {
+    let current = true;
+    const generation = ++directoryGeneration.current;
+    if (user) {
+      directories(user, tab).then(([accounts, orgs, available]) => {
+        if (current && generation === directoryGeneration.current) { setUsers(accounts); setOrganizations(orgs); setProjects(available); }
+      }).catch(error => { if (current && generation === directoryGeneration.current) { setUsers([]); setOrganizations([]); setProjects([]); onError(error); } });
+    }
+    return () => { current = false; };
+  }, [tab, user?.id, user?.is_admin]);
   async function run(action: () => Promise<unknown>) {
     setMessage("");
     try { await action(); await refresh(); setMessage("Changes saved."); }
@@ -43,7 +69,7 @@ export function App() {
       {!user ? <section className="workspace" aria-label="Sign in"><h2>Sign in</h2>
         <form aria-label="Sign in" onSubmit={event => {
           event.preventDefault(); const data = new FormData(event.currentTarget); setBusy(true); setMessage("");
-          void api("auth/login/", "POST", { email: data.get("email"), password: data.get("password") }).then(async () => { await refresh(); setTab("Tasks"); }).catch(onError).finally(() => setBusy(false));
+          void api("auth/login/", "POST", { email: data.get("email"), password: data.get("password") }).then(async () => { await refresh("Tasks"); setTab("Tasks"); }).catch(onError).finally(() => setBusy(false));
         }}><label>Email<input name="email" type="email" autoComplete="username" required /></label>
           <label>Password<input name="password" type="password" autoComplete="current-password" required /></label>
           <button disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button></form>

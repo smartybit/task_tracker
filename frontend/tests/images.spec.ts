@@ -1,3 +1,4 @@
+import { taskCommand, closeTaskWindow } from "./helpers/ui";
 import { absoluteUrl } from "./helpers/urls";
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
@@ -12,6 +13,7 @@ test('description images save inline, survive reload, and require current task r
     await login(page, f.alice.email);
     const list = page.getByRole('list', { name: 'Task list', exact: true });
     const title = 'Illustrated task';
+    await page.getByRole('button', { name: 'New task', exact: true }).click();
     const create = page.getByRole('form', { name: 'Create task', exact: true });
     await create.getByRole('textbox', { name: 'Task title', exact: true }).fill(title);
     await create.getByRole('combobox', { name: 'Task project', exact: true }).selectOption(f.project.id);
@@ -25,6 +27,7 @@ test('description images save inline, survive reload, and require current task r
     await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth), { timeout: 15000 }).toBe(128);
     await expect(image).toBeVisible();
     const url = await image.getAttribute('src');
+    await taskCommand(page, 'Edit task');
     const edit = page.getByRole('form', { name: 'Edit task', exact: true });
     const body = edit.getByRole('textbox', { name: 'Description', exact: true });
     await body.fill(`${await body.inputValue()}\nCaption after an ordinary text edit`);
@@ -45,7 +48,8 @@ test('description images save inline, survive reload, and require current task r
     await detail.getByRole('button', { name: 'Refresh images', exact: true }).click();
     await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth), { timeout: 15000 }).toBe(128);
     await expect(image).toBeVisible();
-    await detail.getByRole('button', { name: 'Preview deletion', exact: true }).click();
+    await taskCommand(page, 'Delete task');
+    await page.getByRole('button', { name: 'Preview deletion', exact: true }).click();
     const preview = page.getByRole('dialog', { name: 'Confirm task change', exact: true });
     await expect(preview).toContainText('deletes 1 image(s)');
     await preview.getByRole('button', { name: 'Confirm change', exact: true }).click();
