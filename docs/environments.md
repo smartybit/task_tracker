@@ -172,16 +172,19 @@ Docker or change deployed services.
 
 ## Host HTTPS Configuration
 
-The maintained template is [evaluation.example.com.conf](../docker/host-nginx/evaluation.example.com.conf).
-It preserves TLS/HTTP redirect handling, proxies only `/time-tracker-eval/` to
-`127.0.0.1:8181` without stripping the mount, and redirects the bare mount to its
-trailing slash. Application sign-in controls access; there is no extra proxy password.
-The template removes obsolete project routes and allows the same 16 MiB request
-body envelope as the private frontend. Per-image application limits are unchanged.
+The tracked [host Nginx example](../docker/host-nginx/example.conf.template) shows
+the TLS/HTTP redirect and prefix-preserving proxy pattern. Copy it to a local
+`docker/host-nginx/HOST.conf` file, which Git ignores. For evaluation, set the host
+to `evaluation.example.com`, mount to `/time-tracker-eval/`, loopback target to
+`127.0.0.1:8181`, and certificate paths to that host's actual paths. Preserve any
+other routes needed on the host. The bare mount redirects to its trailing slash;
+the proxy allows the same 16 MiB request body envelope as the private frontend.
+Application sign-in controls access; there is no extra proxy password. Per-image
+application limits are unchanged.
 
-For an authorized installation/redeployment, review the template against current
-host configuration and retain a backup that will not overwrite an earlier backup.
-Use the maintained repository file, not a possibly expired `/tmp` copy. Installation
+For an authorized installation/redeployment, review the local configuration against
+current host configuration and retain a backup that will not overwrite an earlier
+backup. Use the reviewed local file, not a possibly expired `/tmp` copy. Installation
 and reload require host administrator permissions; the original activation was
 performed by the user. Validate with `sudo nginx -t` before `sudo systemctl reload nginx`.
 If validation fails, restore the saved host file and validate again before reload.

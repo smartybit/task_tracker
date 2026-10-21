@@ -793,8 +793,9 @@ The user replaced evaluation's SSH-tunnel access with
 `https://evaluation.example.com/time-tracker-eval/`, keeping existing application login.
 The user will install the prepared `/tmp/sites-available/evaluation.example.com` configuration
 and validate/reload host Nginx with administrator permissions. The maintained
-template is `docker/host-nginx/evaluation.example.com.conf`. Both obsolete project locations
-are removed; the TLS configuration, HTTP redirect and fallback behavior are
+template was `docker/host-nginx/evaluation.example.com.conf` (later removed from the tracked
+tree; see the current [generic example](../../../docker/host-nginx/example.conf.template)).
+Both obsolete project locations are removed; the TLS configuration, HTTP redirect and fallback behavior are
 preserved. The new proxy preserves the full application URI and public Host and
 matches the private frontend's 16 MiB request-body envelope. `/etc/nginx` is untouched.
 
@@ -1028,8 +1029,9 @@ verification passes; the installation steps below are retained for redeployment.
 The old HTTP SSH-tunnel URL no longer supports normal sign-in with these settings.
 
 The reviewed replacement is `/tmp/sites-available/evaluation.example.com`; the maintained
-copy is [docker/host-nginx/evaluation.example.com.conf](../../../docker/host-nginx/evaluation.example.com.conf).
-It removes both obsolete project locations, preserves Certbot/TLS and the HTTP
+copy was `docker/host-nginx/evaluation.example.com.conf`, now replaced in the tracked tree by
+the [generic example](../../../docker/host-nginx/example.conf.template).
+The reviewed replacement removed both obsolete project locations, preserved Certbot/TLS and the HTTP
 redirect, and proxies only `/time-tracker-eval/` to `127.0.0.1:8181` without stripping
 the prefix. The no-slash path redirects to the canonical trailing slash. Existing
 application authentication controls access; there is no extra proxy password.
