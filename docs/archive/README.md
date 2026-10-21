@@ -5,6 +5,9 @@ Start with the [current documentation map](../README.md) for behavior and comman
 or the [current tracker](../../implementation_plan.md) for status and next work.
 Earlier stage numbers and status statements describe their recorded dates.
 Archived commands and temporary paths are evidence, not maintained instructions.
+Git history was rewritten on 2026-10-21 to redact a deployment hostname.
+Commit hashes recorded before that rewrite are historical build identifiers;
+they may not resolve in the current branch history.
 
 ## History Through 2026-10-21
 

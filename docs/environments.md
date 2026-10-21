@@ -40,6 +40,8 @@ Use `verify NAME` below to check current runtime state; this table is not a live
 | `agent` | All three services healthy; private access | `http://127.0.0.1:8182/time-tracker-agent/` | `7850df8-20261020` | UTC |
 | Production | Not initialized/activated | Prefix `/time-tracker-prod/` reserved | None | Not configured |
 
+The recorded source hashes identify deployed builds from before the
+[history redaction](archive/README.md); they are not checkout instructions.
 Evaluation's private frontend listens on loopback port 8181; agent uses 8182.
 Evaluation already has an administrator and user data. Do not assume fresh/empty
 storage or bootstrap again. `init --zone` selects the shared IANA working zone for
