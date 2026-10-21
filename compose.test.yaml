@@ -1,0 +1,67 @@
+name: task-tracker-tests
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: task_tracker_test
+      POSTGRES_USER: task_tracker_test
+      POSTGRES_PASSWORD: isolated-test-only-password
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U task_tracker_test -d task_tracker_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  web:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    image: task-tracker-web:dev
+    environment:
+      APP_ENV: test
+      DJANGO_CSRF_TRUSTED_ORIGINS: http://frontend:5173
+      DJANGO_SECRET_KEY: isolated-test-only-secret
+      POSTGRES_DB: task_tracker_test
+      POSTGRES_USER: task_tracker_test
+      POSTGRES_PASSWORD: isolated-test-only-password
+      POSTGRES_HOST: db
+      WORKING_TIME_ZONE: UTC
+      UPLOAD_ROOT: /tmp/test-uploads
+    tmpfs:
+      - /tmp/test-uploads:uid=1000,gid=1000
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver --noreload 0.0.0.0:8000"
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/', timeout=3)"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:5173').then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+  browser:
+    image: mcr.microsoft.com/playwright:v1.64.0-noble
+    user: "1000:1000"
+    working_dir: /work
+    init: true
+    ipc: host
+    environment:
+      BASE_URL: http://frontend:5173
+    volumes:
+      - ./frontend:/work
+    command: sh -c "npm ci --cache /tmp/npm-cache && npm run test:e2e"
+    depends_on:
+      frontend:
+        condition: service_healthy

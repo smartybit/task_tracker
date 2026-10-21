@@ -1,0 +1,413 @@
+# Testing Charter
+
+## Purpose and Authority
+
+Establish confidence that the task tracker protects access boundaries, preserves
+recorded work, and produces correct totals while supporting everyday team use.
+Prioritize permission errors, lost data, and incorrect time accounting.
+
+Product behavior is defined in [requirements.md](requirements.md). Current
+technical design and rationale are in [architecture.md](architecture.md).
+This charter guides testing; it does not add product features. Treat proposed
+defaults as revisable choices and keep their tests aligned with the behavior
+selected during implementation.
+
+## Test Missions
+
+### 1. Exercise Access Boundaries
+
+- Cover regular users and administrators with direct project grants, inherited
+  organization grants, and all read/write flag combinations. Organization grants
+  remain effective when project flags are unset. Administrators have no implicit
+  access to application data.
+- Verify unconditional read/write access to one's own timesheet. Separately test
+  Read Others' Timesheets and Write Others' Timesheets across all other users.
+- Verify that whole-timesheet access includes every project while task details,
+  remarks, and images still require their corresponding access. Preserve the
+  permitted task labels and timestamps in the timesheet.
+- Require task read plus the relevant remark permission for remark operations.
+  Check that task read alone permits recording time without task write or ownership.
+- Verify historical task selection includes final tasks without reopening them;
+  new selections require current task read. Existing timesheet references remain
+  editable after task access loss without exposing protected details. Recheck
+  permissions when an Edit day draft is saved, including write-without-read APIs.
+- Check permissions through direct API requests as well as the interface, including
+  search snippets, reference previews, downloads, reports, and CSV exports.
+- Transfer ownership to an eligible user, then revoke that user's access. Ownership
+  remains intact and confers no visibility or editing rights.
+- Change permissions during an active session; subsequent requests must use the
+  current grants. Include deliberately configured write-without-read combinations.
+
+### Authentication and Administration
+
+Use the shared Compose harness for API and Chromium checks for
+CSRF bootstrap, login/logout, account creation, administrator password reset,
+catalog/grant management, and current identity. Exercise valid mutations through
+the actual Vite proxy as well as missing/invalid CSRF and untrusted origins;
+API tests must explicitly enforce CSRF. Verify that old passwords no longer
+work after reset, existing sessions lose authentication after reset/deactivation, and grant
+or administrator-role changes affect subsequent requests without another login.
+Use separate browser contexts and reset mutable synthetic fixtures between cases.
+
+Check first-administrator bootstrap races, account/timesheet atomic creation,
+unique grants, rejected updates, and rollback against PostgreSQL. Exercise fresh
+migrations and isolated upgrades preserving synthetic existing users, grants,
+and timesheet rows. Validate permissions through actual feature endpoints as
+well as policy helpers.
+
+Administrator lifecycle checks, following the agreed policy:
+
+- Reject self-deactivation and self-demotion through both the interface and direct
+  API requests, including when other active administrators exist. Verify rejected
+  changes preserve account status and sessions.
+- Permit deactivation/reactivation and privilege changes for another administrator.
+  Exercise competing account updates against PostgreSQL; recheck actor privileges
+  after waiting for the lock and reject unauthorized writes without partial changes.
+- Exercise server-side password reset for any existing user, including inactive
+  users and administrators. Validate/hash replacement passwords; reject invalid
+  passwords or unknown users without creating accounts or partially changing data.
+  Verify old passwords and sessions stop working, replacements have no expiry or
+  mandatory-change workflow, and reset alone preserves active/admin statuses.
+- Recover an installation with no active administrator by explicitly requesting
+  reactivation and administrator privileges for an existing user. Test each option
+  independently and together, atomic rollback on failure, and successful new sign-in
+  without reviving old sessions or granting implicit application-data access.
+
+### 2. Preserve Timesheet Integrity
+
+- Start tasks, switch tasks, append breaks, and close the targeted session. Active
+  and historical unfinished tails have unset ends and contribute zero until closed.
+- Verify ordinary shared-boundary edits and last-record deletion with preview;
+  earlier rows cannot be individually inserted/deleted through ordinary controls
+  or a bypass API. A last deletion extends the predecessor or clears an independent
+  sole-row session, without changing today's active session during historical edits.
+- In Edit day, freely add, change, and delete rows at the beginning/middle/end.
+  Draft gaps/overlaps and invalid durations are highlighted without preventing edits
+  or automatically moving neighbors. Invalid saves leave rows/revisions/totals
+  unchanged; valid saves apply the complete day atomically. Cancel never writes.
+- Check continuity, positive closed durations, session markers, fixed midnight
+  connections, changes to independent session edges, and clearing independent days.
+  Breaks fill internal gaps; outside-session time needs no filler. Do not infer new
+  sessions from draft gaps. A valid unfinished tail may remain after saving.
+- Exercise Friday-to-Monday correction: start Monday without completing Friday,
+  then append Friday's forgotten task at 14:00 and close Friday at 17:00. Verify
+  Friday's 7h 17m of work, no weekend filler/work, and unchanged Monday records and
+  active-session identity. Cover multiple unfinished historical days and reject
+  a supplied historical end that overlaps later known work.
+- Verify new-day recording defaults to an independent session, explicit Continue
+  previous session supports overnight work, and closed-session resumption retains
+  the advice to convert its End of Working Day marker to a break.
+- Verify the configurable UTC default, Europe/Berlin, and reallocation of stored
+  spans after a zone change, including stable draft identifiers and read-only GET.
+- Close work that crosses midnight and verify each day's allocation without losing
+  a minute. Merely crossing midnight, logging out, or restarting the application
+  must not invent an end time or recorded hours.
+- Exercise simultaneous current starts, historical appends, boundary changes, and
+  whole-day saves using independent PostgreSQL connections. Accepted results
+  preserve the timeline; stale/failed operations leave no partial changes. Check
+  one active session per user and one unfinished tail per session, including
+  migration from the existing Stage 4 global null-end uniqueness constraints.
+
+### Timesheet Browser Acceptance
+
+- Open Edit day for historical and running days; test add/remove/time edits,
+  sorting after field completion, incomplete rows, focus, keyboard navigation,
+  validation highlighting, and changed-draft dismissal confirmation.
+- Select readable tasks with search and project/status filters, including final
+  tasks. Retain existing inaccessible references without opening protected details.
+- Verify a failed save preserves input, invalid drafts never change persisted
+  work, successful saves refresh the day, and Cancel leaves the original intact.
+- Revoke colleague read access while retaining write between opening a boundary
+  editor and previewing: safe write-only previews must not crash or expose content.
+  Distinguish a failed save from a confirmed save followed by a failed reload;
+  the latter must acknowledge storage and require reload without duplicate writes.
+- Record Monday in another tab while editing Friday; a stale save must preserve
+  the draft and require reload/review without overwriting Monday's recording.
+- Exercise ordinary historical additions with explicit selected-day timestamps,
+  last-record deletion, unfinished warnings/partial totals, explicit overnight
+  continuation, and fixed midnight boundaries in the day editor.
+
+### 3. Enforce Task and Status Rules
+
+- Require a project, enforce one project throughout a hierarchy, and reject cycles.
+  Different owners are allowed; ownership and project changes enforce the agreed
+  owner eligibility checks without automatically resolving later access loss.
+- Block finalizing a task while any descendant is non-final. Reopening propagates
+  through final ancestors while leaving unrelated branches unchanged.
+- Verify status history and immutability of used statuses. First use
+  permanently prevents editing or deleting that status.
+- Block deletion whenever a child or any user's timesheet record exists, including
+  records the caller cannot view. Check administrators and indirect deletion paths.
+- Race deletion against creation of a child or time record, and finalization
+  against a descendant reopening. The committed result must satisfy the rules.
+- Exercise the grant matrix through actual task endpoints, including
+  administrators without grants, write-only acknowledgements, protected list/tree
+  counts and history, and grants revoked while a mutation waits for the domain
+  lock. Stale revisions and previews must reject without partial history changes
+  or disclosure of unreadable tasks.
+- Test the five initial statuses on fresh migrations and an isolated Stage 3
+  upgrade preserving existing users, grants, and timesheet rows. Check permanent
+  first-use protection after the last referencing task changes status or is deleted.
+
+### Task Browser Acceptance
+
+Exercise task creation/editing and ownership transfer through the real frontend,
+including persistence after reload. Use a three-level tree, collapse/expand it,
+and combine project and multiple-status filters; matching children remain visible
+when their parents are filtered out. Check status history, blocked finalization,
+ancestor-reopening previews, cancellation, cycle rejection, subtree project moves,
+and protected/eligible deletion.
+
+Use independent browser contexts for stale task revisions and revoke grants from
+another session. Cover read-only controls, write-only creation without content
+responses, denied actions from stale screens, and administrators without data
+grants. Invalidate a preview with another domain mutation and require a new review.
+Configure unused statuses through the management UI and verify used-status controls
+are protected. Exercise keyboard input/focus, repeated confirmation clicks, and
+recovery from a failed request without losing the draft. Capture desktop and narrow
+viewport screenshots for inspection; Chromium remains the acceptance browser.
+
+### 4. Reconcile Reports and CSV with Recorded Work
+
+- Require project task read access for every reported project. Without Read Others'
+  Timesheets, include only the requesting user's work; with it, include permitted
+  project work from all users. Apply these restrictions before calculating totals.
+- Verify project summaries, person-by-day summaries, and task hierarchies with
+  person/date filters and descendant selection. Person means the timesheet user.
+- Check direct and descendant hours separately, with every entry counted once.
+  For example, direct work of 1 hour on a parent, 2 on its child, and 0.5 on its
+  grandchild gives the parent 1 direct hour, 2.5 descendant hours, and 3.5 total hours.
+- Exclude breaks from work totals and count open entries as zero. Display decimal
+  hours: six hours and thirty minutes is `6.5`. Sum original durations before rounding.
+- Edit historical entries, move tasks between parents, and change a hierarchy's
+  project. Reports must reflect current relationships and project attribution.
+- Distinguish unrestricted whole-timesheet daily totals from project-restricted
+  reports; differences must follow permissions rather than inconsistent arithmetic.
+- Export all authorized task records in the requested period, independently of
+  interactive report filters. Check Person, Project, Task, Date, Start Time,
+  End Time, and decimal Duration. Exclude breaks and closing markers; retain open
+  task records with a blank end and zero duration. Check CSV quoting and Unicode.
+
+### Reporting and CSV Acceptance
+
+- Exercise a matrix of direct/inherited task read, independent task write,
+  read/write-others-timesheet flags, and administrator status through every report,
+  options, and actual CSV downloads. Restricted records must not affect totals,
+  selectable people, hierarchy rows, or CSV content.
+- Verify one PostgreSQL read-only repeatable-read snapshot spans permissions,
+  hierarchy, attribution, and records during a concurrent project move and access
+  revocation. Subsequent requests must reflect committed access changes. CSV
+  serving must perform no lazy database queries after generation completes.
+- Reconcile project, person/day, direct/descendant, and overall totals using exact
+  subsecond durations before rounding. Include date clipping, midnight allocation,
+  zone changes over legacy unsplit spans, unfinished starts, and read-only GETs.
+- In Chromium, navigate from tasks/timesheets to all report views, combine filters,
+  select a subtree, and correct historical work through Edit day. Move a hierarchy
+  and verify current project attribution. Parse actual CSV download bytes for
+  authorization, quoting, Unicode, open records, special-row exclusion, and
+  independence from interactive report filters.
+- Exercise revoked selections, empty results, failed report/download requests,
+  reversed dates, retry, and an older response arriving after newer filters.
+  Inspect desktop and narrow screenshots and verify usable keyboard controls.
+
+### 5. Complete Everyday Workflows and Preserve Data
+
+- Exercise email/password sign-in, administrator-created accounts, catalog and
+  permission management, and denial of unauthorized operations.
+- Create tasks, filter multiple statuses, switch flat/hierarchical lists, drag a
+  task into the timesheet, correct past work, and inspect resulting reports.
+- Search English, Russian, and mixed-language tasks/descriptions/remarks,
+  including different word forms and permission-restricted matches. Verify query
+  and indexed-content normalization agree for each enabled language.
+- Post remarks, verify author/timestamp and chronology, share stars between users,
+  and jump from a starred remark to its original position.
+- Follow references after renames, moves, access loss, and deletion. Verify image
+  upload/download permissions, invalid files, and the selected size limit. Test
+  screenshot pasting.
+- Restart the application and verify persisted records and attachments. Exercise
+  failed multi-record operations and confirm rollback without data loss.
+- In Stage 11, follow the written restoration instructions on an isolated second
+  machine or equivalent fresh environment using synthetic backups of the
+  PostgreSQL cluster, attachment directory, and necessary configuration. Verify
+  startup, accounts/permissions, recorded work and totals, and consistency between
+  attachment metadata and files, including permission-checked downloads. Use no
+  live databases or attachment storage for this full-system restoration check.
+
+### Remarks Checks
+
+- Exercise all 256 local/inherited task/remark grant combinations through real
+  endpoints, including remark write without read, absent task read, task write
+  independence, and no administrator bypass.
+- Verify chronology/pagination, shared stars, original author/time preservation,
+  literal HTML rendering, strict mutation inputs, CSRF, and safe acknowledgements.
+- Reject stale edits, star changes, and deletions without changing data/revisions;
+  inject a save failure to verify transaction rollback.
+- Race independent PostgreSQL connections for edit versus star and post versus
+  confirmed task deletion; verify a waiting writer rechecks committed revocation.
+- Verify task moves change existing remark access and task-deletion previews
+  count remarks without exposing their content; new remarks invalidate previews.
+- Browser workflows cover two-user collaboration, star navigation/focus, keyboard
+  input, repeated submissions, narrow screens, write-only posting, read-only
+  controls, revocation, stale edits, failed writes, and saved/reload-failed recovery.
+- Full-stage lifecycle acceptance remains required alongside focused milestones.
+
+### Reference Checks
+
+- Verify source synchronization, duplicate tokens, removal, source deletion,
+  database constraints, and rollback after a reference-storage failure.
+- Upgrade existing tokens without changing source content or revisions.
+- Resolve current labels after rename/move, live grant changes, and deletion.
+  Restricted and deleted targets must share exactly the same response shape;
+  remark resolution requires both task and remark read and has no admin bypass.
+- Verify strict bounded resolver inputs, authentication, and unchanged domain
+  revision for resolution. Browser checks cover picker insertion/focus, current
+  labels, unavailable placeholders, and navigation to the original remark.
+
+### Image Checks
+
+- Validate actual PNG/JPEG/WebP, inclusive 2 MiB boundary, invalid/truncated data,
+  animation/pixel limits, base64, batch size, token ownership and strict inputs.
+- Verify file/metadata/body rollback after partial storage and database failures;
+  token/source deletion removes files only after commit. Exercise orphan pruning.
+- Stream bytes with current task/remark permissions, no administrator bypass,
+  write-only denial, move/revocation, safe headers and missing files. Use real
+  transactions for streamed-response lifecycle and after-commit cleanup checks.
+- Browser workflows cover new-task images, text edits retaining existing images,
+  remark screenshot paste, private downloads, narrow screens, deletion previews,
+  invalid uploads, pending draft retention after failed saves, and retaining
+  pending image bytes across denied remark writes and access restoration.
+- Verify persistent upload storage across application container recreation before
+  full-stage acceptance; use only synthetic test data and a scoped test volume.
+
+### Search Checks
+
+- Verify English, Russian and mixed inflections across titles, descriptions and
+  remark bodies; require all non-stop words in one indexed document.
+- Exercise every local task/remark flag combination plus inheritance, no admin
+  bypass, count/snippet restrictions, live edits/moves/deletion and access loss.
+- Check stable pagination, distant match excerpts, escaped browser rendering,
+  token exclusion, strict query bounds, stop words, authentication and unchanged
+  revision. Verify both functional GIN indexes are usable with query plans.
+- Upgrade existing content without editing it. A search waiting behind a grant
+  revocation must return current authorized counts/excerpts after the lock releases.
+- Browser checks cover mixed queries, original-task/remark navigation, narrow
+  screens, failed-query recovery, repeated queries after revocation and clearing
+  cached excerpts when access refreshes.
+
+## Multiple-Instance Acceptance
+
+Follow the [multiple-instance contract](docs/multiple_instances.md)
+using only isolated PostgreSQL, uploads and synthetic accounts.
+
+- Preserve root-path behavior and verify two sibling prefixes at one origin, nested
+  paths, invalid configuration, mismatched frontend/backend prefixes, boundary
+  routing, query preservation and canonical trailing-slash redirects.
+- Exercise prefixed assets, health/API/auth/CSRF requests, stable references,
+  private image upload/download and actual CSV downloads. Missing API/assets must
+  retain appropriate errors rather than returning frontend HTML or another instance.
+- Use one browser context for both instances. Inspect cookie names/paths and
+  rotation/deletion; logout, password reset and deactivation in one must preserve
+  the other's session. Verify Secure flags through an isolated HTTPS fixture.
+- Verify distinct accounts/grants, tasks, sheets, remarks, search/report totals and
+  image bytes. Matching account emails confer no shared identity; IDs present only
+  in the other instance are unavailable, and matching IDs resolve only local data
+  under local permissions, without querying the other database or files.
+- Check targeted bootstrap/reset/migrate commands and independent instance
+  restart/replacement/update. Inspect scoped cleanup and original-resource
+  preservation; retain the current guarded test entry point and full regressions.
+- State the common-origin limitation accurately: scoped cookies and separate data
+  prevent accidental mixing, but different paths do not create browser trust
+  boundaries. Separate hostnames are required if that isolation is needed.
+
+## Workspace Acceptance
+
+- Sign-in lands on Tasks for administrators and colleagues. The main screen has
+  task-list/timesheet controls, without diagnostics or editing/recording forms.
+  Administration, System status and My access are reachable with appropriate roles.
+- Exercise native task windows, Add subtask defaults, status completion versus
+  Close details, preview cancellation, changed-draft dismissal, keyboard focus,
+  failed/stale submissions and acknowledged-save/reload-failure behavior.
+- Exercise current/historical drag/drop, keyboard/touch recording, ambiguous
+  session selection, breaks, end-day and explicit overnight continuation.
+- Assert HH:MM in the working zone while unchanged precise timestamps, IDs,
+  revisions and report totals survive editor saves. Include another browser zone.
+- Assert composer position, both remark orders, per-user session preference,
+  unchanged edit ordering, chronological shared stars and focused references.
+- Inspect desktop/narrow screenshots; run the build, configuration checks,
+  relevant PostgreSQL tests, full regression lifecycle and prefix verification.
+  Never seed or change evaluation to verify UI behavior.
+
+## Verification Approach
+
+Deployment verification must exercise the actual Gunicorn/static-Nginx
+stack rather than Vite: three independent installations, private image/CSV routes,
+host and CSRF rejection, interactive bootstrap and duplicate refusal, same-browser
+session/data isolation, and persisted database/domain/image bytes across an agent
+update/restart while evaluation stays available. Use only the three reserved
+synthetic deployment-check names; inspect cleanup before creating persistent
+evaluation/agent environments. Production activation and full-system restoration
+acceptance remain separate Stage 11 work.
+
+For evaluation's HTTPS host-proxy handoff, verify the selected release and retained storage,
+scoped Secure cookies, application sign-in page and unauthenticated API protection,
+CSRF enforcement, built assets/API routing with the full mount preserved, the
+trailing-slash redirect and removal of obsolete project routes. Before administrator
+activation, distinguish local/staged proxy checks from actual public HTTPS
+acceptance; the latter requires the installed configuration, trusted certificate
+and `verify evaluation`. Leave first-account bootstrap interactive and do not
+create evaluation records for synthetic checks. Confirm agent services and the
+evaluation database container remain unchanged.
+
+The read-only `environments.py verify NAME` command must also work after initial
+setup. Exercise rejection of missing/unhealthy services, stale releases, unsafe
+ports/storage/privileges, settings drift, wrong frontend/backend identity, failed
+database health and redirects/assets outside the mount. Verify arbitrary named
+environments and configured time zones without querying account/task counts or
+changing application data. Run the command against the existing evaluation and
+agent deployments; fixture writes and destructive lifecycle tests remain confined
+to the synthetic deployment-check projects above.
+
+The [development guide](docs/development.md#isolated-test-setup) owns verified
+commands and fixture/reset handling. The [tracker](implementation_plan.md#latest-application-verification)
+links to actual results and the [archive](docs/archive/README.md) preserves past
+failures and milestone evidence. Do not duplicate execution reports here.
+
+- Use focused automated tests for business rules and meaningful boundary cases.
+- Run API and database integration tests against PostgreSQL, including real
+  transactions and independent connections for concurrency scenarios.
+- Maintain a small set of browser tests for complete critical workflows. Use
+  exploratory sessions for two-tab interactions, repeated actions, stale screens,
+  keyboard navigation, and recovery after failed requests.
+- Use isolated synthetic data: multiple users, two organizations with several
+  projects, different permission combinations, and a hierarchy at least three
+  levels deep. Include several days, midnight work, open entries, and special entries.
+- Control the clock and working time zone for reproducible checks. Derive expected
+  results independently from small examples rather than duplicating implementation.
+- For each defect, retain reproduction steps and add an appropriate regression
+  check. Record the tested revision, environment, results, and known limitations.
+
+## Completion Criteria and Boundaries
+
+Before a version is considered ready, its critical automated checks pass against
+PostgreSQL, required end-to-end workflows have been exercised, and there are no
+unresolved defects that expose unauthorized data, lose records, corrupt timelines,
+or produce incorrect totals. Document remaining limitations and reproduce failures
+clearly. Verify startup and persistence in the deployment configuration.
+
+Application acceptance and prefix-isolation checks do not establish production
+readiness. Stage 11 also requires production host/proxy acceptance and full-system
+restoration. Its outstanding checks and sequencing are in the
+[current tracker](implementation_plan.md#stage-11-production-deployment-and-operational-verification).
+
+Native Android/desktop clients, offline synchronization, general file attachments,
+email delivery, approvals, immutable auditing, and daylight-saving behavior are
+outside the first-version charter. Stage 11 must verify full-system restoration
+under the [agreed backup policy](architecture.md#agreed-backup-and-restoration-policy);
+tooling, schedule, retention, and destination remain deployment-planning decisions.
+The shared working time zone is configurable through settings (UTC default).
+
+For stage completion, run the expanded full suite sequentially twice, including
+reset of an already running test stack, and inspect cleanup and preservation of
+unrelated resources. Focused changes
+use proportional checks; repeat or broaden only for changed inputs, failures, or
+unresolved concerns. Record the actual verification scope and any incomplete checks.

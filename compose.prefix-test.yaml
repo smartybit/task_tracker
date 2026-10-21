@@ -1,0 +1,168 @@
+name: task-tracker-prefix-tests
+x-web: &web
+  build:
+    context: .
+    dockerfile: docker/backend.Dockerfile
+  command: sh -c "python manage.py migrate --noinput && python manage.py runserver --noreload 0.0.0.0:8000"
+  healthcheck:
+    test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/', timeout=3)"]
+    interval: 2s
+    timeout: 5s
+    retries: 30
+x-environment: &environment
+  APP_ENV: test
+  DJANGO_SECRET_KEY: isolated-prefix-a-only-secret
+  DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,web-a,web-b
+  DJANGO_CSRF_TRUSTED_ORIGINS: https://gateway:8443,http://gateway:8080
+  DJANGO_COOKIE_SECURE: "true"
+  POSTGRES_DB: task_tracker_test
+  POSTGRES_USER: task_tracker_test
+  POSTGRES_PASSWORD: isolated-prefix-a-only-password
+  POSTGRES_HOST: db-a
+  WORKING_TIME_ZONE: UTC
+  UPLOAD_ROOT: /var/lib/task-tracker/uploads
+x-db: &db
+  image: postgres:17-alpine
+  healthcheck:
+    test: [CMD-SHELL, pg_isready -U task_tracker_test -d task_tracker_test]
+    interval: 2s
+    timeout: 3s
+    retries: 30
+x-db-environment: &db-environment
+  POSTGRES_DB: task_tracker_test
+  POSTGRES_USER: task_tracker_test
+  POSTGRES_PASSWORD: isolated-prefix-a-only-password
+services:
+  db-a:
+    <<: *db
+    environment: *db-environment
+    volumes: [db-a:/var/lib/postgresql/data]
+  db-b:
+    <<: *db
+    environment:
+      <<: *db-environment
+      POSTGRES_PASSWORD: isolated-prefix-b-only-password
+    volumes: [db-b:/var/lib/postgresql/data]
+  web-a:
+    <<: *web
+    image: task-tracker-prefix-a-web:${PREFIX_VERSION_A:-local}
+    environment:
+      <<: *environment
+      APP_BASE_PATH: /time-tracker-test/
+      INSTANCE_ID: prefix-a
+    volumes: [uploads-a:/var/lib/task-tracker/uploads]
+    depends_on:
+      db-a:
+        condition: service_healthy
+  web-b:
+    <<: *web
+    image: task-tracker-prefix-b-web:local
+    environment:
+      <<: *environment
+      APP_BASE_PATH: ${PREFIX_PATH_B:-/time-tracker-prod/}
+      INSTANCE_ID: prefix-b
+      DJANGO_SECRET_KEY: isolated-prefix-b-only-secret
+      POSTGRES_PASSWORD: isolated-prefix-b-only-password
+      POSTGRES_HOST: db-b
+    volumes: [uploads-b:/var/lib/task-tracker/uploads]
+    depends_on:
+      db-b:
+        condition: service_healthy
+  frontend-a:
+    image: task-tracker-prefix-a-frontend:local
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        APP_BASE_PATH: /time-tracker-test/
+        INSTANCE_ID: prefix-a
+    environment:
+      APP_BASE_PATH: /time-tracker-test/
+      INSTANCE_ID: prefix-a
+      API_PROXY_TARGET: http://web-a:8000
+      FRONTEND_ALLOWED_HOSTS: frontend-a,gateway
+    depends_on:
+      web-a:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:5173/time-tracker-test/').then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+  frontend-b:
+    image: task-tracker-prefix-b-frontend:local
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        APP_BASE_PATH: ${PREFIX_PATH_B:-/time-tracker-prod/}
+        INSTANCE_ID: prefix-b
+    environment:
+      APP_BASE_PATH: ${PREFIX_PATH_B:-/time-tracker-prod/}
+      INSTANCE_ID: prefix-b
+      API_PROXY_TARGET: http://web-b:8000
+      FRONTEND_ALLOWED_HOSTS: frontend-b,gateway
+    depends_on:
+      web-b:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:5173' + process.env.APP_BASE_PATH).then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+  gateway:
+    image: node:22-bookworm-slim
+    user: "1000:1000"
+    command: node --experimental-strip-types /checks/prefix-gateway.mjs
+    environment:
+      PREFIX_ROUTES: '[{"prefix":"/time-tracker-test/","instanceId":"prefix-a","target":"http://frontend-a:5173"},{"prefix":"${PREFIX_PATH_B:-/time-tracker-prod/}","instanceId":"prefix-b","target":"http://frontend-b:5173"}]'
+    volumes:
+      - ./scripts/prefix-gateway.mjs:/checks/prefix-gateway.mjs:ro
+      - ./frontend/instance-config.ts:/frontend/instance-config.ts:ro
+      - ${PREFIX_TLS_DIRECTORY:?Run through scripts/test-prefixes.sh}:/tls:ro
+    depends_on:
+      frontend-a:
+        condition: service_healthy
+      frontend-b:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8080/time-tracker-test/api/v1/health/').then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+  observer:
+    image: node:22-bookworm-slim
+    user: "1000:1000"
+    command: node /checks/prefix-observer.mjs
+    environment:
+      PREFIX_OBSERVER_URL: http://gateway:8080${PREFIX_PATH_B:-/time-tracker-prod/}api/v1/health/
+    volumes:
+      - ./scripts/prefix-observer.mjs:/checks/prefix-observer.mjs:ro
+    healthcheck:
+      test: [CMD, test, -s, /tmp/observer-count]
+      interval: 1s
+      timeout: 2s
+      retries: 15
+  browser:
+    image: mcr.microsoft.com/playwright:v1.64.0-noble
+    user: "1000:1000"
+    init: true
+    ipc: host
+    working_dir: /work
+    environment:
+      BASE_URL: https://gateway:8443/time-tracker-test/
+      PREFIX_OTHER_URL: https://gateway:8443${PREFIX_PATH_B:-/time-tracker-prod/}
+      PREFIX_TESTS: "true"
+      PREFIX_PHASE: ${PREFIX_PHASE:-before}
+      PREFIX_LABEL: ${PREFIX_LABEL:-prefix-test}
+    volumes:
+      - ./frontend:/work
+    command: npm run test:e2e -- tests/instances.spec.ts
+    depends_on:
+      gateway:
+        condition: service_healthy
+volumes:
+  db-a:
+  db-b:
+  uploads-a:
+  uploads-b:

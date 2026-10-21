@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+*.env
+.instance-build.json
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+node_modules/
+dist/
+test-results/
+playwright-report/
+uploads/
+.DS_Store
+.artifacts/
+/environments/
