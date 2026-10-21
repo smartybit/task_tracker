@@ -1,10 +1,10 @@
-"""Check inline local Markdown links in the repository root and docs directory."""
+"""Check inline local Markdown links in the root and recursively under docs."""
 
 import re
 from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
-files = list(root.glob('*.md')) + list((root/'docs').glob('*.md'))
+files = sorted(root.glob('*.md')) + sorted((root/'docs').rglob('*.md'))
 count = 0
 for source in files:
     for target in re.findall(r'\[[^\]]*\]\(([^)]+)\)', source.read_text()):

@@ -1,6 +1,6 @@
 # Remarks API
 
-Stage 8 adds plain-text remarks and shared stars. Reference and image tokens and
+Current contracts for plain-text remarks and shared stars. Reference and image tokens and
 the optional `images` field on create/edit are documented in
 [content_api.md](content_api.md), together with search. Internal paths below begin
 with `/api/v1/`; external requests prepend the configured application mount

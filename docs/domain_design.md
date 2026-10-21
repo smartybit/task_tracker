@@ -1,30 +1,11 @@
 # Domain Model and API Design
 
-Stage 1 design for the [implementation plan](../implementation_plan.md).
-[Requirements](../requirements.md) remain authoritative. This document selects
-initial implementation approaches for delegated behavior, not additional
-user-confirmed product requirements. Stage 2 implemented the initial User and
-MutationLock models and a versioned health API. Stage 3 adds session/account,
-organization/project, and grant APIs, shared access policies, and the minimal
-Timesheet record; verification status is tracked in the implementation plan.
-Stage 4 implements tasks/statuses, preview/confirmation operations, and the minimal
-time-record relationships used for deletion protection. Stage 5 implements the
-recording/correction engine and revised lifecycle. Stage 6 delivers the timesheet
-interface, Stage 7 delivers reports/CSV, and Stage 8 delivers
-[remarks and shared stars](remarks_api.md) plus [references and images](content_api.md).
-Search uses the [shared PostgreSQL configuration](../architecture.md#search-approach).
-Remaining feature operations are a
-design contract; verification status belongs in the implementation tracker.
-Stage 10 adds [instance mount configuration](multiple_instances.md): external URLs
-prepend the configured prefix, while internal `/api/v1/` routes, domain models,
-permissions and accounting contracts remain unchanged.
-
-The timesheet sections were revised on 2026-10-09 for the agreed
-[Edit day](../requirements.md#timesheet-editing) and
-[unfinished-day](../requirements.md#unfinished-days-and-overnight-work) behavior.
-They supersede Stage 1's automatic middle-edit and globally single-open-entry
-proposals. Stage 5 adds lifecycle migrations and backend commands; the Stage 6
-interface is complete.
+Current records, authorization/API contracts, timeline semantics, and transaction
+boundaries. [Requirements](../requirements.md) own product rules;
+[architecture](../architecture.md) explains subsystem design. Concrete endpoint
+payloads are linked below. [The documentation map](README.md) identifies other
+current owners; [implementation history](archive/2026-10-21/implementation_history.md)
+records earlier proposals, migrations, and acceptance.
 
 ## Modules and Records
 
@@ -43,7 +24,7 @@ derive them through current relationships so historical attribution stays correc
 | tasks / Task | title, description, project, parent (nullable), owner, creator, status, revision | Protect project, owner, creator, parent, and status references. Same-project acyclic tree; only creation, ownership transfer, and project changes check owner eligibility. |
 | tasks / TaskStatusChange | task, previous/new status, actor, changed_at | Record initial status and subsequent changes, including propagated ancestor changes; delete history only with an eligible task. |
 | timesheets / Timesheet | user (unique), revision | Persistent per-user lock target, created with the account; ownership grants unconditional self-access. |
-| timesheets / WorkSession | timesheet, started_at, ended_at (nullable), lifecycle state (active/unfinished/closed) | Continuity is required inside a session, not between sessions. One active recording session per user; multiple unfinished historical sessions are permitted. A closed session's end represents its End of Working Day marker. Stage 5 adds the lifecycle field and revised constraints. |
+| timesheets / WorkSession | timesheet, started_at, ended_at (nullable), lifecycle state (active/unfinished/closed) | Continuity is required inside a session, not between sessions. One active recording session per user; multiple unfinished historical sessions are permitted. A closed session's end represents its End of Working Day marker. Lifecycle and constraints are enforced in the schema. |
 | timesheets / TimeEntry | timesheet, session, kind (task/break), task (nullable), started_at, ended_at (nullable) | Timesheet agrees with session; task required exactly for task entries; closed end greater than start; known intervals cannot overlap. One open tail per session, with unknown end/zero duration until closure; its session determines whether it is active recording or historical unfinished work. Task foreign key protects deletion, including hidden records. |
 | remarks / Remark | task, author, body, starred, created_at, edited_at, revision | Shared stars; original author/time survive edits. Task deletion may remove remarks only after its eligibility and content-write checks. |
 | content / ContentImage | containing task OR remark, private storage key, verified format, byte size, width/height | Exactly one containing object; no standalone task attachment collection or public media URL. Rollback/after-commit cleanup follows its containing object. |
@@ -236,7 +217,9 @@ strategy over premature concurrency optimizations:
 
 This deliberately serializes business writes initially. It handles deletion racing
 with time recording/child creation and finalization racing with reopening without
-an incomplete per-tree lock scheme. Reads remain concurrent. Replace the global
+an incomplete per-tree lock scheme. Read locking is operation-specific:
+content/timesheet reads also coordinate with writers where required; reports use
+a repeatable-read snapshot. Replace the global
 coordination with finer-grained ordered locks only when measured load warrants it
 and PostgreSQL concurrency regressions demonstrate equivalent integrity.
 
@@ -250,14 +233,11 @@ validate that it agrees with their session. Enforce one active session per times
 and one open tail per session, with lifecycle-consistent end timestamps. Continuity,
 tree cycles, common-project rules, and final ancestors require service validation.
 
-Stage 5 replaces Stage 4’s global null-end uniqueness through additive migrations.
-Existing closed sessions become closed and existing open sessions remain active,
-without inventing ends. Known-range exclusion allows multiple unknown tails;
-entry/session agreement is also protected in PostgreSQL. The concrete command
-payload is documented in [the timesheet API](timesheet_api.md); execution evidence
-belongs in the implementation tracker.
-Protect permanent status first-use/immutability against accidental direct changes
-with a database trigger when statuses are implemented.
+Known-range exclusion permits multiple unknown tails; PostgreSQL also protects
+entry/session agreement. Permanent status first-use/immutability is protected by
+database triggers. The [timesheet API](timesheet_api.md) defines command payloads;
+[Stage 5 history](archive/2026-10-21/implementation_history.md#stage-5-timesheet-engine)
+records the additive lifecycle migration and preservation checks.
 
 For multi-query reports and streamed CSV, capture an authorized consistent database
 snapshot (read-only repeatable-read transaction) and complete queries under it.
@@ -272,16 +252,11 @@ deletion. Keep file bytes out of transaction error responses and logs.
 
 ## Worked Acceptance Examples
 
-These examples define expected outcomes. Task/status scenarios now have Stage 4
-coverage; timeline examples have Stage 5 coverage and report examples now have
-Stage 7 backend and browser coverage. Executed verification is recorded in the
-implementation tracker. Times use a controlled fixed zone;
-all durations are independently calculated.
-
-The historical middle-edit examples below now describe explicit day drafts, not
-automatic neighbor adjustment. Git history preserves the superseded Stage 1
-proposals. The Friday/Monday scenario is also specified in
-[requirements](../requirements.md#friday-to-monday-example).
+These examples define expected outcomes using a controlled fixed zone and
+independently calculated durations. Middle edits use explicit complete-day drafts.
+The [Friday/Monday product example](../requirements.md#friday-to-monday-example)
+explains the unfinished-day workflow; [the tracker](../implementation_plan.md)
+links to executed verification.
 
 | Scenario | Input / action | Expected committed result |
 | --- | --- | --- |
@@ -310,7 +285,7 @@ proposals. The Friday/Monday scenario is also specified in
 | Day save races current recording | Friday draft uses revision 7; Monday switch commits revision 8 before Save changes | Reject stale Friday save without applying rows. Retain the draft for reload/review; Monday's new recording is preserved. |
 | Delete race | Task deletion races child creation or first time record | Serialized result: either deletion succeeds and creation fails, or creation succeeds and deletion is blocked. No orphan child or time record. |
 
-## Reporting and Search Details to Carry Forward
+## Reporting and Search Contracts
 
 - Use one authorized-record selector for all report views and CSV. Whole-timesheet
   totals intentionally use a different selector without project restrictions.
@@ -329,24 +304,14 @@ proposals. The Friday/Monday scenario is also specified in
   then merge/paginate ranked results. Add PostgreSQL indexes with migrations.
   English and Russian, including mixed-language content, are agreed for initial
   search. The shared [search configuration](../architecture.md#search-approach)
-  and functional GIN indexes are delivered in Stage 8 without a separate service.
+  and functional GIN indexes use PostgreSQL without a separate search service.
 
-## Remaining Decisions and Implementation Boundary
+## Related References
 
-The shared working zone is configurable in settings, defaulting to UTC. Backup
-responsibility and full-system restoration requirements are agreed in the
-[architecture](../architecture.md#agreed-backup-and-restoration-policy); tooling,
-schedule, retention, and destination remain deployment decisions. They do not
-block schema/API design. Initial English/Russian search uses the implemented
-[shared language policy](../architecture.md#search-approach). Additional UI
-libraries and the production server/proxy remain choices for later needs.
-The test runners are Django and
-Playwright/Chromium, introduced in Stage 2 and extended through Stage 4. Worked
-examples are design contracts; actual PostgreSQL, browser, and concurrency
-evidence is recorded in the implementation tracker. Task/status acceptance
-passed in Stage 4; timeline acceptance passed in Stage 5. Stage 7 reporting and
-CSV acceptance passed two full lifecycle runs, each with 97 PostgreSQL tests and
-30 Chromium scenarios. Stage 8 content acceptance passed a complete lifecycle with
-126 PostgreSQL tests, build and 41 Chromium scenarios, plus synthetic image-container
-replacement; detailed evidence is in the implementation plan. Concrete reporting
-contracts are in [the reporting API](reporting_api.md).
+- [Timesheet API](timesheet_api.md): commands, revisions, drafts, and previews.
+- [Reporting API](reporting_api.md): filters, date allocation, CSV, and rounding.
+- [Remarks API](remarks_api.md) and [content API](content_api.md): references,
+  images, and search.
+- [Instance configuration](multiple_instances.md): prepend the configured external
+  mount to internal API paths; domain permissions and accounting stay unchanged.
+- [Current tracker](../implementation_plan.md): unfinished work and actual verification.

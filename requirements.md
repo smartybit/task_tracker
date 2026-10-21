@@ -1,11 +1,12 @@
 # Task Tracking Tool: Requirements
 
 This is the authoritative product description and business specification. It
-consolidates the original description and subsequent decisions, with later agreed
-rules taking precedence over earlier versions. Agreed requirements and proposed
-defaults are identified separately.
+describes current agreed behavior. Agreed requirements and delegated defaults
+are identified separately; implementation does not itself make a default an
+additional user-confirmed requirement. Historical decisions are in the
+[project details archive](docs/archive/README.md).
 
-Technology choices and implementation proposals are in
+Current technical design and unselected future options are in
 [architecture.md](architecture.md). Verification priorities are in
 [testing_charter.md](testing_charter.md).
 
@@ -61,8 +62,8 @@ The following requirements reflect agreed product behavior.
   persistent user evaluation/testing, and agent development/verification. Support
   additional agent environments when needed. Evaluation data and the selected
   evaluation release must survive work, test resets and updates in agent environments.
-  Current deployment preparation targets evaluation and agent work; production
-  remains a separate target.
+  Production activation remains a separate target;
+  [operations](docs/environments.md) records the deployed state.
 - Deploying a new release to a persistent environment requires an intermediate
   discussion and explicit user authorization (agreed 2026-10-21). Completing
   implementation or verification does not authorize deployment by itself.
@@ -197,8 +198,9 @@ The following requirements reflect agreed product behavior.
 
 ### Timesheet Editing
 
-The following editing decisions were agreed on 2026-10-09. They replace the earlier
-proposals for automatic middle insertion/deletion and one globally open entry.
+The following editing rules are agreed. The
+[decision history](docs/archive/2026-10-21/implementation_history.md#stage-5-timesheet-engine)
+records why automatic middle edits and globally single-open-entry proposals changed.
 
 - Ordinary timesheet controls allow appending tasks/breaks, End of Working Day,
   time-boundary edits, and deletion of the last task/break record. Middle insertion
@@ -325,7 +327,7 @@ interval is invented. More involved Friday corrections use Edit day.
   snippets respect task and remark access permissions.
 - Initial search supports English and Russian, including content that mixes the
   two languages. Additional languages may be added later.
-- Implementation default in Stage 8: keyword AND semantics within one task
+- Adopted implementation default: keyword AND semantics within one task
   (title/description) or one remark, with English/Russian word forms. Return
   readable task and remark matches separately, ranked with excerpts and navigation
   to the original. Inline target identifiers/labels and image bytes are not
@@ -360,10 +362,11 @@ interval is invented. More involved Friday corrections use Edit day.
 
 ## Proposed First-Version Defaults
 
-These defaults make the delegated behavior concrete. They are proposals rather
-than additional user-confirmed requirements. Remark editing defaults below have
-been adopted in the Stage 8 implementation under that delegation; this does not
-turn them into additional user-confirmed requirements.
+These defaults make delegated behavior concrete. They are proposals rather than
+additional user-confirmed requirements. Explicitly marked content defaults below
+have been adopted under that delegation; this does not turn them into additional
+user-confirmed requirements. Consult the current domain/API contracts for
+implemented behavior; an unmarked proposal alone does not establish implementation.
 
 ### Time Representation and Closed-Day Resumption
 
@@ -424,7 +427,7 @@ turn them into additional user-confirmed requirements.
   break links. Show a generic unavailable label for restricted targets, without
   exposing titles, authors, snippets, or attachment previews.
 - Deleted references show a generic unavailable/deleted-target placeholder.
-- Adopted in Stage 8 under delegated reference behavior: descriptions and remarks
+- Adopted under delegated reference behavior: descriptions and remarks
   use stable inline task/remark tokens with a picker. Resolve current labels on
   access or explicit refresh; navigate to the task or original remark. Restricted
   and deleted targets share “Unavailable reference”, without revealing which case
@@ -436,14 +439,14 @@ turn them into additional user-confirmed requirements.
   same permissions as views. For descriptions, the containing object is the task.
   Accept verified PNG, JPEG, and WebP images initially; use a 2 MiB
   (2,097,152-byte) upload limit as the interpretation of 2 MB.
-- Adopted in Stage 8 under delegated image-format details: initial images are
+- Adopted under delegated image-format details: initial images are
   static, limited to 20 million decoded pixels. Select files or paste screenshots
   into the description/remark editor; save them with the containing text. Up to
   five new images may be saved per operation, with further batches allowed.
   Failed saves retain pending images and text. Removing an image token deletes
   that source's image after a successful save.
-- Adopted in Stage 8: users with task read and remark write permission may edit,
-  delete, or star any remark. Task write and authorship are not required. Preserve
+- Adopted under delegated behavior: users with task read and remark write permission
+  may edit, delete, or star any remark. Task write and authorship are not required. Preserve
   the original author and creation timestamp when editing; show an edit timestamp.
   No version history is required. Shared-star changes leave the text-edit timestamp
   unchanged.

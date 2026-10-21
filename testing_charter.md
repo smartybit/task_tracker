@@ -6,8 +6,8 @@ Establish confidence that the task tracker protects access boundaries, preserves
 recorded work, and produces correct totals while supporting everyday team use.
 Prioritize permission errors, lost data, and incorrect time accounting.
 
-Product behavior is defined in [requirements.md](requirements.md). Selected
-technologies and implementation proposals are in [architecture.md](architecture.md).
+Product behavior is defined in [requirements.md](requirements.md). Current
+technical design and rationale are in [architecture.md](architecture.md).
 This charter guides testing; it does not add product features. Treat proposed
 defaults as revisable choices and keep their tests aligned with the behavior
 selected during implementation.
@@ -38,7 +38,7 @@ selected during implementation.
 - Change permissions during an active session; subsequent requests must use the
   current grants. Include deliberately configured write-without-read combinations.
 
-### Stage 3 Authentication and Administration Checks
+### Authentication and Administration
 
 Use the shared Compose harness for API and Chromium checks for
 CSRF bootstrap, login/logout, account creation, administrator password reset,
@@ -50,14 +50,12 @@ or administrator-role changes affect subsequent requests without another login.
 Use separate browser contexts and reset mutable synthetic fixtures between cases.
 
 Check first-administrator bootstrap races, account/timesheet atomic creation,
-unique grants, rejected updates, and rollback against PostgreSQL. Exercise new
-migrations on both fresh databases and an isolated Stage 2 schema with synthetic
-existing users. At Stage 3, task/remark and self/others timesheet access are shared
-service contracts; repeat those checks through actual feature endpoints when
-Stages 4–8 introduce them. The Stage 3 completion boundary does not imply that
-task, time-entry, remark, or reporting workflows already work.
+unique grants, rejected updates, and rollback against PostgreSQL. Exercise fresh
+migrations and isolated upgrades preserving synthetic existing users, grants,
+and timesheet rows. Validate permissions through actual feature endpoints as
+well as policy helpers.
 
-Stage 9 administrator lifecycle checks, following the agreed policy:
+Administrator lifecycle checks, following the agreed policy:
 
 - Reject self-deactivation and self-demotion through both the interface and direct
   API requests, including when other active administrators exist. Verify rejected
@@ -74,14 +72,6 @@ Stage 9 administrator lifecycle checks, following the agreed policy:
   reactivation and administrator privileges for an existing user. Test each option
   independently and together, atomic rollback on failure, and successful new sign-in
   without reviving old sessions or granting implicit application-data access.
-
-Stage 9 implements self-protection and server-side reset/recovery. These cases
-were not part of the successful Stage 3 suite; Stage 9 verification results are
-recorded in the implementation tracker using the existing isolated test setup.
-All 13 focused PostgreSQL checks and both new Chromium scenarios passed, then
-passed again in the full 139-test/43-scenario lifecycle. A separate script-driven
-exploratory Chromium session verified keyboard profile saves and simultaneous
-opposing administrator changes; desktop/narrow screenshots were inspected.
 
 ### 2. Preserve Timesheet Integrity
 
@@ -118,7 +108,7 @@ opposing administrator changes; desktop/narrow screenshots were inspected.
   one active session per user and one unfinished tail per session, including
   migration from the existing Stage 4 global null-end uniqueness constraints.
 
-### Stage 6 Browser Acceptance
+### Timesheet Browser Acceptance
 
 - Open Edit day for historical and running days; test add/remove/time edits,
   sorting after field completion, incomplete rows, focus, keyboard navigation,
@@ -137,12 +127,6 @@ opposing administrator changes; desktop/narrow screenshots were inspected.
   last-record deletion, unfinished warnings/partial totals, explicit overnight
   continuation, and fixed midnight boundaries in the day editor.
 
-Stage 6 passed these browser workflows in two full lifecycle runs, each with
-85 PostgreSQL tests, the production build and 25 Chromium scenarios. The repeat
-includes read-revocation and acknowledged-save/reload-failure follow-ups. Exact
-sources and results are recorded in the tracker. They were not exercised during
-Stage 4 or the documentation revision of 2026-10-09.
-
 ### 3. Enforce Task and Status Rules
 
 - Require a project, enforce one project throughout a hierarchy, and reject cycles.
@@ -150,13 +134,13 @@ Stage 4 or the documentation revision of 2026-10-09.
   owner eligibility checks without automatically resolving later access loss.
 - Block finalizing a task while any descendant is non-final. Reopening propagates
   through final ancestors while leaving unrelated branches unchanged.
-- Verify status history and immutability of used statuses. Under the proposed
-  default, first use permanently prevents editing or deleting that status.
+- Verify status history and immutability of used statuses. First use
+  permanently prevents editing or deleting that status.
 - Block deletion whenever a child or any user's timesheet record exists, including
   records the caller cannot view. Check administrators and indirect deletion paths.
 - Race deletion against creation of a child or time record, and finalization
   against a descendant reopening. The committed result must satisfy the rules.
-- Repeat the Stage 3 grant matrix through actual task endpoints, including
+- Exercise the grant matrix through actual task endpoints, including
   administrators without grants, write-only acknowledgements, protected list/tree
   counts and history, and grants revoked while a mutation waits for the domain
   lock. Stale revisions and previews must reject without partial history changes
@@ -165,7 +149,7 @@ Stage 4 or the documentation revision of 2026-10-09.
   upgrade preserving existing users, grants, and timesheet rows. Check permanent
   first-use protection after the last referencing task changes status or is deleted.
 
-### Stage 4 Browser Acceptance
+### Task Browser Acceptance
 
 Exercise task creation/editing and ownership transfer through the real frontend,
 including persistence after reload. Use a three-level tree, collapse/expand it,
@@ -204,7 +188,7 @@ viewport screenshots for inspection; Chromium remains the acceptance browser.
   End Time, and decimal Duration. Exclude breaks and closing markers; retain open
   task records with a blank end and zero duration. Check CSV quoting and Unicode.
 
-### Stage 7 Reporting and CSV Acceptance
+### Reporting and CSV Acceptance
 
 - Exercise a matrix of direct/inherited task read, independent task write,
   read/write-others-timesheet flags, and administrator status through every report,
@@ -226,11 +210,6 @@ viewport screenshots for inspection; Chromium remains the acceptance browser.
   reversed dates, retry, and an older response arriving after newer filters.
   Inspect desktop and narrow screenshots and verify usable keyboard controls.
 
-The backend component milestone passed 12 PostgreSQL tests, and all five focused
-Chromium scenarios passed. Stage 7 then passed two sequential full lifecycle runs,
-each with 97 PostgreSQL tests, the production build, and 30 Chromium scenarios.
-Execution evidence is recorded in the implementation tracker.
-
 ### 5. Complete Everyday Workflows and Preserve Data
 
 - Exercise email/password sign-in, administrator-created accounts, catalog and
@@ -244,7 +223,7 @@ Execution evidence is recorded in the implementation tracker.
   and jump from a starred remark to its original position.
 - Follow references after renames, moves, access loss, and deletion. Verify image
   upload/download permissions, invalid files, and the selected size limit. Test
-  screenshot pasting if implemented.
+  screenshot pasting.
 - Restart the application and verify persisted records and attachments. Exercise
   failed multi-record operations and confirm rollback without data loss.
 - In Stage 11, follow the written restoration instructions on an isolated second
@@ -254,7 +233,7 @@ Execution evidence is recorded in the implementation tracker.
   attachment metadata and files, including permission-checked downloads. Use no
   live databases or attachment storage for this full-system restoration check.
 
-### Stage 8 Remarks Milestone Checks
+### Remarks Checks
 
 - Exercise all 256 local/inherited task/remark grant combinations through real
   endpoints, including remark write without read, absent task read, task write
@@ -272,7 +251,7 @@ Execution evidence is recorded in the implementation tracker.
   controls, revocation, stale edits, failed writes, and saved/reload-failed recovery.
 - Full-stage lifecycle acceptance remains required alongside focused milestones.
 
-### Stage 8 Reference Checks
+### Reference Checks
 
 - Verify source synchronization, duplicate tokens, removal, source deletion,
   database constraints, and rollback after a reference-storage failure.
@@ -284,7 +263,7 @@ Execution evidence is recorded in the implementation tracker.
   revision for resolution. Browser checks cover picker insertion/focus, current
   labels, unavailable placeholders, and navigation to the original remark.
 
-### Stage 8 Image Checks
+### Image Checks
 
 - Validate actual PNG/JPEG/WebP, inclusive 2 MiB boundary, invalid/truncated data,
   animation/pixel limits, base64, batch size, token ownership and strict inputs.
@@ -300,7 +279,7 @@ Execution evidence is recorded in the implementation tracker.
 - Verify persistent upload storage across application container recreation before
   full-stage acceptance; use only synthetic test data and a scoped test volume.
 
-### Stage 8 Search Checks
+### Search Checks
 
 - Verify English, Russian and mixed inflections across titles, descriptions and
   remark bodies; require all non-stop words in one indexed document.
@@ -315,11 +294,9 @@ Execution evidence is recorded in the implementation tracker.
   screens, failed-query recovery, repeated queries after revocation and clearing
   cached excerpts when access refreshes.
 
-## Stage 10 Multiple-Instance Acceptance
+## Multiple-Instance Acceptance
 
-Core prefix support is implemented. Focused configuration, sibling/nested prefix,
-reusable-development acceptance and full root regression passed; Stage 10 is Done.
-Follow the [multiple-instance design](docs/multiple_instances.md#verification-and-completion)
+Follow the [multiple-instance contract](docs/multiple_instances.md)
 using only isolated PostgreSQL, uploads and synthetic accounts.
 
 - Preserve root-path behavior and verify two sibling prefixes at one origin, nested
@@ -342,7 +319,7 @@ using only isolated PostgreSQL, uploads and synthetic accounts.
   prevent accidental mixing, but different paths do not create browser trust
   boundaries. Separate hostnames are required if that isolation is needed.
 
-## UI Adjustment Acceptance
+## Workspace Acceptance
 
 - Sign-in lands on Tasks for administrators and colleagues. The main screen has
   task-list/timesheet controls, without diagnostics or editing/recording forms.
@@ -362,7 +339,7 @@ using only isolated PostgreSQL, uploads and synthetic accounts.
 
 ## Verification Approach
 
-Stage 11 environment preparation must exercise the actual Gunicorn/static-Nginx
+Deployment verification must exercise the actual Gunicorn/static-Nginx
 stack rather than Vite: three independent installations, private image/CSV routes,
 host and CSRF rejection, interactive bootstrap and duplicate refusal, same-browser
 session/data isolation, and persisted database/domain/image bytes across an agent
@@ -390,31 +367,10 @@ changing application data. Run the command against the existing evaluation and
 agent deployments; fixture writes and destructive lifecycle tests remain confined
 to the synthetic deployment-check projects above.
 
-The [reusable test setup](architecture.md#reusable-test-setup) describes
-shared services, isolation, fixture/reset handling, and result capture. The
-[implementation plan](implementation_plan.md#shared-test-environment) maps that
-environment to each stage. Initial executable foundation checks exist; see
-[README.md](README.md) for verified setup commands and the tracker for actual
-results. Stage 2–4 checks passed, including two complete Stage 4 lifecycle runs
-with 54 PostgreSQL tests and 16 Chromium checks each. Stage 5 also passed two full
-runs with 82 PostgreSQL tests and 16 browser checks, including recording/correction
-engine acceptance. Stage 6 passed two full lifecycle runs with 85 PostgreSQL tests
-and 25 Chromium scenarios each, including timesheet browser acceptance. Stage 7
-passed two full runs with 97 PostgreSQL tests and 30 Chromium scenarios each,
-including reporting and CSV acceptance. Stage 8 passed a full lifecycle with
-126 PostgreSQL tests, the production build and 41 Chromium scenarios, exit 0,
-plus synthetic image-container replacement. Reference/image/search workflows,
-permission changes, storage rollback and multilingual indexes are covered.
-Earlier attempts and detailed evidence are preserved in the implementation plan.
-Stage 9 passed a full lifecycle on application source `1f79ff6`: 139 PostgreSQL
-tests, fresh migrations/system/drift, the production frontend build and all 43
-Chromium scenarios, exit 0, with inspected healthy-stack reset and cleanup.
-The administrator lifecycle and separate exploratory evidence are recorded above
-and in the tracker. Stage 10 passed sibling/nested prefix and reusable-development
-lifecycles, plus full root regression with 142 PostgreSQL tests, both frontend
-configuration checks, the production build and all 43 Chromium scenarios.
-Scoped cleanup and preservation of the five original container IDs and both
-persistent volumes were inspected. Stage 11 deployment/restoration remains pending.
+The [development guide](docs/development.md#isolated-test-setup) owns verified
+commands and fixture/reset handling. The [tracker](implementation_plan.md#latest-application-verification)
+links to actual results and the [archive](docs/archive/README.md) preserves past
+failures and milestone evidence. Do not duplicate execution reports here.
 
 - Use focused automated tests for business rules and meaningful boundary cases.
 - Run API and database integration tests against PostgreSQL, including real
@@ -438,13 +394,10 @@ unresolved defects that expose unauthorized data, lose records, corrupt timeline
 or produce incorrect totals. Document remaining limitations and reproduce failures
 clearly. Verify startup and persistence in the deployment configuration.
 
-Stage 9 covers development completion, administrator safeguards/recovery, and
-application regression and exploratory checks in the existing test environment.
-Stage 10 covers development and isolated verification of multiple instances at
-configurable prefixes. Stage 11 covers production server/proxy configuration,
-deployment and operational verification. Completing the development stages alone
-does not satisfy production readiness; deployment startup, persistence and
-full-system restoration remain Stage 11 checks.
+Application acceptance and prefix-isolation checks do not establish production
+readiness. Stage 11 also requires production host/proxy acceptance and full-system
+restoration. Its outstanding checks and sequencing are in the
+[current tracker](implementation_plan.md#stage-11-production-deployment-and-operational-verification).
 
 Native Android/desktop clients, offline synchronization, general file attachments,
 email delivery, approvals, immutable auditing, and daylight-saving behavior are
@@ -452,3 +405,9 @@ outside the first-version charter. Stage 11 must verify full-system restoration
 under the [agreed backup policy](architecture.md#agreed-backup-and-restoration-policy);
 tooling, schedule, retention, and destination remain deployment-planning decisions.
 The shared working time zone is configurable through settings (UTC default).
+
+For stage completion, run the expanded full suite sequentially twice, including
+reset of an already running test stack, and inspect cleanup and preservation of
+unrelated resources. Focused changes
+use proportional checks; repeat or broaden only for changed inputs, failures, or
+unresolved concerns. Record the actual verification scope and any incomplete checks.

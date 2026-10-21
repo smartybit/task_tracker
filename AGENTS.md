@@ -4,23 +4,50 @@ This project is a task and time tracker for personal use and small teams.
 
 ## Project Documents
 
+- Start with the [documentation map and maintenance policy](docs/README.md) and
+  [current position](implementation_plan.md#current-position), then read only the
+  task-relevant current sections. Do not load the archive by default.
 - [requirements.md](requirements.md) is the authoritative source for purpose,
   scope, features, permissions, and business rules.
-- [architecture.md](architecture.md) records the selected stack, implementation
-  proposals, deployment considerations, and future frontend options.
+- [architecture.md](architecture.md) records current technical design and rationale;
+  [domain design](docs/domain_design.md) owns model/transaction/API contracts.
 - [testing_charter.md](testing_charter.md) defines testing priorities, meaningful
   scenarios, and completion criteria.
-- [implementation_plan.md](implementation_plan.md) tracks implementation stages,
-  completion checks, current progress, and remaining decisions.
-- [docs/infrastructure_notes.md](docs/infrastructure_notes.md) preserves observed
-  setup failures, verified fixes, and session-specific execution limitations.
+- [implementation_plan.md](implementation_plan.md) owns current progress, next work,
+  remaining completion checks, and links to verification evidence.
+- [docs/infrastructure_notes.md](docs/infrastructure_notes.md) contains actionable
+  troubleshooting and execution limitations, with links to historical findings.
   Read it before infrastructure troubleshooting or starting verification services.
+- [Operations](docs/environments.md) owns deployed state and operating commands;
+  [development](docs/development.md) owns local setup and test commands.
+- [Project details archive](docs/archive/README.md) preserves dated implementation
+  history and superseded decisions. Consult relevant records only for provenance,
+  earlier failures, or rationale not explained in current guidance.
 
 Read the relevant documents before changing behavior or design. Keep agreed
 requirements distinct from proposed defaults and open questions. Incorporate new
 user decisions in the appropriate document and preserve existing knowledge when
 reorganizing documentation. Explicit user instructions take precedence; update
 the documents when those instructions change recorded decisions.
+
+## Documentation Maintenance
+
+- Follow the [writing and archiving policy](docs/README.md#write-in-the-right-place).
+  Each fact has one authoritative home; link to it instead of copying narratives.
+- Update current guidance in place, using topic headings and present tense. Keep
+  agreed rules, adopted defaults, open proposals, and observed results distinct.
+- Keep the tracker concise: current result, actual verification, limitations,
+  blocker/dependency, and next action. Do not append session diaries to current docs.
+- Archive completed milestone details, superseded decisions, and resolved
+  investigations when they retain useful evidence or explain a choice. First
+  extract lasting rules/fixes and leave unresolved work in current documents.
+- Link current topics to relevant archive records and archived records back to
+  their current replacements; maintain the documentation and archive indexes.
+  Archives must be dated and clearly historical, not alternate operating guides.
+- Preserve unique knowledge, useful examples, and limitations. Remove duplication
+  and stale claims in touched sections; do not create full-document snapshots for
+  routine updates. Keep raw logs/screenshots in ignored artifacts, without secrets.
+- Verify all local links, including archive links, and whitespace before committing.
 
 ## Implementation Guidance
 
@@ -32,7 +59,7 @@ the documents when those instructions change recorded decisions.
 - Preserve the distinction between whole-timesheet access and project-restricted
   reporting. Apply reporting access restrictions before calculating totals.
 - Protect multi-record timesheet and hierarchy operations from partial changes
-  and concurrent inconsistencies, following the architecture proposals.
+  and concurrent inconsistencies, following the architecture and domain design.
 - Keep changes scoped to the user's request and preserve unrelated local edits.
 - Update product behavior in the requirements and technical decisions in the
   architecture; keep the testing charter aligned with both.

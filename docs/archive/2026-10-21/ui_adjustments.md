@@ -1,5 +1,14 @@
 # UI Adjustment Subplan
 
+> Historical snapshot, frozen 2026-10-21 before the documentation reorganization.
+> Status, stage numbers, commands and session restrictions describe their recorded
+> dates; they are not current operating instructions. Later entries can supersede
+> earlier ones. Start with the [current documentation](../../README.md),
+> [current status](../../../implementation_plan.md), and
+> [archive index](../README.md) before using this evidence.
+> Current replacements: [UI design](../../../architecture.md#web-interface),
+> [usage](../../user_guide.md), and [pending review](../../../implementation_plan.md#current-position).
+
 Agreed 2026-10-20 after read-only review of evaluation tasks and six remarks.
 The starred remark governs this objective: structure everyday task work and move
 auxiliary functions into separate windows. This objective takes priority over
@@ -85,7 +94,7 @@ evaluation is a separate deployment action.
   (including public HTTPS) and `verify agent` checks passed. Evaluation retains
   its existing release and records; no migrations, reset, seed or upgrade ran there.
   The first interrupted deployment attempt and earlier browser diagnostics remain
-  documented in [infrastructure notes](infrastructure_notes.md#ui-adjustment-verification-2026-10-2021).
+  documented in [infrastructure notes](verification_history.md#ui-adjustment-verification-2026-10-2021).
 
 ## Handoff
 
@@ -97,7 +106,7 @@ Chromium sign-in rendering passed; authenticated user review is next. Read-only
 fingerprints confirmed unchanged records, migration history, database identity and
 uploads. Only evaluation's backend/frontend containers were replaced; its Tbilisi
 zone, agent and unrelated services were preserved. Rollback configuration/images
-are retained; see [operations](environments.md).
+are retained; see [operations](../../environments.md).
 
 Persistent deployments require discussion and explicit authorization; the approved
 evaluation update does not authorize future releases. Review the delivered UI

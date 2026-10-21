@@ -1,9 +1,9 @@
 # Timesheet API and Configuration
 
-Stage 5 supplies the backend engine. Stage 6 adds browser recording, the
-Edit day dialog and the read endpoints below; full acceptance has passed.
-Product rules remain in [requirements](../requirements.md#timesheets);
-Actual verification is recorded in the [tracker](../implementation_plan.md#stage-6-timesheet-interface).
+Current recording, day-editing, and read contracts. Product rules are in
+[requirements](../requirements.md#timesheets); [the tracker](../implementation_plan.md)
+owns current status. [Engine/interface history](archive/README.md) preserves
+implementation decisions and verification evidence.
 
 All endpoints use the existing session authentication and CSRF protection.
 Route examples use the internal `/api/v1/` path; external requests prepend the

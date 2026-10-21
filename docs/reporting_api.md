@@ -1,7 +1,8 @@
 # Reporting API and CSV
 
-Stage 7 implements the reporting rules in [requirements](../requirements.md#search-and-reporting).
-Execution evidence and completion status are in the [tracker](../implementation_plan.md#stage-7-reporting-and-csv-export).
+Current report/CSV contracts implement the [reporting requirements](../requirements.md#search-and-reporting).
+[Historical evidence](archive/2026-10-21/implementation_history.md#stage-7-reporting-and-csv-export)
+records delivery; [the tracker](../implementation_plan.md) owns current status.
 Route examples use internal `/api/v1/` paths. External report and CSV requests
 prepend the configured application mount; see [instance configuration](multiple_instances.md).
 

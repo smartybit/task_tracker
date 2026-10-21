@@ -1,941 +1,135 @@
-# Infrastructure Notes for Future Agents
-
-Recorded on 2026-10-08 during the foundation work in `c54e5ad`. These are observed
-setup problems, fixes, and verification limits, not new product requirements.
-Use [README.md](../README.md) for setup commands and the
-[implementation tracker](../implementation_plan.md) for current progress. Update
-this note when a discovery changes; do not treat old session restrictions as
-permanent properties of the VDS.
-
-## Stage 2 Verification: 2026-10-08
-
-The Stage 2 access blocker was resolved through explicit sandbox escalation
-during verification in `e9a6ccf`. Git commit, Docker inspection, scoped Compose
-lifecycle commands, and the test script ran with approval; no socket/group/daemon
-permissions were changed. The sandboxed Git commit and test script failed before
-escalation, and host loopback access also needed escalation. Continue requesting access when required;
-past approvals do not establish access in a future session.
-
-Earlier diagnostic documentation was reviewed and committed as `df58d99`.
-Its expired session instructions have been removed; the verified findings and
-access failures are retained below. Git history preserves the original text.
-
-Two sequential approved `sh scripts/test.sh` runs exited successfully: each built
-images, started ready services, migrated fresh PostgreSQL 17.11 databases, passed
-system/migration-drift checks and all 13 backend tests, seeded synthetic accounts,
-built TypeScript/Vite production assets, and passed all 3 Chromium checks using
-Playwright 1.64.0. After each run, Docker label-filtered container/network/volume
-listings showed no `task-tracker-tests` resources. The npm esbuild install-script
-warning remained non-failing. No application changes were needed.
-
-Development started with the following command, creating a fresh development
-volume and applying all 18 migrations:
-
-```sh
-docker compose -f compose.yaml -p task-tracker-dev up -d --build --wait --wait-timeout 120
-```
-
-Django checks passed with no migration drift. All 3 Chromium checks passed
-against its actual `frontend:5173` Compose service;
-frontend-internal and host-loopback `/api/v1/health/` checks returned PostgreSQL
-health through Vite's proxy. Only frontend port 5173 was published, on loopback.
-
-The second test run took place while development remained running. Development
-retained the same database system identifier, 18 migrations, zero users, and its
-`domain` coordination row at revision zero; the tests did not seed development.
-
-Development `down` retained `task-tracker-dev_development-db`. A second
-`up -d --wait --wait-timeout 120` reused the same database system identifier and
-counts; startup reported no migrations to apply, and the host-loopback proxied
-health route passed again. Final `down` removed development containers/network
-while retaining the volume. The two downloader containers remained running with
-their original IDs; their volume and three pre-existing stopped containers were
-preserved. No pruning, broad cleanup, or development-volume removal was used.
-
-Stage 2 completion checks passed. Results apply to foundation source `c54e5ad`
-and documentation baseline `df58d99`, with no application changes during the
-checks. Current implementation status is maintained in the tracker.
-
-## Stage 3 Verification Findings: 2026-10-08
-
-Stage 3 extends the same Compose entry point without new runtime dependencies.
-The test API explicitly trusts `http://frontend:5173` for CSRF; the development
-loopback origins remain separate. Login is explicitly CSRF-protected, and
-session-authenticated unsafe requests return a stable `csrf_failed` JSON error.
-Public health connectivity alone did not establish these mutation behaviors.
-
-The accounts app must precede Django auth in `INSTALLED_APPS` so its guarded
-`createsuperuser`/`changepassword` command replacements take precedence. The first
-backend check caught the incorrect order; corrected checks passed. Use the
-interactive `bootstrap_admin` command documented in README and application
-account management for subsequent account/password changes.
-
-PostgreSQL activity sampling in a transaction can retain a statistics snapshot.
-The deterministic blocked-writer regression calls `pg_stat_clear_snapshot()`
-before checking `pg_stat_activity`; it then observes an actual lock wait before
-committing administrator revocation. Independent connections, bounded lock waits,
-and committed-state assertions are required for these concurrency checks.
-
-The initial Chromium catalog scenario used an exact label query that did not
-match the select element. Its accessible combobox name was correct; the test
-now selects by that role/name. The other eight browser checks passed on that
-attempt; full lifecycle results are recorded in the tracker.
-
-One approved full-script attempt exited with status 143 during the initial test
-reset, before application checks. Its cleanup completed, and Docker inspection
-confirmed no test containers/network remained. The cause was not established;
-the next invocation started successfully from clean test state. Keep this
-interrupted attempt distinct from successful verification runs. The later
-running-stack reset succeeded and did not reproduce the interruption.
-
-Two sequential complete `sh scripts/test.sh` invocations subsequently exited 0
-against Stage 3 source `5653aa5`: each passed all 35 PostgreSQL backend tests,
-TypeScript/Vite build, and all 9 Chromium checks, followed by cleanup. The second
-invocation reset a healthy running test stack before recreating services and
-fresh databases. No test containers, networks, or volumes remained after either
-run. Final Docker inspection retained both development/downloader volumes and
-all five unrelated container IDs; no development migrations or fixture resets
-were run. Stage 3 is complete; Stage 4 remains unstarted.
-
-## Stage 4 Verification Findings: 2026-10-09
-
-Stage 4 source `c2d5ca3` passed two sequential complete test-script runs, each
-with exit 0, 54 PostgreSQL tests, TypeScript/production build, and 16 Chromium
-checks. The first successful run reset healthy running services. After each run,
-label-filtered inspection found no test containers, networks, or volumes; both
-original volumes and all five unrelated container IDs were preserved. No
-Docker-daemon, socket, group, or host-permission changes were made.
-
-The verified foreground-terminal wrapper uses this noninteractive command and
-captures its log plus a separate exit-status file:
-
-```sh
-timeout --foreground 1200 sh scripts/test.sh < /dev/null
-```
-
-The temporary helpers are now maintained as
-[`scripts/test-runner.sh`](../scripts/test-runner.sh),
-[`scripts/check-links.py`](../scripts/check-links.py), and
-[`scripts/docker-diagnostics.sh`](../scripts/docker-diagnostics.sh).
-The runner resolves the checkout from its location and defaults new log/status
-files to ignored `.artifacts/verification/`; see
-[Verification Helpers](../README.md#verification-helpers) for usage and the
-focused account mode's prepared-stack requirement. Historical results below
-remain at their original paths and were produced by the original temporary runner.
-
-Successful logs/status files remain under `/tmp/task-tracker-stage4-verified1`
-and `verified2` with `.log`/`.status` extensions. Keep foreground supervision,
-command completion, and scoped cleanup distinct from service health. The first
-terminal attempt used plain `timeout`, which created another process group; its
-shell stopped with job-control state `T` when a Compose exec client tried to read
-the foreground terminal. Unsandboxed inspection of the exact runner PIDs
-established that state. After terminating only the stuck check clients, continuing
-that test process group let its pending termination and cleanup finish (exit 143).
-No application-check result was obtained from that interrupted wrapper. A
-standalone check with closed input passed; `--foreground` plus closed input then
-passed both complete runs.
-
-Earlier Compose command clients exited 130 or 143 while one-off browsers continued.
-A two-scenario rerun's retained `.last-run.json` reported passed with no failed
-tests; another full attempt's retained browser result identified only the account
-scenario as failed. These are component results, not successful lifecycle
-commands. Restricted-session process probes did not reliably establish host runner
-state. A `nohup` wrapper failed to produce its completion-status file even though
-the account browser finished; a small `setsid` background probe also produced no
-completion file. Do not rely on detached host processes in this session.
-
-Use role/name selectors for wrapped selects and prefilled textareas. Exact
-`getByLabel` queries can include option text or initial textarea content while the
-accessible combobox/textbox name remains correct. The first browser attempt passed
-the nine existing checks, then timed out on these selectors. Its obsolete test
-stack was torn down; subsequent connection failures in that attempt were caused
-by teardown. Corrected selectors passed the task workflows. Complete status/tree
-workflows measured over 30 seconds, so the shared scenario deadline is 90 seconds;
-normal short assertion deadlines are unchanged.
-
-The initial full attempt passed all 54 backend tests and 15 browser checks but
-exceeded the existing account scenario's 30-second deadline after deactivation.
-A longer run revealed the underlying wait: an in-flight task request had already
-returned the revoked colleague session to sign-in, so Refresh access no longer
-existed. Reload after deactivation/password reset and assert sign-in; this verifies
-invalidation regardless of which request detects it first. Use a separate synthetic
-account when rerunning that scenario. The corrected focused scenario passed in
-27 seconds and passed again in both complete runs. Raising the deadline alone
-did not resolve the obsolete UI-state assumption.
-
-Compose `down --volumes` does not stop a still-running one-off browser container.
-An early teardown retained its network until that browser exited through `--rm`.
-Inspect label-filtered containers/networks/volumes after completion and repeat
-scoped cleanup if necessary; a `down` exit code alone is insufficient evidence.
-
-The initial restricted build also failed writing Docker buildx activity under the
-user's Docker configuration directory; approved escalation resolved it. Docker
-inspection and Git writes continued to require session-specific approval when
-restricted. Backend component checks passed fresh migrations, 52 regressions,
-and two additional write-only regressions before full acceptance. Development
-volumes were never migrated, reset, or seeded. Stage 4 is complete; Stage 5 remains
-Not started.
-
-## Stage 5 Verification Findings: 2026-10-09
-
-Focused engine checks reuse the test Compose project and source-mounted backend;
-no development volume is migrated. Fresh lifecycle migrations, system/drift checks,
-and 19 task regressions passed. An initial 24-check engine attempt passed timeline
-scenarios but failed four concurrency fixtures and the upgrade fixture: transaction
-flush removes the seeded coordination row, and historical model state must include
-`accounts.0002_user_session_version` to match the database. Restore the lock in
-transaction fixtures and retain other apps’ latest migration targets when testing
-Stage 4-to-Stage 5 upgrades. Corrected 24- and expanded 25-check runs passed;
-three subsequent checks passed storage-failure rollback, subsecond totals, and
-competing complete-day saves. These are component results; full lifecycle
-acceptance is recorded separately in the tracker.
-
-The shared working zone is configured through `WORKING_TIME_ZONE`; UTC is the
-default and Europe/Berlin is also verified outside DST transitions. Normalization
-on reads uses deterministic fragment IDs for older unsplit spans or zone changes;
-reads do not change timestamps, revisions or stored rows. Accepted commands persist
-normalization atomically. Do not rewrite old migration history or infer unknown
-end times when configuring the zone.
-
-Stage 5 completion: final source `2c12aa6` passed two sequential complete
-`sh scripts/test.sh` lifecycles through the repository runner, labels
-`stage5-verified2` and `stage5-verified3`, each exit 0. Each passed 82 PostgreSQL
-tests, system/drift checks, fresh migrations, TypeScript/Vite build, and 16 Chromium
-checks. An earlier baseline run (`stage5-verified1`, source `601ed20`) also exited 0;
-the final-source repetitions additionally include safe write-only validation errors.
-Logs and status files remain under ignored `.artifacts/verification/`.
-
-Before `stage5-verified2`, db/web/frontend were explicitly started and all three
-reported healthy; the full run then successfully reset them. The repeat started
-from the inspected clean state. After each final-source run, project-label filters
-showed no test containers, networks or volumes. Original container IDs
-`5362f5db3c1c`, `4be32c2c4bf7`, `fd646cd028b8`, `bcd4c9629eee`, and `6cf3f68761fc`
-remained, along with `task-tracker-dev_development-db` and
-`youtube-downloader_downloads`. No development migration/reset/seed or host
-permission changes ran. The known non-failing npm esbuild script warning remains.
-Stage 5 is complete; timesheet UI/browser acceptance belongs to Stage 6.
-
-## Stage 6 Verification Findings: 2026-10-11
-
-The initial component run exposed `crypto.randomUUID()` being unavailable at the
-plain HTTP Compose hostname. Draft keys now use local counters with timestamps;
-they are stable client error keys, not persisted UUIDs. Focus checks must leave all
-segments of a native datetime-local input before expecting blur/sorting. Chromium
-normalizes zero seconds out of its field value; assert the actual value format.
-These test corrections preserve real keyboard/focus coverage.
-
-Sign-in initially mounted the workspace before account catalogs finished, and
-resolving the first server-zone date triggered a second day load after briefly
-showing recording controls. Publish the authenticated workspace once catalogs are
-ready, and recognize the already-loaded owner/date/version to avoid that second
-load. Readiness assertions allow 15 seconds for the multi-request initial screen;
-normal assertions remain 5 seconds. A competing-tab check now explicitly waits for
-the current-time checkbox before editing its timestamp.
-
-One component command client exited 143 while its one-off browser remained running.
-Container logs and retained browser artifacts supplied component evidence only;
-this is not a successful lifecycle invocation. Continue to use the documented
-foreground terminal runner with closed stdin for full acceptance. Do not reset the
-test stack while its browser is still running. Session-specific restricted Docker
-log/process inspection required approved escalation; no host configuration changed.
-
-`stage6-verified1`, interface source `820028b`, exited 0 through the repository
-foreground terminal runner: 85 PostgreSQL tests, fresh migrations/system/drift,
-TypeScript/Vite build and 25 Chromium checks passed. The first run reset healthy
-services. Label-filtered inspection found no remaining test containers, networks or
-volumes; both original volumes and all five unrelated container IDs were preserved.
-
-Final review adds safe handling when read revocation removes timelines from a
-write-only preview, and accurate acknowledgement when storage succeeds but its
-subsequent reload fails. Both focused Chromium regressions passed. The follow-up
-was committed as `daf9299` and passed `stage6-verified2` in full, exit 0: 85
-PostgreSQL tests, migrations/system/drift, build and 25 Chromium scenarios. The
-repeat also reset a healthy running stack. Both logs/status files are retained in
-ignored `.artifacts/verification/`.
-
-After the repeat, project-label inspection again found no test containers,
-networks or volumes. Original container IDs `5362f5db3c1c`, `4be32c2c4bf7`,
-`fd646cd028b8`, `bcd4c9629eee`, and `6cf3f68761fc` and both original volumes were
-preserved. No development migration/reset/seed or host permission changes ran.
-Desktop, narrow and modal screenshots were inspected; the existing non-failing
-npm warning remains. Stage 6 is complete; reporting/CSV belongs to Stage 7.
-
-## Docker Access Is Session-Specific
-
-Before approved lifecycle verification, an earlier agent session produced these
-different outcomes:
-
-| Action | Observed outcome |
-| --- | --- |
-| `docker info --format '{{json .Driver}} {{json .ServerVersion}}'` | Succeeded; daemon reported 29.8.0. |
-| `docker run ...` and `docker compose build web frontend` | Succeeded; containers ran and images built. |
-| `docker compose config --quiet` and test-config validation | Succeeded; validates configuration, not service startup. |
-| `docker version`, Compose startup, and `docker stop` | Docker socket permission denied. |
-| Forwarding Ctrl-C to running verification sessions | Rejected by the tool's approval policy. |
-
-Read-only diagnostics supplied from the user's normal SSH terminal confirmed
-that `vasiliy` (UID 1000) belonged to `docker` (GID 989), and the socket was
-`root:docker`, mode `660`. Docker used the default context and
-`unix:///var/run/docker.sock`, without environment overrides; Docker 29.8.0 and
-the system service/socket were healthy. An inactive user-level Docker service
-was expected for this system daemon. The agent saw restricted groups and
-mapped socket ownership (`nobody:nogroup`). This identified an agent execution
-restriction, not a daemon failure. No host permission/configuration changes were
-needed; approved sandbox escalation subsequently enabled lifecycle verification.
-
-Earlier Git staging also succeeded while commit failed creating `.git/index.lock`
-on a read-only filesystem. Approved Git write access resolved that failure.
-
-This is evidence of command/session access differences, not proof of a broken
-Docker installation or an incorrect host group. Check the current session's
-execution permissions before repeating host-level troubleshooting. A successful
-build/run does not establish permission to start Compose services or stop them.
-
-Do not change socket permissions, add privileged containers, mount the Docker
-socket into a helper container, or otherwise route around an execution restriction.
-If required startup/shutdown access is unavailable, report that limitation and
-ask for an authorized session or user-run verification.
-
-## Establish Cleanup Before Starting Services
-
-- `docker run --rm` removes a container after it exits; it does not make an
-  indefinitely running server exit. Do not assume a terminal interrupt will work.
-- Prefer bounded, disposable checks when possible. The verified browser fallback
-  runs `timeout 120 sh /checks/browser-checks.sh` inside its container. That script
-  starts its own temporary Vite server and waits for readiness. It still needs a
-  separately running test API and database; it is not a complete environment.
-- Confirm an authorized cleanup path before starting long-running API/database
-  services. If stopping is denied, hand off exact names and ports; do not launch
-  more unbounded copies or use broad prune/volume-removal commands.
-- The previous fallback used only `task-tracker-foundation-db` (loopback 55439),
-  `task-tracker-foundation-api` (loopback 8009), and
-  `task-tracker-foundation-frontend` (loopback 5179). The bounded browser check used
-  loopback 5180. These names/ports are not evidence that services are running now.
-
-The user initially reported those three containers stopped. Stage 2 verification
-subsequently inspected all containers and independently confirmed no foundation
-containers remained. Neither observation establishes future-session access.
-Recheck ownership/availability before reusing names or ports; never stop an unrelated service to free a port.
-
-After that cleanup, a Stage 2 completion attempt on the same date confirmed the
-restriction remained: standalone `docker compose ps` succeeded and showed no
-development-project containers; Docker info also succeeded. Test Compose startup
-was denied. `sh scripts/test.sh` failed at the initial test-project reset and again
-in its cleanup trap before any application checks or startup. No new verification
-containers were started by that failed attempt. Later approved lifecycle
-verification resolved this blocker and confirmed test and development cleanup.
-
-## Non-Root Frontend Files Must Be Writable
-
-The initial frontend build failed with `EACCES` while Vite wrote a temporary
-configuration module beside `vite.config.ts`. Running as UID 1000 was insufficient
-because `/app` and copied files were owned by root.
-
-The fix in [docker/frontend.Dockerfile](../docker/frontend.Dockerfile) is to give
-`/app` to the `node` user, install dependencies as that user, and use
-`COPY --chown=node:node` for package manifests and sources. The non-root production
-build and live Vite server subsequently worked. Preserve writable generated-file
-locations when changing mounts; do not solve this by running everything as root or
-making the entire source tree world-writable.
-
-## Vite Must Recognize the Internal Compose Hostname
-
-Loopback browser checks alone missed the hostname used by Compose. The
-[Vite configuration](../frontend/vite.config.ts) explicitly permits `frontend` in
-`server.allowedHosts`, while `/api` proxies to `web:8000` by default.
-
-Keep this hostname aligned with Compose service names. Do not disable host
-checking globally. The [foundation regression](../frontend/tests/foundation.spec.ts)
-sends the internal hostname in the request and verifies acceptance. It passed,
-but is not a substitute for verifying the complete Compose network/startup flow.
-
-## Dependency Tool Cache and Runtime Differences
-
-Backend lock generation initially failed when pip-tools tried to create the
-unwritable default cache `/.cache`. It succeeded with an explicit
-`--cache-dir /tmp/pip-cache`. The disposable container installed pip-tools 7.6.2
-using `PYTHONUSERBASE=/tmp/pip-tools`, without changing a home-directory variable.
-The resulting [backend lockfile](../backend/requirements.txt) includes hashes.
-Keep lock generation under the selected Python 3.13 runtime and use a writable
-tool-specific cache rather than modifying host permissions.
-
-Host Node/npm were absent; no host installation was needed. Frontend builds use
-the Node 22 image, while the Playwright image has its own Node/npm runtime. Keep
-the Playwright package and image version aligned (currently 1.64.0). Its npm
-printed an esbuild install-script warning, but the source build and browser checks
-passed; that warning was not a failing check or a reason to enable all package
-scripts indiscriminately.
-
-## Django Migration Ordering and Test Guards
-
-Create the schema migration before adding a data migration that depends on it.
-Adding `core.0002_seed_mutation_lock` before `core.0001_initial` existed caused
-`NodeNotFoundError` during `makemigrations`. The current ordering is correct:
-the initial migration creates the table, then the data migration creates the
-persistent `domain` coordination row. Do not rewrite already-applied migrations
-to repeat this initial scaffolding workaround.
-
-Use the dedicated test configuration, not development credentials:
-
-- `APP_ENV=test`, database/user `task_tracker_test`, and temporary uploads.
-- The backend test command rejects development settings; settings also reject
-  mismatched test database/user configuration.
-- The seed command accepts only the designated test databases/user and is
-  repeatable. The test runner creates `test_task_tracker_test`; browser fixtures
-  use `task_tracker_test` separately.
-- `scripts/test.sh` resets only the fixed `task-tracker-tests` Compose project.
-  Run it sequentially; do not point cleanup at the development project/volume.
-
-## What Was and Was Not Verified
-
-At the foundation milestone: images built, PostgreSQL 17.11 migrations and drift
-checks passed, 13 backend tests passed, TypeScript/production builds passed, and
-3 Playwright Chromium checks passed using the documented component arrangement.
-Source-mounted backend checks and the rebuilt backend image were both exercised.
-
-At that foundation milestone, full development Compose startup and the combined
-Compose reset/test/cleanup script had not been exercised successfully. Those
-checks were subsequently run with authorized access; see the verification update
-above for repeatability, cleanup, and development results.
-
-## Stage 7 Verification Findings: 2026-10-11
-
-The backend component suite passed all 12 reporting checks twice using the
-source-mounted backend in the isolated PostgreSQL test project. Initial Docker
-socket denial required approved escalation; no daemon or host permissions changed.
-
-`stage7-attempt1` passed all 97 PostgreSQL tests and the production build. Three new
-browser scenarios timed out on exact `getByLabel` selects (`Report view`,
-`Report project`, and `Timesheet person`); traces showed correct report totals and
-the same wrapped-select behavior already documented for Stage 4. Corrected tests
-use accessible combobox role/name selectors. The failure/retry/stale-response
-scenario passed during that attempt, but the run was interrupted and is not a
-successful full lifecycle. Ctrl-C ended the runner without a status file; its
-cleanup removed services but left the one-off browser/network. Label-filtered
-inspection identified that exact test-owned remainder, and project-scoped
-`down --volumes --remove-orphans` removed it before restarting test services.
-
-Original failed traces/screenshots were preserved under ignored
-`.artifacts/verification/stage7-attempt1-browser/`. The corrected focused command
-used foreground supervision, closed input, and a 360-second limit against the
-prepared test stack. All five scenarios passed (`stage7-reports1`, exit 0), with
-desktop/narrow screenshots inspected. Final full-run evidence remains in the
-implementation tracker; component success alone does not complete Stage 7.
-
-`stage7-verified1` on interface source `f4dfd00` exited 1: all 97 PostgreSQL tests,
-the production build, and 29 of 30 Chromium scenarios passed. The existing account
-password-reset scenario exceeded its five-second completion-message assertion
-while the focused backend CSV follow-up ran concurrently. The trace confirms the
-reset returned HTTP 200 after 4.6 seconds; catalog refresh then completed outside
-that assertion window. This does not establish why the request was slower. The
-failed trace is preserved under `.artifacts/verification/stage7-verified1-browser/`.
-Cleanup was inspected: no test resources remained; all five original unrelated
-container IDs and both original volumes were unchanged.
-
-Keep remaining runtime suites sequential. The account regression now awaits and
-asserts the password-reset HTTP response before its unchanged completion-message
-deadline. That workflow passed in 26.6 seconds during serial `stage7-verified2`.
-CSV review source `9ba2742` also passed all 12 focused PostgreSQL checks with
-explicit `Accept: text/csv` and JSON errors. Full-run acceptance was pending at
-this milestone.
-
-Serial full acceptance completed on 2026-10-12: `stage7-verified2` and
-`stage7-verified3` each exited 0 with 97 PostgreSQL tests, fresh migrations,
-system/drift checks, TypeScript/Vite production build, and 30 Chromium scenarios.
-Application source `9ba2742` and browser follow-up `7f7e583` were exercised in
-both runs. The repeat's account reset workflow passed in 27.2 seconds with the
-same assertion deadline; its full browser suite passed in 8.2 minutes. No runtime
-suites overlapped these final runs. Both started with healthy prepared test
-services, verified their reset, and completed scoped cleanup. Final inspection
-found no test containers, networks, or volumes; the five original unrelated
-container IDs and both original persistent volumes remained unchanged. Development
-data was not migrated/reset/seeded. Logs/status are retained under ignored
-`.artifacts/verification/`; final browser screenshots are preserved in
-`.artifacts/verification/stage7-verified3-browser/`. Stage 7 is complete.
-
-## Stage 8 Remarks Verification Findings: 2026-10-12
-
-Focused source-mounted PostgreSQL verification passed 29 remarks/task checks
-after correcting non-object JSON validation in the shared strict serializer.
-Raising a string-shaped serializer error had caused DRF's error dictionary
-construction to fail; a `non_field_errors` dictionary now returns 400 and the
-regression includes arrays, strings, and numbers. No schema or dependency change
-was needed for that fix. The new remarks migration passed fresh and upgrade checks.
-
-All four focused Chromium workflows passed. The first full run
-(`stage8-remarks-verified1`) passed 107 PostgreSQL tests, the production build,
-and the four final-layout remarks scenarios. Its new fixtures granted the shared
-administrator access to their projects, contaminating the later administrator
-no-data-access assertion in the existing task workflow. The trace shows three
-readable discussion tasks, confirming fixture contamination. Fixtures now use a
-dedicated scenario user's authenticated API context for content; management uses
-the shared administrator without changing that administrator's data permissions.
-
-The first full run was interrupted before completion and has no successful
-lifecycle status. Subsequent connection failures followed teardown. The retained
-one-off browser was inspected by project label; scoped cleanup removed the test
-network, and separate label-filtered listings confirmed no test containers,
-networks, or volumes remained. Artifacts are retained in ignored
-`.artifacts/verification/stage8-remarks-attempt1-browser/`. Docker and Git writes
-required session-specific approved access; no host permissions or development
-data were changed.
-
-Corrected serial run `stage8-remarks-verified2` passed 107 PostgreSQL tests,
-fresh migrations/system/drift, the production build, and all 34 Chromium scenarios
-(10.7-minute browser suite). Application `7d331c6` and fixture correction `f4329c8`
-were exercised. The 20-minute foreground wrapper budget expired during final
-cleanup, returning 124 despite all application checks passing. Keep this distinct
-from a successful lifecycle invocation. Separate inspection found no test
-containers/networks/volumes, and all five original unrelated container IDs and
-both persistent volumes were preserved. Final screenshots were inspected and
-retained under ignored `.artifacts/verification/stage8-remarks-verified2-browser/`.
-
-The growing suite now has a 30-minute full-run budget in `scripts/test-runner.sh`;
-the focused account budget remains three minutes. Shell syntax/documentation
-checks passed; another full lifecycle under the expanded budget has not run.
-The older 1200-second command above records the Stage 4 arrangement. Use the
-repository wrapper and README for current commands. Final-stage acceptance still
-requires successful full lifecycle evidence; remarks component checks alone do
-not complete Stage 8.
-
-## Stage 8 References and Images: 2026-10-12
-
-Reference source/migration/API checks passed five PostgreSQL tests; both new
-Chromium scenarios and all four existing remarks scenarios passed (2.7 minutes).
-The shared editor now uses explicit textarea labels; browser locators use control
-roles because label text can include select options or textarea children.
-
-Image streaming tests now use `TransactionTestCase`. Closing a `FileResponse`
-sends request-finished and closes the database connection; doing that inside a
-wrapping `TestCase` transaction made subsequent queries unusable. Real transactions
-also verify after-commit file deletion. The corrected run passed all eleven
-content tests (52.233 seconds). Boundary-validation assertions now verify actual
-API 400 responses rather than expecting domain exceptions from serializer errors.
-
-The HTTP Compose hostname does not provide `crypto.randomUUID`; its exception in
-FileReader.onload left uploads pending. UUID v4 generation now uses
-`crypto.getRandomValues`, and read failures/aborts settle their promises. A browser
-narrow-screen check found intrinsic grid sizing overflowing with file inputs;
-single-column task grids now use `minmax(0, 1fr)`. All three image and four remark
-Chromium scenarios passed (2.8 minutes); inspected screenshots are retained under
-ignored `.artifacts/verification/stage8-images-focused-browser/`.
-
-`sh scripts/check-image-persistence.sh` exited 0. It attached a scoped synthetic
-image volume, verified bytes/metadata/authorized download and admin denial, forcibly
-recreated the test web container, and verified the same data and permissions again.
-Cleanup removed the test stack/network/image volume. All five original unrelated
-containers and both original volumes were preserved. The development image volume
-is configured but no development services or data were changed. The expanded
-twelve-check content suite passed (42.084 seconds), adding stale/nested rollback
-and cleanup-failure recovery. Full-stage acceptance follows search implementation.
-
-## Stage 8 Final Acceptance: 2026-10-12
-
-English/Russian search passed eighteen focused content checks (59.425 seconds),
-a separate waiting-search/revocation race (8.162 seconds) and both browser workflows
-(37.9 seconds). Search narrow screenshots were inspected. Final image-draft review
-moved pending remark bytes into the parent draft so a denied composer can unmount
-without losing the upload; all seven image/remark browser scenarios passed.
-
-`stage8-final-verified1` passed 126 PostgreSQL tests and the build, but one older
-task browser expectation assumed automatic stale-edit refresh. The delivered image
-editor intentionally retains the draft until explicit refresh. Forty other Chromium
-scenarios passed; cleanup completed and the wrapper exited 1. Its artifacts are
-retained. The corrected scenario now checks pending text/image retention, disabled
-saving, and latest content after explicit refresh; its focused run passed in
-36.8 seconds. No application change was needed for this failure.
-
-Final source `142611f` passed `stage8-final-verified2`, exit 0: fresh migrations,
-system/drift checks, 126 PostgreSQL tests (571.625 seconds), production build and
-all 41 Chromium scenarios (14.2 minutes). Healthy-stack reset and final cleanup
-completed. Log creation to status write measured 25 minutes 31 seconds; the
-30-minute wrapper budget was sufficient. This is the successful full-stage
-lifecycle evidence, superseding the earlier pending status without erasing failed
-or timed-out attempts.
-
-Independent Docker inspection found no test containers/networks/volumes. All five
-original unrelated container IDs and both original volumes were preserved. Logs,
-status and screenshots are retained under ignored
-`.artifacts/verification/stage8-final-verified2*`; final narrow image layout was
-inspected on the same application source. Development data/services were untouched.
-Production deployment and full backup/restoration remain unimplemented. The
-2026-10-13 stage split schedules this operational work in Stage 10; Stage 9 now
-contains development activities only.
-
-## Stage 9 Development Verification: 2026-10-13
-
-Application source `1f79ff6` passed
-`sh scripts/test-runner.sh stage9-verified1 full`, exit 0: healthy-stack reset,
-fresh migrations, system/drift checks, all 139 PostgreSQL tests (594.845 seconds),
-TypeScript/Vite build and all 43 Chromium scenarios (13.6 minutes). Log creation
-to status write measured 25 minutes 9 seconds, within the existing 30-minute bound.
-The repository foreground runner and closed input worked without modification.
-Logs/status remain under ignored `.artifacts/verification/stage9-verified1.*`.
-
-The first focused browser attempt created accounts through an API context that
-shared the page's cookies, then attempted UI sign-in while still authenticated as
-the fixture administrator. The form disappeared during filling. Clearing that
-fixture session before UI sign-in corrected the setup; both Stage 9 scenarios
-passed focused and full runs. The failed focused artifacts remain under
-`.artifacts/verification/stage9-focused1-browser`.
-
-A script-driven exploratory session exercised keyboard saves and concurrent
-opposing administrator-demotion requests. One update saved and the other was
-denied after privilege rechecking. Its initial assertion incorrectly expected
-administrators to see no project catalogs; catalog administration is separate
-from data access. Checking effective data flags instead passed and strengthened
-the focused recovery fixtures. Outcomes and desktop/narrow inspection are retained
-in `.artifacts/verification/stage9-exploration.md` and `stage9-focused2-browser/`.
-
-Focused Docker commands required session-specific escalation after socket denials;
-approved retries succeeded. No host/socket/group/daemon configuration changed.
-Final project-label inspection found no test containers, networks or volumes.
-All five original unrelated container IDs and both original volumes were
-preserved. Development data/services were not migrated, reset or seeded.
-Stage 9 is complete; production server/proxy configuration, deployment and
-full-system backup/restoration remain unimplemented. The later 2026-10-13 sequencing
-update moves that work to Stage 11 and inserts multiple-instance development at
-Stage 10; the earlier entries retain the numbering used at their milestones.
-
-## Stage 10 Verification Findings: 2026-10-13
-
-Core prefix configuration passed three focused PostgreSQL/WSGI checks and two
-frontend configuration checks. The root frontend build passed. The first paired
-attempt was denied daemon access before application checks; approved retries use
-only the reserved synthetic project, without host/socket permission changes.
-
-The paired image workflows passed but revealed that Vite's default SPA fallback
-returns HTML/200 for a missing JavaScript asset. The application navigates through
-document fragments, so `appType: mpa` retains HTML handling without that fallback.
-The missing-asset/error/redirect/CSRF check passed after the change. The literal
-needs an explicit `as const` for the async configuration's TypeScript inference.
-
-`stage10-pair4` passed nine prefixed workflows and the post-replacement browser
-check, preserving all captured domain rows, database identities and image bytes.
-It still exited 127 because the shell runner was edited while running and read
-a shifted trailing fragment. Keep this component result distinct from lifecycle
-acceptance. The new wrappers execute a temporary snapshot of themselves; other
-test inputs must still remain stable during a run. Failure logs/artifacts are
-retained under ignored `.artifacts/verification/stage10-*` paths. Final acceptance
-and resource-preservation results remain pending in the implementation tracker.
-
-## Stage 10 Acceptance Resumed: 2026-10-19
-
-The retained `stage10-pair5` and `6` attempts exited 1 on lazy-image visibility
-assertions. Image checks now scroll the refresh control into view and await actual
-decoded image width before asserting visibility. `stage10-pair7` exited 1 on the
-reference-label assertion deadline; paired verification now has explicit
-15-second assertions and 180-second workflow budgets, retaining the original
-root-suite budgets. The forwarding fixture retries unavailable upstreams for a
-bounded readiness interval while still rejecting a successful mismatched response.
-Failed paired runs also retain service diagnostics before scoped cleanup.
-
-`stage10-pair8` exited 0: nine prefixed Chromium workflows (5.1 minutes), followed
-by the post-replacement live-session check (20.3 seconds). Database identities,
-domain rows and image bytes were preserved; the sibling remained healthy during
-53 observations. Scoped cleanup completed. This result supersedes the earlier
-pending sibling result, without making the nested/development/root checks complete.
-
-Before resumed verification, the five original unrelated container IDs and both
-persistent volumes recorded in Stage 9 were present. Only the two downloader
-containers were running. The otherwise empty `task-tracker-tests_default` network
-was present and is owned by the disposable root test project. Keep runtime suites
-serial and inspect final cleanup against this current baseline.
-
-On source `11c45ec`, `stage10-nested-20261019` exited 0: two nested-prefix browser
-workflows (1.3 minutes), the after-replacement session/recovery check (17.3 seconds),
-both builds/configuration checks and Django system/drift checks passed. Database
-identities, domain rows and image bytes were preserved; the sibling stayed healthy
-across 54 observations. Screenshots showed the independent 1.00/2.00 report totals.
-Scoped cleanup and separate label-filtered inspection found no prefix resources.
-
-`stage10-dev-20261019` was interrupted during second-stack startup: the tool
-session exited 143 without a runner status file. There was no application
-assertion failure and host process inspection found no remaining runner. Both
-reserved development-instance projects/storage were explicitly removed with
-scoped Compose commands before retry; temporary env files were removed. Preserve
-the log/interruption note as an interrupted attempt, not successful verification.
-The cause was not established and no daemon/host permission settings changed.
-
-The foreground-terminal retry, `stage10-dev-20261019-retry`, exited 0. Both
-development configurations passed prefixed HTTP/CSRF login, targeted bootstrap
-and recovery, database/upload identity persistence and sibling container/credential
-preservation across first-instance backend/frontend replacement. Automatic cleanup
-removed both synthetic projects and their storage. Full root acceptance is next;
-runtime suites remain serial.
-
-`sh scripts/test-runner.sh stage10-root-20261019 full` exited 0 on documentation
-milestone `ca52bf2` and application/tooling source `11c45ec`: fresh migrations,
-Django system/drift checks, all 142 PostgreSQL tests (579.216 seconds), both frontend
-configuration checks, TypeScript/Vite build and all 43 Chromium scenarios
-(13.0 minutes). No browser scenarios were skipped or retried. Log creation to
-status write took 24 minutes 13 seconds, within the unchanged 30-minute budget.
-Application/test inputs stayed stable; only documentation changed during the run.
-
-Final Docker inventory found no test containers/networks/volumes for the prefix,
-two reusable-development or root test projects. All five original container IDs
-and both persistent volumes were preserved; the two downloader containers remained
-running. Root cleanup removed the previously empty disposable test network.
-The interrupted attempt's orphaned temporary runner snapshot was identified by
-its matching script content and removed. Desktop/narrow root timesheet/image
-screenshots were inspected and preserved under
-`.artifacts/verification/stage10-root-20261019-browser/`. Stage 10 is complete;
-production hosting/settings, deployment and full-system backup/restoration remain
-unimplemented Stage 11 work. No development data/services were changed.
-
-## Stage 11 Environment Preparation: 2026-10-19–20
-
-The user selected loopback/SSH-tunnel access for persistent evaluation and agent
-environments. The existing host Nginx already owns ports 80/443; it was not modified.
-Inspection found ports 8180–8182 free, about 3 GiB available memory and 133 GiB free
-disk. These are session observations, not future resource guarantees. The current
-unrelated baseline contains the two downloader containers and the development-db
-and downloader volumes; the three older stopped containers are no longer present.
-
-Separate deployment Dockerfiles use hash-pinned Gunicorn 26.2.0 alongside the
-unchanged application dependency versions, and the unprivileged Nginx stable
-Alpine image. Initial verification found and corrected these setup issues:
-
-- Dependency tooling needs `PYTHONUSERBASE=/tmp/pip-tools` and a writable pip-tools
-  cache, as previously documented. The first install used the unwritable default.
-- A literal Nginx environment placeholder must survive JavaScript template
-  generation; use a literal string variable rather than interpolating an undefined
-  JavaScript identifier.
-- Compose flow-list tmpfs values containing commas must be quoted as one string.
-- Gunicorn 26.2.0 validates `forwarder_headers` as a comma-separated string; the
-  empty setting is `''`, not `[]`. Deployment builds now validate Gunicorn settings
-  against the installed dependency before release.
-- The frontend's private backend readiness request must send the configured public
-  Host header, since Django correctly rejects the internal `web` hostname.
-- With a read-only frontend, set client/proxy/fastcgi/uwsgi/scgi temporary paths
-  under `/tmp`; the latter three otherwise use unwritable `/var/cache/nginx` paths.
-
-Corrected prototype release `verify-20261020-v4` passed migration execution and
-all database/backend/frontend health checks in the reserved `verify-eval` project.
-Four host-tool tests and three isolated Django deployment-setting checks passed.
-The prototype is disposable and has no user account. Next run the three-environment
-lifecycle with scoped cleanup before starting the persistent environments. Keep
-actual results distinct from pending production backup/restoration acceptance.
-
-First three-environment run `stage11-environments-20261020-1` exited 1 after all
-three stacks and interactive bootstrap checks passed. Its report browser fixture
-lacked a wait for the initial options/default-date load before filling dates,
-then timed out awaiting the historical total. It now waits for the initial report
-table, matching the existing prefixed browser flow, and captures traces/screenshots on
-failure. All reserved projects, volumes and configurations were cleaned up;
-inventory again showed only the two original downloader containers and both
-original volumes. This is a failed attempt, not lifecycle acceptance. Ownership
-guards were added before retry to reject pre-existing orphan resources and Docker
-projects belonging to another workspace; all six host-tool checks passed.
-
-Retry `stage11-environments-20261020-2` on source `7850df8` exited 0. Three real
-Gunicorn/static-Nginx deployments passed the browser checks before and after
-agent release replacement and down/up. Evaluation stayed healthy across 95
-observations. Sessions, domain/database identities, private image bytes and
-independent report totals survived; both sibling container sets were unchanged.
-All synthetic configurations, containers, networks and volumes were removed.
-Independent inventory showed only the two original downloader containers and
-both original persistent volumes. Report screenshots for all three deployments
-were inspected and copied under the run's ignored verification artifact directory.
-
-The serial focused root regression `stage11-root-focused-20261020` exited 0:
-fresh PostgreSQL migrations, system/drift checks and 28 deployment-setting,
-prefix/WSGI and account/administration/concurrency tests passed (79.493 seconds).
-Its trap removed both root services and the disposable network. No production
-or existing development data was used or changed.
-
-Persistent deployment then initialized only `evaluation` and `agent`, built release
-`7850df8-20261020` in their distinct image namespaces and started all six services
-healthy. Frontends are bound to `127.0.0.1:8181` and `127.0.0.1:8182`; database and
-Gunicorn ports are not published. Both databases contain zero users/tasks/images,
-with only migration-installed defaults. No bootstrap was run on either persistent
-environment. A temporary read-only handoff probe initially referred to a nonexistent
-Django `WORKING_TIME_ZONE` setting; corrected to `TIME_ZONE`, it passed all live
-checks and saved safe metadata under
-`.artifacts/verification/stage11-persistent-deployment-20261020.json`.
-Application containers are non-root and read-only, debug is disabled, and restart
-policies are set. Existing downloader container IDs and original volumes remain;
-only the six intended deployment services and their storage/network resources
-were added. Production was not initialized and host public proxy files were not
-changed. See the environment operations guide for SSH and interactive bootstrap.
-
-## Reusable Live Verification: 2026-10-20
-
-By user agreement, reusable checks from the temporary handoff script now live in
-`scripts/environments.py verify NAME`. No extra standalone script was added and
-the dated temporary regression wrapper was not imported. The command has no empty
-database, UTC-only, environment-count or unrelated-container assumptions. It
-performs scoped inspection, a whitelisted Django settings read and HTTP GETs;
-deployment lifecycle operations and application record queries are excluded.
-
-Thirteen host-tool tests passed, including actual ephemeral loopback HTTP servers,
-redirect/mount/identity/database-health failures, runtime/container drift, all
-three roles and a nested additional environment with Europe/Berlin configured.
-The initial sandboxed run could not create HTTP fixture sockets (EPERM); the
-approved retry outside the sandbox passed. This is a test-execution restriction,
-not a deployment failure; no Docker socket or host permissions were changed.
-Both `verify evaluation` and `verify agent` exited 0 against the running private
-deployments without restarting services or modifying application data. No new
-test stacks were needed. Public HTTPS was not live-tested in this milestone.
-
-## Evaluation HTTPS Handoff: 2026-10-20
-
-The user replaced evaluation's SSH-tunnel access with
-`https://evaluation.example.com/time-tracker-eval/`, keeping existing application login.
-The user will install the prepared `/tmp/sites-available/evaluation.example.com` configuration
-and validate/reload host Nginx with administrator permissions. The maintained
-template is `docker/host-nginx/evaluation.example.com.conf`. Both obsolete project locations
-are removed; the TLS configuration, HTTP redirect and fallback behavior are
-preserved. The new proxy preserves the full application URI and public Host and
-matches the private frontend's 16 MiB request-body envelope. `/etc/nginx` is untouched.
-
-An initial evaluation backend restart timed out waiting for health. HTTP health
-requests were redirected to HTTPS because `SecurityMiddleware` matches the script
-prefix in `request.path`, while `SECURE_REDIRECT_EXEMPT` originally matched only
-`api/v1/health/`. Fix `b6f8dca` derives the exact exemption from the validated mount.
-Four focused deployment tests passed in a networkless container with synthetic
-test settings, including root, prefixed and nested HTTPS middleware requests and
-continued HTTPS redirection elsewhere. The first test invocation omitted required
-settings; retry with synthetic Django/PostgreSQL settings passed without any
-database setup or connection.
-
-Evaluation now runs corrected release `https-health-20261020`, with
-`PUBLIC_ORIGIN=https://evaluation.example.com`, public host/scheme and Secure cookies set.
-Only its backend/frontend were recreated; no migrations, seed or bootstrap ran.
-All services are healthy. Evaluation database, agent and unrelated container IDs
-are unchanged. The original private settings/release were backed up under ignored
-`.artifacts/verification/evaluation-https-20261020/` with mode 600.
-
-A temporary local Nginx fixture validated staged routing syntax and exercised the
-real deployment over fixture HTTPS. Its isolated listeners and certificate replaced
-only the public listeners/host TLS files for this check. Deployment runtime/settings,
-assets/API/PostgreSQL health, canonical redirects with query preservation, obsolete
-routes, Secure scoped CSRF cookies, anonymous protection and missing/untrusted-origin
-CSRF rejection passed. Chromium displayed the sign-in form and connected-database
-status; the screenshot was inspected. The probe's initial assumptions about relative
-redirects, CSRF error text and automatic cookie bootstrap were corrected to match
-existing behavior before acceptance passed. No account was created. The fixture
-proxy and browser were removed; original host config hashes still match.
-
-The standard agent verifier exited 0. The standard evaluation verifier passed
-runtime/settings and direct-loopback HTTP, then failed at the live public mount's
-404, as expected before administrator installation. Host Nginx's actual full TLS
-configuration validation, public verification and authenticated sign-in/sign-out
-remain operator handoff steps; local fixture results must not be presented as
-public HTTPS acceptance. Docker access and the temporary listeners needed sandbox
-escalation; no host permission settings were changed. See the operations guide
-for activation, first-account bootstrap, browser URL and rollback commands.
-
-## Evaluation Public Activation and Working Zone: 2026-10-20
-
-After the user installed host Nginx configuration and loaded the interface,
-`verify evaluation` passed against the actual public HTTPS origin. The initial
-organization/project were confirmed using list/detail API handlers with in-memory
-authentication and a PostgreSQL read-only transaction, as explicitly approved by
-the user. This did not automate password login or change records.
-
-The user then requested Tbilisi/Yerevan working time. Updated only evaluation's
-private `WORKING_TIME_ZONE` from UTC to `Asia/Tbilisi`, backed up its original
-configuration with mode 600, and recreated its backend at unchanged release
-`https-health-20261020`. Gracefully reloaded the existing frontend Nginx to refresh
-backend DNS. No image build, migration, seed or application-record write ran.
-Runtime Django `TIME_ZONE=Asia/Tbilisi` and offset +14,400 seconds were confirmed.
-The standard evaluation verifier passed local and actual public HTTPS checks;
-the agent verifier also passed. Only evaluation's backend container ID changed;
-database, frontend, agent and unrelated container IDs were preserved.
-Safe result metadata and private rollback configuration are under
-`.artifacts/verification/evaluation-tbilisi-20261020/`. Existing browser pages
-should be refreshed to fetch the new shared working zone. Documentation checks
-cover this configuration-only update; no new regression suite was needed.
-
-## UI Adjustment Verification: 2026-10-20–21
-
-Use the disposable test project and reserved synthetic deployment-check names;
-never seed or upgrade persistent evaluation for UI checks. Original persistent
-container/volume identities were captured before starting verification.
-
-The first broad diagnostic browser run recorded 39 passes, five failures and one
-unrun case in 24.4 minutes. Failures included wrapped-select exact-label locators,
-missing explicit project selection in a reopened creation dialog, an initial login
-while a build ran, and a native drag whose whole-panel target scrolled during the
-operation. Use accessible combobox roles, explicit dialog commands and the visible
-drop target; assert the recorded row rather than reusing an earlier save message.
-Do not compile or refresh frontend source during a browser acceptance run.
-
-A focused repeat also selected the fixed ui-grants account workflow against an
-already-used synthetic database and received 409, which is fixture reuse rather
-than application permission failure. The final lifecycle must recreate its own
-PostgreSQL database. Empty task lists have zero height; assert the loaded matching
-count to distinguish ready/empty from loading, instead of list visibility.
-
-Two command clients returned 143 after completed failure logs. Keep those results
-as diagnostic evidence, not successful lifecycle acceptance. Artifacts are under
-`.artifacts/verification/ui-adjustments/`.
-
-The expanded browser workload took 24.4 minutes before the clean PostgreSQL suite.
-Raised the full test-runner bound from 30 to 45 minutes to accommodate both layers
-and inspected cleanup. Account-only runs retain their existing three-minute bound.
-Runtime final acceptance is still pending at this documentation milestone.
-
-The full clean lifecycle `ui-adjustments-final-20261021` subsequently exited 0 on
-implementation `cfb6c23`: 146 PostgreSQL tests (953.412s), fresh migrations,
-system/drift checks, both frontend configuration checks, TypeScript/Vite build,
-and 47 Chromium scenarios (21.2m). Scoped test-service cleanup completed; final
-screenshots were inspected and archived under the UI verification directory.
-
-The first built-deployment run `ui-adjustments-release-20261021` was interrupted
-during its second synthetic instance startup: command exit 143, no runner status
-file and no remaining host verifier. No application assertion failed. Both
-reserved deployment-check projects, their synthetic volumes and private configs
-were explicitly removed before the foreground-terminal retry. Persistent
-evaluation/agent and unrelated services were not targeted. The interruption's
-cause is unknown. Local Node is unavailable; use the existing container runtime
-for the deployment browser script rather than installing host dependencies.
-
-The foreground-terminal retry `ui-adjustments-release-20261021-retry` exited 0:
-three real Gunicorn/static-Nginx deployments, including a nested mount, passed
-built assets/routing/host/CSRF checks, same-browser isolated sessions, private
-images, independent report totals and actual CSV downloads. Existing sessions,
-database identity/records and image bytes survived targeted synthetic agent
-replacement/restart; its evaluation sibling stayed healthy across 157 observations.
-Close task details before page reload in the browser harness, since a fresh page
-opens the task list without a detail dialog (`6bb5543`). All reserved projects,
-volumes, networks and configurations were removed by automatic scoped cleanup.
-
-Independent final inspection confirmed all eight original container identities
-and six original persistent volumes were preserved, with no test or synthetic
-deployment resources remaining. Read-only evaluation verification passed both
-loopback and actual public HTTPS; agent verification also passed. Persistent
-evaluation remains on its original release and retains its records and working
-zone. No persistent environment was seeded, migrated or upgraded for UI acceptance.
-Safe identity/cleanup metadata is retained in
-`.artifacts/verification/ui-adjustments/preservation-final.json`.
-
-## Authorized Evaluation UI Deployment: 2026-10-21
-
-After discussing readiness, the user explicitly authorized evaluation deployment
-of source `1ca13e4`. New release `ui-1ca13e4-20261021` was built and applied with
-the standard environment manager in foreground terminal mode. Its predecessor
-`https-health-20261020` and private configuration were retained for rollback.
-Only evaluation's backend/frontend containers were recreated; database, agent and
-unrelated container identities were preserved. The normal migration check reported
-no migrations to apply. Read-only repeatable-read domain fingerprints, migration
-history, database identity and upload hashes matched before/after. No seed/reset
-or application-record writes were performed; only the release setting changed.
-Public HTTPS, Secure cookies and `Asia/Tbilisi` are unchanged.
-
-Standard evaluation verification passed through loopback and actual public HTTPS;
-agent verification passed. A separate Chromium check rendered the compact public
-sign-in UI, with no JavaScript errors and no automatic health diagnostics. The
-screenshot was inspected. No authenticated login was attempted; user review of
-the new workspace remains next. Prior full application/prefixed-deployment results
-remain valid because deployed application source is unchanged.
-
-The deployment command exited 0. Safe metadata/fingerprints, browser results and
-screenshot are under `.artifacts/verification/evaluation-ui-20261021/`; bounded
-deployment output is in `.artifacts/verification/evaluation-ui-20261021.log`.
-`evaluation.before-ui.env` is private (mode 600 in a mode-700 ignored directory);
-it retains the old release plus current HTTPS/Tbilisi settings. UI rollback
-instructions are in the operations guide. Deployment approval does not resume
-deferred Stage 11 production or backup/restoration work, or authorize later
-persistent releases without discussion.
+# Infrastructure Troubleshooting
+
+Read before infrastructure troubleshooting or starting verification services.
+Use [development commands](development.md) and [environment operations](environments.md)
+for maintained procedures. This page preserves actionable lessons; detailed
+attempts, outcomes, and former session restrictions are in the
+[verification archive](archive/2026-10-21/verification_history.md).
+Current execution permissions and service state must be checked in the current session.
+
+## Docker Access and Process Supervision
+
+**Symptom:** Docker/socket, Git index, buildx cache, or loopback-listener access fails
+inside an agent session despite working in the user's terminal.
+
+**Cause/fix:** Earlier failures were execution restrictions, not broken host Docker
+or group configuration. Use the session's authorized escalation path when needed;
+prior success of `docker info` or a build does not establish lifecycle/cleanup
+access. Do not change socket permissions, add privileged helper containers, or
+mount the daemon socket to route around restrictions. The read-only
+`bash scripts/docker-diagnostics.sh` helper bounds individual probes; its final
+exit status alone does not prove daemon access.
+
+**Verify:** Confirm the needed command and scoped cleanup are permitted before
+starting services. See [access findings](archive/2026-10-21/verification_history.md#docker-access-is-session-specific).
+
+**Symptom:** A test client exits 130/143, a shell stops in job-control state `T`,
+or no runner status file appears while a browser still runs.
+
+**Fix:** Use the [foreground test wrapper](development.md#verification-helpers)
+with closed stdin and GNU `timeout --foreground`. Detached `nohup`/`setsid` probes
+were unreliable in earlier sessions. Keep build inputs stable during checks; editing
+a running shell script previously caused exit 127. Do not run competing browser
+suites, rebuild frontend sources, or tear down a stack while its browser is active.
+
+**Verify:** Require the wrapper's recorded completion/exit status plus inspected
+cleanup. Passing component output or service health is not successful lifecycle
+acceptance. Codes 124/143 or a missing status file need inspection; do not infer
+an application defect or a successful run. See
+[runner findings](archive/2026-10-21/verification_history.md#stage-4-verification-findings-2026-10-09)
+and [stable-input findings](archive/2026-10-21/verification_history.md#stage-10-verification-findings-2026-10-13).
+
+## Cleanup and Fixture Isolation
+
+- `docker run --rm` removes an exited container; it does not stop an indefinite
+  server. Compose cleanup may leave a running one-off browser and its network.
+  Inspect exact project-labelled containers/networks/volumes after interruptions.
+  Stop/remove only owned test resources; never use broad prune or live-volume removal.
+- Use the reserved synthetic test/prefix/deployment project names from the maintained
+  helpers. Record the relevant current baseline before lifecycle checks; historical
+  container IDs, counts, and free ports are not future-state guarantees.
+- Test settings require `APP_ENV=test`, database/user `task_tracker_test`, and
+  temporary uploads. Django tests create `test_task_tracker_test`; browser fixtures
+  use the separately migrated `task_tracker_test`. Guarded commands refuse development
+  settings. Run shared-stack suites sequentially.
+- Give scenarios independent synthetic users. Do not grant application-data access
+  to the shared fixture administrator or alter another scenario's credentials.
+  Reusing fixed accounts without reset can produce 409 fixture conflicts.
+- Inspect preserved database identity/records and image bytes for lifecycle checks;
+  a retained volume name alone does not establish data preservation.
+
+[Cleanup history](archive/2026-10-21/verification_history.md#establish-cleanup-before-starting-services)
+and [fixture contamination](archive/2026-10-21/verification_history.md#stage-8-remarks-verification-findings-2026-10-12)
+explain the corresponding failures.
+
+## Build, Dependencies, and Proxy Readiness
+
+| Symptom | Known cause/fix | Verification |
+| --- | --- | --- |
+| Vite temporary-config `EACCES` | Own writable build locations as the non-root node user; preserve `COPY --chown` and `/app` ownership | Non-root build/start succeeds; do not make the tree world-writable |
+| pip-tools cache failure at `/.cache` | Use a tool-specific writable cache such as `/tmp/pip-cache` and `PYTHONUSERBASE=/tmp/pip-tools` under Python 3.13 | Regenerate hashed locks with the selected runtime |
+| Host Node/npm unavailable | Use existing Node/build and Playwright containers | Align Playwright package/image versions; a non-failing esbuild warning is not permission to enable every install script |
+| Internal Compose hostname rejected | Align Vite `allowedHosts` and Django/CSRF trusted origins with actual service/browser origins | Check actual proxy mutations, not just loopback health; retain host/CSRF protection |
+| Missing JavaScript returns HTML/200 | Disable SPA fallback for the fragment-navigation application (`appType: mpa`) | Missing assets/unknown paths remain 404 under root and prefixed mounts |
+| Gunicorn settings rejected | Validate `forwarder_headers` as the installed version expects; its empty value is a string | Deployment build validates Gunicorn configuration |
+| Read-only Nginx fails startup | Put client/proxy/fastcgi/uwsgi/scgi temp paths under `/tmp`; quote comma-containing Compose tmpfs flow-list values | Actual built frontend health/startup passes |
+| Private frontend readiness gets host rejection | Send the configured public Host to Django, not internal `web` | Readiness succeeds without widening allowed hosts |
+| HTTPS backend health redirects | Match the exact configured script prefix in the security redirect exemption | Root/prefixed/nested health works while other HTTP paths still redirect |
+| Backend-only recreation leaves stale Nginx upstream | Reload the existing frontend to refresh upstream DNS | Verify the selected environment afterward |
+
+See [build findings](archive/2026-10-21/verification_history.md#non-root-frontend-files-must-be-writable),
+[deployment setup](archive/2026-10-21/verification_history.md#stage-11-environment-preparation-2026-10-1920),
+[HTTPS fix](archive/2026-10-21/verification_history.md#evaluation-https-handoff-2026-10-20),
+and [zone update](archive/2026-10-21/verification_history.md#evaluation-public-activation-and-working-zone-2026-10-20).
+Staged TLS with a fixture certificate does not prove public HTTPS activation;
+use the maintained live verifier after host installation.
+
+## PostgreSQL, Migrations, and Streaming Tests
+
+- Create schema migrations before dependent data migrations; never rewrite applied
+  migrations to repeat an initial scaffolding fix. Account command guards depend
+  on app ordering before Django auth.
+- Transaction-test flush can remove the seeded domain lock. Restore it in fixtures.
+  Historical upgrade models must include compatible latest migrations for other
+  apps, such as the account session-version field.
+- PostgreSQL activity checks can retain a statistics snapshot. Call
+  `pg_stat_clear_snapshot()` before sampling lock waits; use independent connections,
+  explicit synchronization, bounded waits, and committed-state assertions.
+- Use real transactions for streaming `FileResponse` lifecycle and after-commit
+  file cleanup. Closing a response can close the database connection, breaking
+  queries inside a wrapping `TestCase` transaction.
+- Strict serializer non-object errors must use the expected error-dictionary shape;
+  verify actual 400 responses for arrays/scalars, not only raised domain exceptions.
+
+See [migration guards](archive/2026-10-21/verification_history.md#django-migration-ordering-and-test-guards),
+[timeline fixtures](archive/2026-10-21/verification_history.md#stage-5-verification-findings-2026-10-09),
+[lock sampling](archive/2026-10-21/verification_history.md#stage-3-verification-findings-2026-10-08),
+and [streaming checks](archive/2026-10-21/verification_history.md#stage-8-references-and-images-2026-10-12).
+
+## Browser Fixtures and Drafts
+
+- Prefer accessible role/name locators for wrapped selects and prefilled textareas;
+  exact label queries can include options/initial content.
+- Await meaningful readiness before editing: loaded task count for empty lists,
+  initial report table/options before dates, and current-recording controls before
+  timestamps. Increasing arbitrary timeouts does not fix an obsolete state assumption.
+- After password reset/deactivation, reload and assert sign-in; an in-flight request
+  may already have removed Refresh access. Await the mutation response separately
+  from its UI completion message.
+- Native datetime-local fields must lose all segment focus before blur/sort assertions;
+  Chromium can omit zero seconds. Verify retained timestamp precision separately.
+- Plain HTTP Compose hosts may lack `crypto.randomUUID()`. Draft keys use local
+  counters/timestamps; image UUIDs use `crypto.getRandomValues`. Settle FileReader
+  failure/abort paths so uploads cannot remain pending indefinitely.
+- Scroll lazy images into view and await decoded width. Use the visible drag/drop
+  target and assert the resulting row. Close details before a reload when the fresh
+  page opens the task list. Test keyboard/focus behavior at desktop and narrow sizes.
+- Keep pending image bytes in the parent draft across permission-driven unmounts.
+  Stale edits retain drafts until explicit refresh; saved-but-reload-failed needs a
+  different assertion from failed save. Neither case should silently resubmit.
+
+See [timesheet browser findings](archive/2026-10-21/verification_history.md#stage-6-verification-findings-2026-10-11),
+[image findings](archive/2026-10-21/verification_history.md#stage-8-references-and-images-2026-10-12),
+and [UI verification](archive/2026-10-21/verification_history.md#ui-adjustment-verification-2026-10-2021).
+Add future actionable fixes here; archive the completed investigation using the
+[maintenance policy](README.md#move-details-to-the-archive).
